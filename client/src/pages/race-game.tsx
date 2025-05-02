@@ -211,7 +211,7 @@ export default function RaceGame() {
               <Card className="border-primary/30">
                 <CardHeader>
                   <div className="flex justify-between items-center">
-                    <CardTitle className="text-2xl">DataRacer Game</CardTitle>
+                    <CardTitle className="text-2xl">Votes and Wars Race</CardTitle>
                     <Badge variant="outline" className="bg-primary/10 text-primary">
                       {gameState === "racing" ? "Racing!" : gameState === "countdown" ? "Ready..." : gameState === "finished" ? "Finished" : "Select Car"}
                     </Badge>
@@ -256,42 +256,46 @@ export default function RaceGame() {
                     </div>
                   )}
                   
-                  {/* Race track */}
+                  {/* Race track - single line with cars facing each other */}
                   <div className={`bg-black rounded-lg p-4 mb-4 ${gameState === "ready" ? "opacity-70" : ""}`}>
-                    <div className="relative h-32 rounded-lg overflow-hidden bg-gradient-to-r from-neutral-800 to-neutral-900 flex items-end">
-                      {/* Track markings */}
-                      <div className="absolute inset-0 flex flex-col justify-between py-10">
-                        <div className="h-px bg-white opacity-30"></div>
-                        <div className="h-px bg-white opacity-30"></div>
+                    <div className="relative h-24 rounded-lg overflow-hidden bg-gradient-to-r from-neutral-800 to-neutral-900 flex items-center">
+                      {/* Track markings - Single middle line */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-full h-px bg-white opacity-30"></div>
                       </div>
                       
-                      {/* Player car */}
-                      <div className="absolute top-1/3 transform -translate-y-1/2 left-0 right-0 h-8">
+                      {/* Center divider line */}
+                      <div className="absolute top-0 bottom-0 left-1/2 transform -translate-x-1/2 w-px h-full bg-primary"></div>
+                      
+                      {/* Left Player car (facing right) */}
+                      <div className="absolute top-1/2 transform -translate-y-1/2" 
+                           style={{ 
+                             left: `${playerPosition}%`, 
+                             transition: 'left 0.1s ease-out' 
+                           }}>
                         <img 
                           src={carImages[selectedCar]} 
                           alt="Player car" 
-                          className="absolute h-8 w-auto transition-all duration-100"
-                          style={{ left: `${playerPosition}%` }}
+                          className="h-10 w-auto"
                         />
                       </div>
                       
-                      {/* AI car */}
-                      <div className="absolute top-2/3 transform -translate-y-1/2 left-0 right-0 h-8">
+                      {/* Right AI car (facing left) */}
+                      <div className="absolute top-1/2 transform -translate-y-1/2" 
+                           style={{ 
+                             right: `${100 - aiPosition}%`, 
+                             transition: 'right 0.1s ease-out' 
+                           }}>
                         <img 
                           src={carImages[(selectedCar + 2) % carImages.length]} 
                           alt="AI car" 
-                          className="absolute h-8 w-auto transition-all duration-100"
-                          style={{ left: `${aiPosition}%` }}
+                          className="h-10 w-auto transform scale-x-[-1]" // Flip horizontally
                         />
                       </div>
                       
-                      {/* Finish line */}
-                      <div className="absolute right-0 top-0 bottom-0 w-1 bg-white opacity-70 flex flex-col">
-                        <div className="h-1/4 bg-black"></div>
-                        <div className="h-1/4 bg-black"></div>
-                        <div className="h-1/4 bg-black"></div>
-                        <div className="h-1/4 bg-black"></div>
-                      </div>
+                      {/* Finish lines on both sides */}
+                      <div className="absolute left-[2%] top-0 bottom-0 w-1 bg-white opacity-70"></div>
+                      <div className="absolute right-[2%] top-0 bottom-0 w-1 bg-white opacity-70"></div>
                       
                       {/* Countdown overlay */}
                       {gameState === "countdown" && (
@@ -337,14 +341,14 @@ export default function RaceGame() {
                               ? `Time: ${(raceTime / 1000).toFixed(2)}s`
                               : gameState === "finished"
                                 ? `Finished in ${(gameResult?.time || 0) / 1000}s`
-                                : "Data Speed Race"}
+                                : "Poll Racing Game"}
                           </h4>
                           <p className="text-xs text-muted-foreground">
                             {gameState === "racing" 
                               ? "Keep tapping to accelerate!" 
                               : gameState === "finished"
                                 ? gameResult?.won ? "Great job! You won the race!" : "Better luck next time!"
-                                : "Race to beat the AI opponent"}
+                                : "Vote to advance your choice!"}
                           </p>
                         </div>
                       </div>
