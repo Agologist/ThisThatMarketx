@@ -216,8 +216,14 @@ export default function Header() {
                   )}
                 </>
               ) : (
-                <Button asChild className="btn-gold">
-                  <Link href="/auth" onClick={() => setIsMenuOpen(false)}>Sign In</Link>
+                <Button 
+                  className="btn-gold"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    exitGuestMode();
+                  }}
+                >
+                  Sign In
                 </Button>
               )}
             </nav>
