@@ -133,27 +133,46 @@ export class MemStorage implements IStorage {
   }
   
   async createPoll(insertPoll: InsertPoll): Promise<Poll> {
-    const id = this.currentId.polls++;
-    const now = new Date();
-    
-    // Ensure all optional fields are explicitly null if undefined
-    const sanitizedData = {
-      ...insertPoll,
-      optionAImage: insertPoll.optionAImage || null,
-      optionBImage: insertPoll.optionBImage || null,
-      isPublic: insertPoll.isPublic ?? true,
-    };
-    
-    const poll: Poll = { 
-      ...sanitizedData, 
-      id, 
-      createdAt: now, 
-      optionAVotes: 0, 
-      optionBVotes: 0 
-    };
-    
-    this.polls.set(id, poll);
-    return poll;
+    try {
+      console.log("Creating poll in memory storage with data:", insertPoll);
+      
+      const id = this.currentId.polls++;
+      const now = new Date();
+      
+      // Ensure all optional fields are explicitly null if undefined
+      const sanitizedData = {
+        ...insertPoll,
+        optionAImage: insertPoll.optionAImage || null,
+        optionBImage: insertPoll.optionBImage || null,
+        isPublic: insertPoll.isPublic ?? true,
+      };
+      
+      // Parse the endTime string to a Date object if it's not already
+      let endTime: Date;
+      if (typeof sanitizedData.endTime === 'string') {
+        endTime = new Date(sanitizedData.endTime);
+      } else if (sanitizedData.endTime instanceof Date) {
+        endTime = sanitizedData.endTime;
+      } else {
+        throw new Error("Invalid endTime format");
+      }
+      
+      const poll: Poll = { 
+        ...sanitizedData,
+        endTime, // Use the parsed Date object 
+        id, 
+        createdAt: now, 
+        optionAVotes: 0, 
+        optionBVotes: 0 
+      };
+      
+      this.polls.set(id, poll);
+      console.log("Poll created successfully:", poll);
+      return poll;
+    } catch (error) {
+      console.error("Error creating poll in memory storage:", error);
+      throw error;
+    }
   }
   
   async incrementPollVote(pollId: number, option: string): Promise<void> {
@@ -348,22 +367,41 @@ export class DatabaseStorage implements IStorage {
   }
   
   async createPoll(insertPoll: InsertPoll): Promise<Poll> {
-    // Ensure all optional fields are explicitly null if undefined
-    const sanitizedData = {
-      ...insertPoll,
-      optionAImage: insertPoll.optionAImage || null,
-      optionBImage: insertPoll.optionBImage || null,
-      isPublic: insertPoll.isPublic ?? true,
-    };
-    
-    const [poll] = await db.insert(polls).values({
-      ...sanitizedData,
-      optionAVotes: 0,
-      optionBVotes: 0,
-      createdAt: new Date()
-    }).returning();
-    
-    return poll;
+    try {
+      console.log("Creating poll in storage with data:", insertPoll);
+      
+      // Ensure all optional fields are explicitly null if undefined
+      const sanitizedData = {
+        ...insertPoll,
+        optionAImage: insertPoll.optionAImage || null,
+        optionBImage: insertPoll.optionBImage || null,
+        isPublic: insertPoll.isPublic ?? true,
+      };
+      
+      // Parse the endTime string to a Date object if it's not already
+      let endTime: Date;
+      if (typeof sanitizedData.endTime === 'string') {
+        endTime = new Date(sanitizedData.endTime);
+      } else if (sanitizedData.endTime instanceof Date) {
+        endTime = sanitizedData.endTime;
+      } else {
+        throw new Error("Invalid endTime format");
+      }
+      
+      const [poll] = await db.insert(polls).values({
+        ...sanitizedData,
+        endTime, // Use the proper Date object
+        optionAVotes: 0,
+        optionBVotes: 0,
+        createdAt: new Date()
+      }).returning();
+      
+      console.log("Poll created successfully:", poll);
+      return poll;
+    } catch (error) {
+      console.error("Error creating poll in storage:", error);
+      throw error;
+    }
   }
   
   async incrementPollVote(pollId: number, option: string): Promise<void> {

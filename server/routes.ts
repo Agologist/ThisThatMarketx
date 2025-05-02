@@ -118,16 +118,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const pollData = insertPollSchema.parse({
+      console.log("Received poll data:", req.body);
+      
+      // Validate and sanitize input data first
+      const sanitizedInput = {
         ...req.body,
         userId: req.user.id,
-      });
+        // Ensure boolean fields are properly typed
+        isPublic: req.body.isPublic === true || req.body.isPublic === "true",
+        // Ensure we have all required fields
+        optionAImage: req.body.optionAImage || null,
+        optionBImage: req.body.optionBImage || null
+      };
+      
+      // Now pass the sanitized data to the schema validator
+      const pollData = insertPollSchema.parse(sanitizedInput);
+      
+      console.log("Validated poll data:", pollData);
       
       const poll = await storage.createPoll(pollData);
       res.status(201).json(poll);
     } catch (error) {
+      console.error("Poll creation error:", error);
+      
       if (error instanceof z.ZodError) {
-        console.error("Poll validation error:", error.errors);
+        console.error("Poll validation error:", JSON.stringify(error.errors, null, 2));
         return res.status(400).json({ message: "Invalid poll data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create poll" });

@@ -107,6 +107,7 @@ export default function PollCreator() {
           endTime.setHours(now.getHours() + 24);
       }
       
+      // Ensure we have all required fields with proper types
       const pollData = {
         userId: user?.id,
         question: values.question,
@@ -115,8 +116,10 @@ export default function PollCreator() {
         optionBText: values.optionBText,
         optionBImage: optionBImage || null,
         endTime: endTime.toISOString(),
-        isPublic: values.audience === "public",
+        isPublic: values.audience === "public" ? true : false,
       };
+      
+      console.log("Submitting poll data:", pollData);
       
       const res = await apiRequest("POST", "/api/polls", pollData);
       return await res.json();
