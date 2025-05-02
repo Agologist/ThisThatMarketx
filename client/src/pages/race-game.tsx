@@ -19,7 +19,7 @@ import type {
 
 // Game constants
 const PUSH_POWER = 3; // How much pushing power each vote provides
-const MAX_POSITION = 30; // Position at the edge of the platform where car falls off
+const MAX_POSITION = 22; // Position at the edge of the platform where car falls off (20% from center to edge)
 const CENTER_POSITION = 0; // Starting position at center
 
 // Using white racecar SVG images for better reliability
@@ -453,7 +453,7 @@ export default function RaceGame() {
                         )}
                       </div>
 
-                      {/* Platform edges - more visible */}
+                      {/* Platform edges - more visible - used for explosion detection */}
                       <div className="absolute left-[20%] top-0 bottom-0 w-1 bg-white opacity-90"></div>
                       <div className="absolute right-[20%] top-0 bottom-0 w-1 bg-white opacity-90"></div>
                       
