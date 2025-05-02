@@ -44,11 +44,11 @@ export default function RaceGame() {
   const PLATFORM_WIDTH = 60; // Percentage of the track width
   const MOVE_STEP = 5; // Percentage to move when a car wins a round
   
-  const { data: userRaces, isLoading: racesLoading } = useQuery({
+  const { data: userRaces, isLoading: racesLoading } = useQuery<RaceRecord[]>({
     queryKey: ["/api/user/races"],
   });
   
-  const { data: userAchievements, isLoading: achievementsLoading } = useQuery({
+  const { data: userAchievements, isLoading: achievementsLoading } = useQuery<(UserAchievement & Achievement)[]>({
     queryKey: ["/api/user/achievements"],
   });
   
@@ -95,8 +95,8 @@ export default function RaceGame() {
   // Start the race
   const startRace = () => {
     setGameState("racing");
-    setLeftPosition(0);
-    setRightPosition(0);
+    setLeftPosition(5); // Initial offset for a bit of gap between cars
+    setRightPosition(5); // Initial offset for a bit of gap between cars
     setLeftVotes(0);
     setRightVotes(0);
     setLeftExploded(false);
@@ -550,44 +550,48 @@ export default function RaceGame() {
                                 // Left car got the vote - push right car backward
                                 const moveAmount = MOVE_STEP;
                                 
-                                // Only apply the movement to the right car (being pushed)
-                                setRightPosition(prev => {
-                                  const newPos = prev + moveAmount;
-                                  
-                                  // Check if car fell off the platform
-                                  if (newPos >= PLATFORM_WIDTH / 2) {
-                                    setRightExploded(true);
-                                    const elapsed = Date.now() - (startTimeRef.current || 0);
-                                    // Delay finish to show explosion
-                                    setTimeout(() => {
-                                      finishRace(true, elapsed); // Left wins
-                                    }, 800);
-                                    return PLATFORM_WIDTH / 2;
-                                  }
-                                  
-                                  return newPos;
-                                });
+                                // Get current positions to maintain nose-to-nose contact
+                                let newRightPos = rightPosition + moveAmount;
+                                
+                                // Check if car fell off the platform
+                                if (newRightPos >= PLATFORM_WIDTH / 2) {
+                                  setRightExploded(true);
+                                  const elapsed = Date.now() - (startTimeRef.current || 0);
+                                  // Delay finish to show explosion
+                                  setTimeout(() => {
+                                    finishRace(true, elapsed); // Left wins
+                                  }, 800);
+                                  newRightPos = PLATFORM_WIDTH / 2;
+                                }
+                                
+                                // Update both positions to maintain nose-to-nose
+                                setRightPosition(newRightPos);
+                                
+                                // No need to update left car's position since it's staying put
+                                // and the right car is the one being pushed back
                               } else {
                                 // Right car got the vote - push left car backward
                                 const moveAmount = MOVE_STEP;
                                 
-                                // Only apply the movement to the left car (being pushed)
-                                setLeftPosition(prev => {
-                                  const newPos = prev + moveAmount;
-                                  
-                                  // Check if car fell off the platform
-                                  if (newPos >= PLATFORM_WIDTH / 2) {
-                                    setLeftExploded(true);
-                                    const elapsed = Date.now() - (startTimeRef.current || 0);
-                                    // Delay finish to show explosion
-                                    setTimeout(() => {
-                                      finishRace(false, elapsed); // Right wins
-                                    }, 800);
-                                    return PLATFORM_WIDTH / 2;
-                                  }
-                                  
-                                  return newPos;
-                                });
+                                // Get current positions to maintain nose-to-nose contact
+                                let newLeftPos = leftPosition + moveAmount;
+                                
+                                // Check if car fell off the platform
+                                if (newLeftPos >= PLATFORM_WIDTH / 2) {
+                                  setLeftExploded(true);
+                                  const elapsed = Date.now() - (startTimeRef.current || 0);
+                                  // Delay finish to show explosion
+                                  setTimeout(() => {
+                                    finishRace(false, elapsed); // Right wins
+                                  }, 800);
+                                  newLeftPos = PLATFORM_WIDTH / 2;
+                                }
+                                
+                                // Update both positions to maintain nose-to-nose
+                                setLeftPosition(newLeftPos);
+                                
+                                // No need to update right car's position since it's staying put
+                                // and the left car is the one being pushed back
                               }
                               // If votes are tied, neither car moves
                             }, 500); // Short delay to show the vote count change first
