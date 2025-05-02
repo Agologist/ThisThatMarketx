@@ -22,12 +22,12 @@ const PUSH_POWER = 3; // How much pushing power each vote provides
 const MAX_POSITION = 30; // Position at the edge of the platform where car falls off
 const CENTER_POSITION = 0; // Starting position at center
 
-// Cybertruck images - white and futuristic
+// White car images for racing
 const carImages = [
-  "https://cdn-icons-png.flaticon.com/512/3097/3097140.png", // White car
-  "https://cdn-icons-png.flaticon.com/512/3097/3097140.png", // White car
-  "https://cdn-icons-png.flaticon.com/512/3097/3097140.png", // White car
-  "https://cdn-icons-png.flaticon.com/512/3097/3097140.png"  // White car
+  "https://cdn-icons-png.flaticon.com/512/2554/2554937.png", // White car
+  "https://cdn-icons-png.flaticon.com/512/2554/2554937.png", // White car
+  "https://cdn-icons-png.flaticon.com/512/2554/2554937.png", // White car
+  "https://cdn-icons-png.flaticon.com/512/2554/2554937.png"  // White car
 ];
 
 export default function RaceGame() {
@@ -390,9 +390,9 @@ export default function RaceGame() {
                       {/* Left car (facing right - toward center) */}
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
-                             // Left car starts exactly at center line (50%) with a tiny offset
+                             // Left car starts exactly at center line (50%)
                              // As leftPosition increases, car moves right (forward)
-                             left: `${49.8 + leftPosition}%`, 
+                             left: `${50 + leftPosition}%`, 
                              transition: 'left 0.3s ease-out',
                              zIndex: 10
                            }}>
@@ -419,9 +419,9 @@ export default function RaceGame() {
                       {/* Right car (facing left - toward center) */}
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
-                             // Right car starts exactly at center line (50%) with a tiny offset
+                             // Right car starts exactly at center line (50%)
                              // As rightPosition increases, right car gets pushed away from center
-                             left: `${50.2 + rightPosition}%`,
+                             left: `${50 + rightPosition}%`,
                              transition: 'left 0.3s ease-out',
                              zIndex: 9
                            }}>
