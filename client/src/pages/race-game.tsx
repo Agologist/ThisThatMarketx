@@ -18,8 +18,9 @@ import type {
 } from "../../../shared/schema";
 
 // Game constants
-const MOVE_AMOUNT = 2; // How much each car moves with each vote (percentage)
-const MAX_POSITION = 30; // Position where a car falls off the track (percentage from center)
+const PUSH_POWER = 3; // How much pushing power each vote provides
+const MAX_POSITION = 30; // Position at the edge of the platform where car falls off
+const CENTER_POSITION = 0; // Starting position at center
 
 // Race car images
 const carImages = [
@@ -145,39 +146,49 @@ export default function RaceGame() {
   // Handle a vote for the left car
   const handleLeftVote = () => {
     // Only process if the game is still racing
-    if (gameState !== "racing") return;
+    if (gameState !== "racing" || leftExploded || rightExploded) return;
     
     // Increment left votes
     setLeftVotes(prev => prev + 1);
     
-    // Left car moves forward by MOVE_AMOUNT
-    setLeftPosition(prevLeftPos => {
-      const newLeftPos = prevLeftPos + MOVE_AMOUNT;
-      return newLeftPos;
-    });
+    // In a sumo-style game:
+    // - The cars push against each other at the boundary between them
+    // - The boundary position is determined by the relative strength of the two sides
+    // - When one side gets a vote, they get more pushing power and move the boundary toward the other car
     
-    // Right car gets pushed back by the same amount
-    setRightPosition(prevRightPos => {
-      const newRightPos = prevRightPos + MOVE_AMOUNT;
+    // For visual effect, add a small delay to simulate impact
+    setTimeout(() => {
+      // Current position of both cars in the match
+      const currentLeftPos = leftPosition;
+      const currentRightPos = rightPosition;
       
-      // Check if right car has fallen off the platform
+      // Calculate new positions after this push
+      // Left car pushes with PUSH_POWER units of force
+      // We move both cars to reflect the boundary shifting
+      const pushAmount = PUSH_POWER;
+      const newRightPos = currentRightPos + pushAmount;
+      
+      // Check if right car falls off the platform
       if (newRightPos >= MAX_POSITION) {
-        // Car has fallen off, show explosion
+        // Right car falls off - show explosion
         setRightExploded(true);
+        setRightPosition(MAX_POSITION); // Position at edge
         
-        // Calculate elapsed time
+        // Calculate race time
         const elapsed = Date.now() - (startTimeRef.current || 0);
         
-        // Delay finish to show explosion animation
+        // Delay end of race to show explosion animation
         setTimeout(() => {
           finishRace(true, elapsed); // Left car wins
         }, 800);
+      } else {
+        // Update positions - right car gets pushed back
+        setRightPosition(newRightPos);
         
-        return MAX_POSITION; // Position right at the edge for explosion
+        // Left car stays at the center
+        setLeftPosition(CENTER_POSITION);
       }
-      
-      return newRightPos;
-    });
+    }, 100); // Short delay for visual effect
   };
   
   // Cleanup on unmount
@@ -358,14 +369,12 @@ export default function RaceGame() {
                       {/* Center divider line */}
                       <div className="absolute top-0 bottom-0 left-1/2 transform -translate-x-1/2 w-px h-full bg-primary"></div>
                       
-                      {/* Cars positioned nose-to-nose at the center line */}
+                      {/* Cars positioned for sumo contest */}
                       {/* Left car (facing right - toward center) */}
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
-                             // Position from center based on leftPosition value
-                             // At start (0), car is at 47% from left (right at center line)
-                             // As leftPosition increases, car moves left away from center
-                             left: `${47 - leftPosition}%`, 
+                             // In sumo-style game, left car stays at center
+                             left: `47%`, 
                              transition: 'left 0.3s ease-out',
                              zIndex: 10
                            }}>
@@ -392,11 +401,10 @@ export default function RaceGame() {
                       {/* Right car (facing left - toward center) */}
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
-                             // Position from center based on rightPosition value
-                             // At start (0), car is at 47% from right (right at center line)
-                             // As rightPosition increases, car moves right away from center
-                             right: `${47 - rightPosition}%`, 
-                             transition: 'right 0.3s ease-out',
+                             // Right car gets pushed by the left car 
+                             // As rightPosition increases, right car gets pushed away from center
+                             left: `${53 + rightPosition}%`,
+                             transition: 'left 0.3s ease-out',
                              zIndex: 9
                            }}>
                         {rightExploded ? (
