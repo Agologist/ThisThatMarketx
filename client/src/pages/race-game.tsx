@@ -28,14 +28,13 @@ export default function RaceGame() {
   const [gameState, setGameState] = useState<"ready" | "countdown" | "racing" | "finished">("ready");
   const [countdownValue, setCountdownValue] = useState(3);
   const [raceTime, setRaceTime] = useState(0);
-  const [playerPosition, setPlayerPosition] = useState(0);
-  const [aiPosition, setAiPosition] = useState(0);
+  const [leftPosition, setLeftPosition] = useState(0);
+  const [rightPosition, setRightPosition] = useState(0);
   const [selectedCar, setSelectedCar] = useState(0);
   const [gameResult, setGameResult] = useState<{ won: boolean; time: number } | null>(null);
   
   const raceTimerRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
-  const aiSpeedRef = useRef(Math.random() * 3 + 8); // Random AI speed between 8-11
   
   const { data: userRaces, isLoading: racesLoading } = useQuery({
     queryKey: ["/api/user/races"],
@@ -88,8 +87,8 @@ export default function RaceGame() {
   // Start the race
   const startRace = () => {
     setGameState("racing");
-    setPlayerPosition(0);
-    setAiPosition(0);
+    setLeftPosition(0);
+    setRightPosition(0);
     setRaceTime(0);
     
     startTimeRef.current = Date.now();
@@ -98,27 +97,18 @@ export default function RaceGame() {
     raceTimerRef.current = window.setInterval(() => {
       const elapsed = Date.now() - (startTimeRef.current || 0);
       setRaceTime(elapsed);
-      
-      // Move AI car
-      setAiPosition(prev => {
-        const newPos = prev + aiSpeedRef.current;
-        if (newPos >= 100) {
-          finishRace(false, elapsed);
-        }
-        return Math.min(newPos, 100);
-      });
     }, 100);
   };
   
-  // Handle key presses for player car
+  // Handle key presses for cars
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (gameState !== "racing") return;
       
-      // Left arrow or 'A' key votes for the left car (player)
+      // Left arrow or 'A' key votes for the left car
       if (e.code === "ArrowLeft" || e.code === "KeyA") {
         e.preventDefault();
-        setPlayerPosition(prev => {
+        setLeftPosition(prev => {
           const newPos = prev + 5; // Move 5% each press
           
           if (newPos >= 100) {
@@ -131,10 +121,10 @@ export default function RaceGame() {
         });
       }
       
-      // Right arrow or 'D' key votes for the right car (opponent)
+      // Right arrow or 'D' key votes for the right car
       if (e.code === "ArrowRight" || e.code === "KeyD") {
         e.preventDefault();
-        setAiPosition(prev => {
+        setRightPosition(prev => {
           const newPos = prev + 5; // Move 5% each press
           
           if (newPos >= 100) {
@@ -178,7 +168,8 @@ export default function RaceGame() {
   const resetGame = () => {
     setGameState("ready");
     setGameResult(null);
-    aiSpeedRef.current = Math.random() * 3 + 8; // Random AI speed for next race
+    setLeftPosition(0);
+    setRightPosition(0);
   };
   
   // Calculate best time
@@ -285,28 +276,28 @@ export default function RaceGame() {
                       {/* Center divider line */}
                       <div className="absolute top-0 bottom-0 left-1/2 transform -translate-x-1/2 w-px h-full bg-primary"></div>
                       
-                      {/* Left Player car (facing right) */}
+                      {/* Left car (facing right) */}
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
-                             left: `${45 - playerPosition}%`, 
+                             left: `${45 - leftPosition}%`, 
                              transition: 'left 0.1s ease-out' 
                            }}>
                         <img 
                           src={carImages[selectedCar]} 
-                          alt="Player car" 
+                          alt="Left car" 
                           className="h-10 w-auto"
                         />
                       </div>
                       
-                      {/* Right AI car (facing left) */}
+                      {/* Right car (facing left) */}
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
-                             right: `${45 - aiPosition}%`, 
+                             right: `${45 - rightPosition}%`, 
                              transition: 'right 0.1s ease-out' 
                            }}>
                         <img 
                           src={carImages[(selectedCar + 2) % carImages.length]} 
-                          alt="AI car" 
+                          alt="Right car" 
                           className="h-10 w-auto"
                           style={{ transform: 'scaleX(-1)' }}
                         />
@@ -375,16 +366,16 @@ export default function RaceGame() {
                       <div className="hidden md:flex items-center space-x-2">
                         <div className="flex items-center">
                           <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                            <span className="text-xs">P</span>
+                            <span className="text-xs">L</span>
                           </div>
-                          <span className="text-xs ml-1">You</span>
+                          <span className="text-xs ml-1">Left</span>
                         </div>
                         <span className="text-xs text-muted-foreground">vs</span>
                         <div className="flex items-center">
                           <div className="w-6 h-6 rounded-full bg-destructive/20 flex items-center justify-center text-destructive">
-                            <span className="text-xs">AI</span>
+                            <span className="text-xs">R</span>
                           </div>
-                          <span className="text-xs ml-1">CPU</span>
+                          <span className="text-xs ml-1">Right</span>
                         </div>
                       </div>
                     </div>
@@ -420,17 +411,25 @@ export default function RaceGame() {
                             // Randomly decide which car moves further
                             const random = Math.random();
                             if (random > 0.5) {
-                              setPlayerPosition(prev => Math.min(prev + 5, 100));
-                              if (playerPosition + 5 >= 100) {
-                                const elapsed = Date.now() - (startTimeRef.current || 0);
-                                finishRace(true, elapsed);
-                              }
+                              setLeftPosition(prev => {
+                                const newPos = prev + 5; // Move 5% each press
+                                if (newPos >= 100) {
+                                  const elapsed = Date.now() - (startTimeRef.current || 0);
+                                  finishRace(true, elapsed);
+                                  return 100;
+                                }
+                                return newPos;
+                              });
                             } else {
-                              setAiPosition(prev => Math.min(prev + 5, 100));
-                              if (aiPosition + 5 >= 100) {
-                                const elapsed = Date.now() - (startTimeRef.current || 0);
-                                finishRace(false, elapsed);
-                              }
+                              setRightPosition(prev => {
+                                const newPos = prev + 5; // Move 5% each press
+                                if (newPos >= 100) {
+                                  const elapsed = Date.now() - (startTimeRef.current || 0);
+                                  finishRace(false, elapsed);
+                                  return 100;
+                                }
+                                return newPos;
+                              });
                             }
                           }}
                         >
