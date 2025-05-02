@@ -63,8 +63,14 @@ export default function PollPage() {
     
     try {
       // Send the vote request regardless of whether user has already voted
-      // The server will handle deleting the old vote if it exists
+      // The server will return an error if the user has already voted
       const response = await apiRequest("POST", `/api/polls/${id}/vote`, { option: selectedOption });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to record vote");
+      }
+      
       const result = await response.json();
       
       // Immediately update the local poll data for instant feedback
@@ -74,7 +80,13 @@ export default function PollPage() {
       
       // Also update the vote status
       if (result.vote) {
-        queryClient.setQueryData([`/api/polls/${id}/vote`], result.vote);
+        queryClient.setQueryData([`/api/polls/${id}/vote`], {
+          hasVoted: true,
+          poll: result.poll,
+          userId: user?.id,
+          pollId: parseInt(id),
+          option: result.vote.option
+        });
       }
       
       // Additionally, invalidate the queries to ensure fresh data
@@ -82,14 +94,14 @@ export default function PollPage() {
       queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}/vote`] });
       
       toast({
-        title: hasVoted ? "Vote changed!" : "Vote recorded!",
+        title: "Vote recorded!",
         description: `You voted for ${selectedOption === "A" ? poll.optionAText : poll.optionBText}`,
       });
     } catch (error) {
       console.error("Voting error:", error);
       toast({
         title: "Vote failed",
-        description: "There was an error recording your vote",
+        description: error instanceof Error ? error.message : "There was an error recording your vote",
         variant: "destructive",
       });
     } finally {

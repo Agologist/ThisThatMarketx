@@ -208,13 +208,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Found existing vote: ${!!existingVote}`);
       
       if (existingVote) {
-        // Allow changing votes by deleting the old one
-        console.log(`Removing existing vote ${existingVote.id} for user ${userId} on poll ${pollId}`);
-        await storage.deleteVote(existingVote.id);
-        
-        // Always decrement the old vote count since we're creating a new vote below
-        console.log(`Decrementing vote count for option ${existingVote.option} on poll ${pollId}`);
-        await storage.decrementPollVote(pollId, existingVote.option);
+        // Prevent changing votes
+        return res.status(400).json({ 
+          message: "You have already voted on this challenge", 
+          existingVote
+        });
       }
       
       // Create the vote
