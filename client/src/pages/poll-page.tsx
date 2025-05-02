@@ -46,6 +46,13 @@ export default function PollPage() {
     const end = new Date(poll.endTime);
     const diff = end.getTime() - now.getTime();
     
+    console.log("Time check:", {
+      now: now.toISOString(),
+      end: end.toISOString(),
+      diff,
+      endTimeRaw: poll.endTime
+    });
+    
     if (diff <= 0) return { hours: 0, minutes: 0, seconds: 0 };
     
     const hours = Math.floor(diff / (1000 * 60 * 60));
