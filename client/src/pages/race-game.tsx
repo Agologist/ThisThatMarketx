@@ -11,6 +11,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, ChevronLeft, Trophy, Flag, Timer, Award, Zap } from "lucide-react";
 import { useLocation } from "wouter";
 import Achievements from "@/components/game/Achievements";
+import type { 
+  RaceRecord, 
+  Achievement, 
+  UserAchievement 
+} from "../../../shared/schema";
 
 // Race car images
 const carImages = [
