@@ -12,6 +12,7 @@ const firebaseUserSchema = z.object({
   email: z.string().email(),
   displayName: z.string().optional(),
   photoURL: z.string().optional(),
+  provider: z.enum(['google', 'twitter']).default('google'),
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {

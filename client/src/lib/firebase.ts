@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup, UserCredential } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, TwitterAuthProvider, signInWithPopup, UserCredential } from "firebase/auth";
 
 // Firebase configuration with environment variables provided as secrets
 const firebaseConfig = {
@@ -14,10 +14,16 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
+const twitterProvider = new TwitterAuthProvider();
 
 // Google sign-in function
 export const signInWithGoogle = async (): Promise<UserCredential> => {
   return signInWithPopup(auth, googleProvider);
+};
+
+// Twitter sign-in function
+export const signInWithTwitter = async (): Promise<UserCredential> => {
+  return signInWithPopup(auth, twitterProvider);
 };
 
 // Sign out function
