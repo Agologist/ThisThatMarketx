@@ -33,9 +33,13 @@ export default function RaceGame() {
   const [gameState, setGameState] = useState<"ready" | "countdown" | "racing" | "finished">("ready");
   const [countdownValue, setCountdownValue] = useState(3);
   const [raceTime, setRaceTime] = useState(0);
-  // Position values - represents distance from center
-  // Both cars start at center (0), and move away from center as value increases
-  // Left car moves left (toward its side) as value increases
+  // Define constants for game mechanics
+  const MOVE_STEP = 3; // Position increment for each vote
+  const MAX_CAR_POSITION = 30; // Maximum position before falling off
+  
+  // Position values in a 0-30 range where:
+  // - Both cars start at position 0 (center line)
+  // - As values increase, cars move away from center
   // Right car moves right (toward its side) as value increases
   const [leftPosition, setLeftPosition] = useState(0); // Start at center line
   const [rightPosition, setRightPosition] = useState(0); // Start at center line
@@ -51,7 +55,6 @@ export default function RaceGame() {
   
   // Constants for the race game
   const PLATFORM_WIDTH = 60; // Percentage of the track width
-  const MOVE_STEP = 5; // Percentage to move when a car wins a round
   
   const { data: userRaces, isLoading: racesLoading } = useQuery<RaceRecord[]>({
     queryKey: ["/api/user/races"],
