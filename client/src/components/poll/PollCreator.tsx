@@ -111,9 +111,9 @@ export default function PollCreator() {
         userId: user?.id,
         question: values.question,
         optionAText: values.optionAText,
-        optionAImage: optionAImage || undefined,
+        optionAImage: optionAImage || null,
         optionBText: values.optionBText,
-        optionBImage: optionBImage || undefined,
+        optionBImage: optionBImage || null,
         endTime: endTime.toISOString(),
         isPublic: values.audience === "public",
       };

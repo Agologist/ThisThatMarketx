@@ -135,13 +135,22 @@ export class MemStorage implements IStorage {
   async createPoll(insertPoll: InsertPoll): Promise<Poll> {
     const id = this.currentId.polls++;
     const now = new Date();
+    
+    // Ensure image properties are explicitly null if undefined
+    const sanitizedData = {
+      ...insertPoll,
+      optionAImage: insertPoll.optionAImage || null,
+      optionBImage: insertPoll.optionBImage || null,
+    };
+    
     const poll: Poll = { 
-      ...insertPoll, 
+      ...sanitizedData, 
       id, 
       createdAt: now, 
       optionAVotes: 0, 
       optionBVotes: 0 
     };
+    
     this.polls.set(id, poll);
     return poll;
   }
