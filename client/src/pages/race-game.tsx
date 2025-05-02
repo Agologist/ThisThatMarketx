@@ -150,14 +150,8 @@ export default function RaceGame() {
     // Increment left votes
     setLeftVotes(prev => prev + 1);
     
-    // Left car moves FORWARD (reducing left value pushes car right toward center)
-    setLeftPosition(prevLeftPos => {
-      // Decrease position to move right (forward)
-      const newLeftPos = Math.max(0, prevLeftPos - MOVE_AMOUNT);
-      return newLeftPos;
-    });
-    
-    // Right car gets pushed BACK (increasing right value pushes car right away from center)
+    // When left car gets votes, the right car gets pushed backward
+    // This means right car's position increases (moving it rightward away from center)
     setRightPosition(prevRightPos => {
       const newRightPos = prevRightPos + MOVE_AMOUNT;
       
@@ -179,6 +173,9 @@ export default function RaceGame() {
       
       return newRightPos;
     });
+    
+    // The left car doesn't move in this implementation - only the right car moves
+    // This creates the illusion that the left car is pushing the right car
   };
   
   // Cleanup on unmount
@@ -364,10 +361,10 @@ export default function RaceGame() {
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
                              // Position from center based on leftPosition value
-                             // At start (0), car is at 47% from left (right at center line)
-                             // As leftPosition decreases, car moves forward/right by SUBTRACTING less from position
-                             // As leftPosition increases, car moves backward/left by SUBTRACTING more from position
-                             left: `${47 - leftPosition}%`, 
+                             // At start (0), car is at 47% from left (at the center line)
+                             // In this implementation, the left car stays stationary at the center
+                             // Only the right car moves when votes are cast
+                             left: `47%`, 
                              transition: 'left 0.3s ease-out',
                              zIndex: 10
                            }}>
