@@ -19,6 +19,7 @@ type AuthContextType = {
   logoutMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<SelectUser, Error, RegisterData>;
   continueAsGuest: () => void;
+  exitGuestMode: () => void;
 };
 
 type LoginData = {
@@ -75,6 +76,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Navigate to home with guest parameter
     setLocation("/?guest=true");
   }, [toast, setLocation]);
+  
+  // Function to exit guest mode and go to auth page
+  const exitGuestMode = React.useCallback(() => {
+    setIsGuest(false);
+    setLocation("/auth");
+  }, [setLocation]);
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
@@ -161,6 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error,
         isGuest,
         continueAsGuest,
+        exitGuestMode,
         loginMutation,
         logoutMutation,
         registerMutation,

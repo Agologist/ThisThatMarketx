@@ -9,7 +9,7 @@ import { FlagIcon, User, LogOut, Menu, X, UserIcon } from "lucide-react";
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [location, navigate] = useLocation();
-  const { user, isGuest, logoutMutation } = useAuth();
+  const { user, isGuest, logoutMutation, exitGuestMode } = useAuth();
 
   const handleLogout = async () => {
     try {
@@ -125,11 +125,9 @@ export default function Header() {
                   <DropdownMenuSeparator />
                   
                   {isGuest ? (
-                    <DropdownMenuItem asChild>
-                      <Link href="/auth" className="cursor-pointer">
-                        <User className="mr-2 h-4 w-4" />
-                        <span>Sign In / Register</span>
-                      </Link>
+                    <DropdownMenuItem onClick={exitGuestMode} className="cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Sign In / Register</span>
                     </DropdownMenuItem>
                   ) : (
                     <>
@@ -149,8 +147,8 @@ export default function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button asChild className="btn-gold">
-                <Link href="/auth">Sign In</Link>
+              <Button onClick={exitGuestMode} className="btn-gold">
+                Sign In
               </Button>
             )}
           </nav>
@@ -198,12 +196,13 @@ export default function Header() {
                     <Button 
                       variant="outline" 
                       className="border-primary text-primary"
-                      asChild
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        exitGuestMode();
+                      }}
                     >
-                      <Link href="/auth" onClick={() => setIsMenuOpen(false)}>
-                        <UserIcon className="mr-2 h-4 w-4" />
-                        Sign In / Register
-                      </Link>
+                      <UserIcon className="mr-2 h-4 w-4" />
+                      Sign In / Register
                     </Button>
                   ) : (
                     <Button 
