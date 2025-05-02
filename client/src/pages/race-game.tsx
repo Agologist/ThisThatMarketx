@@ -150,23 +150,15 @@ export default function RaceGame() {
     // Increment left votes
     setLeftVotes(prev => prev + 1);
     
-    // Move both cars in opposite directions with the same amount
-    // Left car moves FORWARD toward the right - SUBTRACT from leftPosition 
-    // This will increase the left coordinate value when displayed (47 - leftPosition)
-    // Right car is pushed BACKWARD toward the right - ADD to rightPosition
-    // Both cars effectively move in the same rightward direction
-    
-    const moveAmount = MOVE_AMOUNT;
-    
-    // Left car moves FORWARD
+    // Left car moves forward by MOVE_AMOUNT
     setLeftPosition(prevLeftPos => {
-      // Decrease leftPosition to move car forward/rightward (pushing toward right car)
-      return Math.max(prevLeftPos - moveAmount, -MAX_POSITION); // Allow negative values to move forward
+      const newLeftPos = prevLeftPos + MOVE_AMOUNT;
+      return newLeftPos;
     });
     
-    // Right car gets pushed BACKWARD simultaneously
+    // Right car gets pushed back by the same amount
     setRightPosition(prevRightPos => {
-      const newRightPos = prevRightPos + moveAmount;
+      const newRightPos = prevRightPos + MOVE_AMOUNT;
       
       // Check if right car has fallen off the platform
       if (newRightPos >= MAX_POSITION) {
@@ -371,9 +363,8 @@ export default function RaceGame() {
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
                              // Position from center based on leftPosition value
-                             // At start (0), car is at 47% from left (at the center line)
-                             // As leftPosition decreases, car moves forward/right by ADDING to position
-                             // When leftPosition is negative, the car moves forward
+                             // At start (0), car is at 47% from left (right at center line)
+                             // As leftPosition increases, car moves left away from center
                              left: `${47 - leftPosition}%`, 
                              transition: 'left 0.3s ease-out',
                              zIndex: 10
@@ -403,9 +394,8 @@ export default function RaceGame() {
                            style={{ 
                              // Position from center based on rightPosition value
                              // At start (0), car is at 47% from right (right at center line)
-                             // As rightPosition increases, car moves further right by ADDING to position value
-                             // This makes the right car move toward the right edge as rightPosition increases
-                             right: `${47 + rightPosition}%`, 
+                             // As rightPosition increases, car moves right away from center
+                             right: `${47 - rightPosition}%`, 
                              transition: 'right 0.3s ease-out',
                              zIndex: 9
                            }}>
