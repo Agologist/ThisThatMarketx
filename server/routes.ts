@@ -9,7 +9,7 @@ import axios from "axios";
 // Schema for Firebase user data
 const firebaseUserSchema = z.object({
   uid: z.string(),
-  email: z.string().email(),
+  email: z.string().email().optional().nullable(),
   displayName: z.string().optional(),
   photoURL: z.string().optional(),
   provider: z.enum(['google', 'twitter']).default('google'),
@@ -26,7 +26,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const firebaseData = firebaseUserSchema.parse(req.body);
       
       // Check if a user with this Firebase UID already exists
-      const existingUser = await storage.getUserByEmail(firebaseData.email);
+      let existingUser = null;
+      if (firebaseData.email) {
+        existingUser = await storage.getUserByEmail(firebaseData.email);
+      }
       
       if (existingUser) {
         // Log the user in
@@ -39,7 +42,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } else {
         // Create a new user
-        const username = `${firebaseData.email.split('@')[0]}_${Math.floor(Math.random() * 1000)}`;
+        let username;
+        if (firebaseData.email) {
+          username = `${firebaseData.email.split('@')[0]}_${Math.floor(Math.random() * 1000)}`;
+        } else {
+          // If no email, use provider and random number for username
+          username = `${firebaseData.provider}_user_${Math.floor(Math.random() * 10000)}`;
+        }
         const displayName = firebaseData.displayName || username;
         
         const newUser = await storage.createUser({
