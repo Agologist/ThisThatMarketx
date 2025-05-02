@@ -129,3 +129,55 @@ export function generatePlaceholderImage(text: string): string {
 export function getFallbackImage(text: string): string {
   return generatePlaceholderImage(text);
 }
+
+/**
+ * Compress an image data URL to reduce its size
+ * @param dataUrl The original image data URL
+ * @param maxWidth Maximum width of the compressed image
+ * @param quality Compression quality (0-1)
+ * @returns A promise that resolves to the compressed image data URL
+ */
+export function compressImageDataUrl(dataUrl: string, maxWidth = 800, quality = 0.7): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      // Calculate new dimensions while maintaining aspect ratio
+      let width = img.width;
+      let height = img.height;
+      
+      if (width > maxWidth) {
+        const ratio = maxWidth / width;
+        width = maxWidth;
+        height = height * ratio;
+      }
+      
+      // Create canvas to draw compressed image
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      
+      // Draw image on canvas
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Failed to get canvas context'));
+        return;
+      }
+      
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      // Get compressed data URL - use jpeg for better compression
+      const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+      
+      console.log(`Image compressed: ${Math.round(dataUrl.length / 1024)}KB → ${Math.round(compressedDataUrl.length / 1024)}KB`);
+      resolve(compressedDataUrl);
+    };
+    
+    img.onerror = () => {
+      console.error('Failed to load image for compression');
+      // Return original if compression fails
+      resolve(dataUrl);
+    };
+    
+    img.src = dataUrl;
+  });
+}
