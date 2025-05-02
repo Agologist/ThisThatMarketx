@@ -395,9 +395,9 @@ export default function RaceGame() {
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
                              // Left car with nose touching center line
-                             // As leftPosition increases, car moves left (gets pushed back)
-                             right: `calc(50% + ${leftPosition}%)`, 
-                             transition: 'right 0.3s ease-out',
+                             // As leftPosition increases, car moves right (forward)
+                             left: `calc(50% - 12% + ${leftPosition}%)`, 
+                             transition: 'left 0.3s ease-out',
                              zIndex: 10
                            }}>
                         {leftExploded ? (
