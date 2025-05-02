@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FlagIcon, CheckIcon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { signInWithGoogle, signInWithTwitter } from "@/lib/firebase";
+import { signInWithGoogle, signInWithTwitter, handleRedirectResult } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { FirebaseError } from "firebase/app";
 
@@ -20,6 +20,50 @@ export default function AuthPage() {
       navigate("/");
     }
   }, [user, isGuest, navigate]);
+  
+  // Handle redirect result when the page loads (for Twitter auth)
+  useEffect(() => {
+    const checkRedirectResult = async () => {
+      try {
+        const result = await handleRedirectResult();
+        
+        // If we have a result from redirect, process it
+        if (result && result.user) {
+          console.log("Processing redirect result for:", result.user.providerData[0]?.providerId);
+          
+          // Call your server to register or login the Firebase user
+          const res = await fetch('/api/auth/firebase', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              uid: result.user.uid,
+              email: result.user.email, // This might be null from Twitter
+              displayName: result.user.displayName || result.user.providerData[0]?.displayName || 'Auth User',
+              photoURL: result.user.photoURL,
+              provider: result.user.providerData[0]?.providerId.includes('twitter') ? 'twitter' : 'google'
+            }),
+          });
+          
+          if (res.ok) {
+            window.location.href = '/';
+          } else {
+            toast({
+              title: "Authentication failed",
+              description: "Failed to complete authentication after redirect",
+              variant: "destructive"
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error handling redirect result:", error);
+        // Don't show error toast here as it might be confusing on initial page load
+      }
+    };
+    
+    checkRedirectResult();
+  }, [toast, navigate]);
   
   const handleGuestAccess = () => {
     continueAsGuest();

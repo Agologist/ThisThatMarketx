@@ -1,5 +1,13 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, TwitterAuthProvider, signInWithPopup, UserCredential } from "firebase/auth";
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  TwitterAuthProvider, 
+  signInWithPopup, 
+  signInWithRedirect, 
+  getRedirectResult,
+  UserCredential 
+} from "firebase/auth";
 
 // Firebase configuration with environment variables provided as secrets
 const firebaseConfig = {
@@ -31,17 +39,41 @@ export const signInWithGoogle = async (): Promise<UserCredential> => {
   return signInWithPopup(auth, googleProvider);
 };
 
-// Twitter sign-in function
+// Twitter sign-in function with popup
 export const signInWithTwitter = async (): Promise<UserCredential> => {
   // Add additional parameters specific to Twitter authentication
   twitterProvider.setCustomParameters({
-    // Force re-authentication to avoid token issues
-    'force_login': 'true',
+    // Don't force login if already logged in to Twitter
+    'force_login': 'false',
     // Pass the callback URL if available in environment
     'oauth_callback': window.location.origin
   });
   
-  return signInWithPopup(auth, twitterProvider);
+  try {
+    // Try with popup first
+    return await signInWithPopup(auth, twitterProvider);
+  } catch (error: any) {
+    console.log("Popup authentication failed, trying redirect...", error.code);
+    // Fallback to redirect for more seamless auth if popup fails
+    if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
+      signInWithRedirect(auth, twitterProvider);
+      // This will redirect, so we won't return directly
+      // The redirect result will be handled elsewhere
+      return new Promise(() => {}); // This won't resolve as page will redirect
+    }
+    throw error; // Re-throw if not a popup issue
+  }
+};
+
+// Function to handle authentication redirect result
+export const handleRedirectResult = async (): Promise<UserCredential | null> => {
+  try {
+    const result = await getRedirectResult(auth);
+    return result;
+  } catch (error) {
+    console.error("Redirect result error:", error);
+    throw error;
+  }
 };
 
 // Sign out function
