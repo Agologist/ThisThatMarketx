@@ -28,8 +28,8 @@ export default function RaceGame() {
   const [gameState, setGameState] = useState<"ready" | "countdown" | "racing" | "finished">("ready");
   const [countdownValue, setCountdownValue] = useState(3);
   const [raceTime, setRaceTime] = useState(0);
-  const [leftPosition, setLeftPosition] = useState(0);
-  const [rightPosition, setRightPosition] = useState(0);
+  const [leftPosition, setLeftPosition] = useState(5); // Initial offset for a bit of gap between cars
+  const [rightPosition, setRightPosition] = useState(5); // Initial offset for a bit of gap between cars
   const [leftVotes, setLeftVotes] = useState(0);
   const [rightVotes, setRightVotes] = useState(0);
   const [selectedCar, setSelectedCar] = useState(0);
@@ -180,8 +180,8 @@ export default function RaceGame() {
   const resetGame = () => {
     setGameState("ready");
     setGameResult(null);
-    setLeftPosition(0);
-    setRightPosition(0);
+    setLeftPosition(5); // Initial offset for a bit of gap between cars
+    setRightPosition(5); // Initial offset for a bit of gap between cars
     setLeftVotes(0);
     setRightVotes(0);
     setLeftExploded(false);
@@ -332,11 +332,13 @@ export default function RaceGame() {
                       {/* Center divider line */}
                       <div className="absolute top-0 bottom-0 left-1/2 transform -translate-x-1/2 w-px h-full bg-primary"></div>
                       
+                      {/* Cars positioned nose-to-nose at the center line */}
                       {/* Left car (facing right) */}
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
-                             left: `${Math.max(20, 50 - leftPosition)}%`, 
-                             transition: 'left 0.3s ease-out' 
+                             left: `${Math.max(20, 50 - leftPosition - 5)}%`, 
+                             transition: 'left 0.3s ease-out',
+                             zIndex: 10
                            }}>
                         {leftExploded ? (
                           <div className="relative">
@@ -361,8 +363,9 @@ export default function RaceGame() {
                       {/* Right car (facing left) */}
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
-                             right: `${Math.max(20, 50 - rightPosition)}%`, 
-                             transition: 'right 0.3s ease-out' 
+                             right: `${Math.max(20, 50 - rightPosition - 5)}%`, 
+                             transition: 'right 0.3s ease-out',
+                             zIndex: 9
                            }}>
                         {rightExploded ? (
                           <div className="relative">
@@ -541,18 +544,15 @@ export default function RaceGame() {
                               setRightVotes(newRightVotes);
                             }
                             
-                            // After voting, move the car that received the vote forward, pushing the other car backward
+                            // After voting, one car pushes the other (they always remain nose-to-nose)
                             setTimeout(() => {
                               if (random > 0.5) {
-                                // Left car got the vote - move left forward and push right backward
-                                setLeftPosition(prev => {
-                                  // Decrease leftPosition (move car right/forward)
-                                  return Math.max(0, prev - MOVE_STEP/2);
-                                });
+                                // Left car got the vote - push right car backward
+                                const moveAmount = MOVE_STEP;
                                 
-                                // Push right car back
+                                // Only apply the movement to the right car (being pushed)
                                 setRightPosition(prev => {
-                                  const newPos = prev + MOVE_STEP;
+                                  const newPos = prev + moveAmount;
                                   
                                   // Check if car fell off the platform
                                   if (newPos >= PLATFORM_WIDTH / 2) {
@@ -568,15 +568,12 @@ export default function RaceGame() {
                                   return newPos;
                                 });
                               } else {
-                                // Right car got the vote - move right forward and push left backward
-                                setRightPosition(prev => {
-                                  // Decrease rightPosition (move car left/forward)
-                                  return Math.max(0, prev - MOVE_STEP/2);
-                                });
+                                // Right car got the vote - push left car backward
+                                const moveAmount = MOVE_STEP;
                                 
-                                // Push left car back
+                                // Only apply the movement to the left car (being pushed)
                                 setLeftPosition(prev => {
-                                  const newPos = prev + MOVE_STEP;
+                                  const newPos = prev + moveAmount;
                                   
                                   // Check if car fell off the platform
                                   if (newPos >= PLATFORM_WIDTH / 2) {
