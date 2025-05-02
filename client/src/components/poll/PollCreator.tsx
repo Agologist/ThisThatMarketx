@@ -133,9 +133,32 @@ export default function PollCreator() {
       setOptionBImage(null);
     },
     onError: (error) => {
+      console.error("Challenge creation error:", error);
+      
+      // Try to extract detailed error information if available
+      let errorMsg = "An error occurred while creating the challenge";
+      
+      if (error.message) {
+        errorMsg = error.message;
+      }
+      
+      // If there's a response with more details
+      if (error.response && error.response.data) {
+        console.error("Error details:", error.response.data);
+        
+        if (error.response.data.errors) {
+          // Format validation errors
+          errorMsg = Object.entries(error.response.data.errors)
+            .map(([field, msgs]) => `${field}: ${msgs}`)
+            .join(', ');
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      }
+      
       toast({
         title: "Failed to create challenge",
-        description: error.message || "An error occurred while creating the challenge",
+        description: errorMsg,
         variant: "destructive",
       });
     },

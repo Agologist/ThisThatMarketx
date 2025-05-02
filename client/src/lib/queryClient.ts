@@ -8,7 +8,10 @@ async function throwIfResNotOk(res: Response) {
       
       if (contentType && contentType.includes('application/json')) {
         const errorData = await res.json();
-        throw new Error(errorData.message || `${res.status}: ${res.statusText}`);
+        const error = new Error(errorData.message || `${res.status}: ${res.statusText}`);
+        // Attach the response data to the error for more details
+        (error as any).response = { data: errorData };
+        throw error;
       } else {
         // Fallback to text
         const text = await res.text();
