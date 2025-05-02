@@ -467,40 +467,53 @@ export default function RaceGame() {
                           onClick={() => {
                             // Generate a vote for either the left or right car
                             const random = Math.random();
+                            let newLeftVotes = leftVotes;
+                            let newRightVotes = rightVotes;
+                            
                             if (random > 0.5) {
                               // Vote for left car
-                              setLeftVotes(prev => prev + 1);
+                              newLeftVotes += 1;
+                              setLeftVotes(newLeftVotes);
                             } else {
                               // Vote for right car
-                              setRightVotes(prev => prev + 1);
+                              newRightVotes += 1;
+                              setRightVotes(newRightVotes);
                             }
                             
                             // After voting, determine which car moves
                             setTimeout(() => {
                               // Calculate which car has more votes
-                              if (leftVotes > rightVotes) {
+                              if (newLeftVotes > newRightVotes) {
                                 // Left car wins - move right car backwards
                                 setRightPosition(prev => {
                                   const newPos = prev + MOVE_STEP;
                                   
                                   // Check if car fell off the platform
                                   if (newPos >= PLATFORM_WIDTH / 2) {
+                                    setRightExploded(true);
                                     const elapsed = Date.now() - (startTimeRef.current || 0);
-                                    finishRace(true, elapsed); // Left wins
+                                    // Delay finish to show explosion
+                                    setTimeout(() => {
+                                      finishRace(true, elapsed); // Left wins
+                                    }, 800);
                                     return PLATFORM_WIDTH / 2;
                                   }
                                   
                                   return newPos;
                                 });
-                              } else if (rightVotes > leftVotes) {
+                              } else if (newRightVotes > newLeftVotes) {
                                 // Right car wins - move left car backwards
                                 setLeftPosition(prev => {
                                   const newPos = prev + MOVE_STEP;
                                   
                                   // Check if car fell off the platform
                                   if (newPos >= PLATFORM_WIDTH / 2) {
+                                    setLeftExploded(true);
                                     const elapsed = Date.now() - (startTimeRef.current || 0);
-                                    finishRace(false, elapsed); // Right wins
+                                    // Delay finish to show explosion
+                                    setTimeout(() => {
+                                      finishRace(false, elapsed); // Right wins
+                                    }, 800);
                                     return PLATFORM_WIDTH / 2;
                                   }
                                   
