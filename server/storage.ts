@@ -1,11 +1,16 @@
 import { 
   User, InsertUser, Poll, InsertPoll, Vote, InsertVote, 
-  Achievement, UserAchievement, InsertUserAchievement, RaceRecord, InsertRaceRecord 
+  Achievement, UserAchievement, InsertUserAchievement, RaceRecord, InsertRaceRecord,
+  users, polls, votes, achievements, userAchievements, raceRecords
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
+import { db, pool } from "./db";
+import { desc, eq, and } from "drizzle-orm";
 
 const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
 
 // modify the interface with any CRUD methods
 // you might need
@@ -40,7 +45,7 @@ export interface IStorage {
   updateUserAchievement(id: number, data: Partial<UserAchievement>): Promise<UserAchievement>;
   
   // Session store
-  sessionStore: session.SessionStore;
+  sessionStore: any; // Using any to avoid type conflicts with session store
 }
 
 export class MemStorage implements IStorage {
@@ -51,7 +56,7 @@ export class MemStorage implements IStorage {
   private achievements: Map<number, Achievement>;
   private userAchievements: Map<number, UserAchievement>;
   
-  sessionStore: session.SessionStore;
+  sessionStore: any; // Using any to avoid type conflicts with session store
   currentId: { [key: string]: number };
 
   constructor() {
@@ -270,4 +275,221 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  sessionStore: any; // Using any to avoid type conflicts with session store
+
+  constructor() {
+    this.sessionStore = new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true,
+    });
+    
+    // Seed achievements if needed
+    this.seedAchievementsIfEmpty();
+  }
+
+  // User methods
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+  
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+  
+  // Poll methods
+  async getPolls(): Promise<Poll[]> {
+    return db.select().from(polls).orderBy(desc(polls.createdAt));
+  }
+  
+  async getPoll(id: number): Promise<Poll | undefined> {
+    const [poll] = await db.select().from(polls).where(eq(polls.id, id));
+    return poll;
+  }
+  
+  async getUserPolls(userId: number): Promise<Poll[]> {
+    return db.select().from(polls)
+      .where(eq(polls.userId, userId))
+      .orderBy(desc(polls.createdAt));
+  }
+  
+  async createPoll(insertPoll: InsertPoll): Promise<Poll> {
+    const [poll] = await db.insert(polls).values({
+      ...insertPoll,
+      optionAVotes: 0,
+      optionBVotes: 0,
+      createdAt: new Date()
+    }).returning();
+    return poll;
+  }
+  
+  async incrementPollVote(pollId: number, option: string): Promise<void> {
+    const [poll] = await db.select().from(polls).where(eq(polls.id, pollId));
+    if (!poll) return;
+    
+    if (option === "A") {
+      await db.update(polls)
+        .set({ optionAVotes: (poll.optionAVotes || 0) + 1 })
+        .where(eq(polls.id, pollId));
+    } else if (option === "B") {
+      await db.update(polls)
+        .set({ optionBVotes: (poll.optionBVotes || 0) + 1 })
+        .where(eq(polls.id, pollId));
+    }
+  }
+  
+  // Vote methods
+  async createVote(insertVote: InsertVote): Promise<Vote> {
+    const [vote] = await db.insert(votes).values({
+      ...insertVote,
+      votedAt: new Date()
+    }).returning();
+    return vote;
+  }
+  
+  async getUserVoteForPoll(userId: number, pollId: number): Promise<Vote | undefined> {
+    const [vote] = await db.select().from(votes)
+      .where(and(eq(votes.userId, userId), eq(votes.pollId, pollId)));
+    return vote;
+  }
+  
+  // Race methods
+  async createRaceRecord(insertRecord: InsertRaceRecord): Promise<RaceRecord> {
+    const [record] = await db.insert(raceRecords).values({
+      ...insertRecord,
+      racedAt: new Date()
+    }).returning();
+    return record;
+  }
+  
+  async getUserRaces(userId: number): Promise<RaceRecord[]> {
+    return db.select().from(raceRecords)
+      .where(eq(raceRecords.userId, userId))
+      .orderBy(desc(raceRecords.racedAt));
+  }
+  
+  // Achievement methods
+  async getAchievements(): Promise<Achievement[]> {
+    return db.select().from(achievements);
+  }
+  
+  async getAchievementsByCriteria(criteria: string[]): Promise<Achievement[]> {
+    // Note: This is a simplified implementation that won't work exactly like the memory one
+    // In a real DB, you'd need a more complex query or a different schema design
+    const allAchievements = await db.select().from(achievements);
+    return allAchievements.filter(achievement => 
+      criteria.some(c => achievement.criteria.includes(c))
+    );
+  }
+  
+  async getUserAchievements(userId: number): Promise<(UserAchievement & Achievement)[]> {
+    // Join userAchievements with achievements to get full data
+    const result = await db.select({
+      ...userAchievements,
+      name: achievements.name,
+      description: achievements.description,
+      iconName: achievements.iconName,
+      criteria: achievements.criteria
+    })
+    .from(userAchievements)
+    .innerJoin(achievements, eq(userAchievements.achievementId, achievements.id))
+    .where(eq(userAchievements.userId, userId));
+    
+    return result;
+  }
+  
+  async getUserAchievement(userId: number, achievementId: number): Promise<UserAchievement | undefined> {
+    const [userAchievement] = await db.select().from(userAchievements)
+      .where(
+        and(
+          eq(userAchievements.userId, userId),
+          eq(userAchievements.achievementId, achievementId)
+        )
+      );
+    return userAchievement;
+  }
+  
+  async createUserAchievement(insertUA: InsertUserAchievement): Promise<UserAchievement> {
+    const [userAchievement] = await db.insert(userAchievements).values({
+      ...insertUA,
+      unlockedAt: new Date()
+    }).returning();
+    return userAchievement;
+  }
+  
+  async updateUserAchievement(id: number, data: Partial<UserAchievement>): Promise<UserAchievement> {
+    const [updated] = await db.update(userAchievements)
+      .set(data)
+      .where(eq(userAchievements.id, id))
+      .returning();
+    
+    if (!updated) {
+      throw new Error(`User achievement ${id} not found`);
+    }
+    
+    return updated;
+  }
+  
+  // Seed achievements if the table is empty
+  private async seedAchievementsIfEmpty() {
+    const existingAchievements = await db.select().from(achievements);
+    
+    if (existingAchievements.length === 0) {
+      const achievementsData = [
+        {
+          name: 'Poll Creator',
+          description: 'Create your first poll',
+          iconName: 'poll',
+          criteria: 'create_poll_1',
+        },
+        {
+          name: 'Poll Star',
+          description: 'Create 5 polls',
+          iconName: 'star',
+          criteria: 'create_poll_5',
+        },
+        {
+          name: 'Voting Machine',
+          description: 'Vote in 10 polls',
+          iconName: 'vote-yea',
+          criteria: 'vote_10',
+        },
+        {
+          name: 'First Race',
+          description: 'Complete your first race',
+          iconName: 'flag-checkered',
+          criteria: 'race_complete',
+        },
+        {
+          name: 'Speedy',
+          description: 'Complete a race in under 10 seconds',
+          iconName: 'tachometer-alt',
+          criteria: 'race_time_10',
+        },
+        {
+          name: 'Champion',
+          description: 'Win 5 races',
+          iconName: 'trophy',
+          criteria: 'race_win',
+        },
+      ];
+      
+      await db.insert(achievements).values(achievementsData);
+    }
+  }
+}
+
+// Use DatabaseStorage instead of MemStorage
+export const storage = new DatabaseStorage();
