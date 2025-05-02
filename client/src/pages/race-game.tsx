@@ -402,6 +402,7 @@ export default function RaceGame() {
                               src={carImages[selectedCar]} 
                               alt="Left car" 
                               className="h-12 w-auto opacity-50"
+                              style={{ transform: 'scaleX(1)' }} /* Left car facing right */
                             />
                             <div className="absolute inset-0 flex items-center justify-center">
                               <div className="text-destructive text-2xl">💥</div>
@@ -412,6 +413,7 @@ export default function RaceGame() {
                             src={carImages[selectedCar]} 
                             alt="Left car" 
                             className="h-12 w-auto"
+                            style={{ transform: 'scaleX(1)' }} /* Left car facing right */
                           />
                         )}
                       </div>
