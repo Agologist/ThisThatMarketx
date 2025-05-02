@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,9 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ImageIcon, HelpCircle } from "lucide-react";
+import { Loader2, ImageIcon, HelpCircle, Upload, Camera } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { searchImages } from "@/utils/imageSearch";
+import { searchImages, getFallbackImage } from "@/utils/imageSearch";
 import { useLocation } from "wouter";
 
 const pollFormSchema = z.object({
@@ -39,6 +39,10 @@ export default function PollCreator() {
   const [showCustomDuration, setShowCustomDuration] = useState(false);
   const [typingTimeoutA, setTypingTimeoutA] = useState<NodeJS.Timeout | null>(null);
   const [typingTimeoutB, setTypingTimeoutB] = useState<NodeJS.Timeout | null>(null);
+  
+  // Hidden file inputs for image uploads
+  const fileInputA = useRef<HTMLInputElement>(null);
+  const fileInputB = useRef<HTMLInputElement>(null);
   
   const durations = [
     { value: "1h", label: "1 hour" },
@@ -158,6 +162,71 @@ export default function PollCreator() {
     createPollMutation.mutate(values);
   };
   
+  // Handle image file uploads
+  const handleImageUpload = (option: "A" | "B", event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please upload an image file (JPEG, PNG, etc.)",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Check file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      toast({
+        title: "File Too Large",
+        description: "Please upload an image smaller than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Read the file as a data URL
+    const reader = new FileReader();
+    
+    if (option === "A") setIsSearchingA(true);
+    else setIsSearchingB(true);
+    
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      if (option === "A") {
+        setOptionAImage(result);
+        setIsSearchingA(false);
+      } else {
+        setOptionBImage(result);
+        setIsSearchingB(false);
+      }
+    };
+    
+    reader.onerror = () => {
+      toast({
+        title: "Error Reading File",
+        description: "There was an error reading the image file",
+        variant: "destructive",
+      });
+      if (option === "A") setIsSearchingA(false);
+      else setIsSearchingB(false);
+    };
+    
+    reader.readAsDataURL(file);
+  };
+  
+  // Function to open file picker
+  const openFilePicker = (option: "A" | "B") => {
+    if (option === "A" && fileInputA.current) {
+      fileInputA.current.click();
+    } else if (option === "B" && fileInputB.current) {
+      fileInputB.current.click();
+    }
+  };
+
   const searchImageForOption = async (option: "A" | "B") => {
     const searchText = option === "A" 
       ? form.getValues("optionAText") 
@@ -271,20 +340,43 @@ export default function PollCreator() {
                             </div>
                           )}
                           
-                          {optionAImage && (
-                            <Button 
+                          <div className="absolute bottom-2 right-2 flex gap-1">
+                            <Button
                               type="button"
-                              variant="ghost" 
-                              size="sm" 
-                              className="absolute top-1 right-1 bg-black/50 hover:bg-black/70"
+                              variant="ghost"
+                              size="sm"
+                              className="bg-black/50 hover:bg-black/70 h-8 w-8 p-0"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                searchImageForOption("A");
+                                openFilePicker("A");
                               }}
                             >
-                              Change
+                              <Upload className="h-4 w-4" />
                             </Button>
-                          )}
+                            
+                            {optionAImage && (
+                              <Button 
+                                type="button"
+                                variant="ghost" 
+                                size="sm" 
+                                className="bg-black/50 hover:bg-black/70 h-8 w-8 p-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  searchImageForOption("A");
+                                }}
+                              >
+                                <ImageIcon className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                          
+                          <input
+                            type="file"
+                            ref={fileInputA}
+                            className="hidden"
+                            accept="image/*"
+                            onChange={(e) => handleImageUpload("A", e)}
+                          />
                         </div>
                         <div className="p-3">
                           <FormControl>
@@ -350,20 +442,43 @@ export default function PollCreator() {
                             </div>
                           )}
                           
-                          {optionBImage && (
-                            <Button 
+                          <div className="absolute bottom-2 right-2 flex gap-1">
+                            <Button
                               type="button"
-                              variant="ghost" 
-                              size="sm" 
-                              className="absolute top-1 right-1 bg-black/50 hover:bg-black/70"
+                              variant="ghost"
+                              size="sm"
+                              className="bg-black/50 hover:bg-black/70 h-8 w-8 p-0"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                searchImageForOption("B");
+                                openFilePicker("B");
                               }}
                             >
-                              Change
+                              <Upload className="h-4 w-4" />
                             </Button>
-                          )}
+                            
+                            {optionBImage && (
+                              <Button 
+                                type="button"
+                                variant="ghost" 
+                                size="sm" 
+                                className="bg-black/50 hover:bg-black/70 h-8 w-8 p-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  searchImageForOption("B");
+                                }}
+                              >
+                                <ImageIcon className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                          
+                          <input
+                            type="file"
+                            ref={fileInputB}
+                            className="hidden"
+                            accept="image/*"
+                            onChange={(e) => handleImageUpload("B", e)}
+                          />
                         </div>
                         <div className="p-3">
                           <FormControl>
