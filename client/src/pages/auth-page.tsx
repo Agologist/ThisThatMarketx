@@ -130,6 +130,14 @@ export default function AuthPage() {
                   </svg>
                   Sign in with Google
                 </Button>
+                
+                <Button 
+                  variant="ghost" 
+                  className="w-full mt-4 text-muted-foreground"
+                  onClick={() => navigate("/?guest=true")}
+                >
+                  Continue as Guest
+                </Button>
               </TabsContent>
               
               <TabsContent value="register">

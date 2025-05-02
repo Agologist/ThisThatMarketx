@@ -1,15 +1,21 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
-import { Redirect, Route } from "wouter";
+import { Redirect, Route, useLocation } from "wouter";
 
 export function ProtectedRoute({
   path,
   component: Component,
+  requireAuth = true,
 }: {
   path: string;
   component: () => React.JSX.Element;
+  requireAuth?: boolean;
 }) {
   const { user, isLoading } = useAuth();
+  const [location] = useLocation();
+  
+  // Check for guest mode in query parameter
+  const isGuestMode = location.includes('?guest=true') || !requireAuth;
 
   if (isLoading) {
     return (
@@ -21,7 +27,8 @@ export function ProtectedRoute({
     );
   }
 
-  if (!user) {
+  // Allow access if logged in or in guest mode
+  if (!user && !isGuestMode && requireAuth) {
     return (
       <Route path={path}>
         <Redirect to="/auth" />

@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext } from "react";
+import React, { createContext, ReactNode, useContext } from "react";
 import {
   useQuery,
   useMutation,
@@ -13,9 +13,11 @@ type AuthContextType = {
   user: SelectUser | null;
   isLoading: boolean;
   error: Error | null;
+  isGuest: boolean;
   loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<SelectUser, Error, RegisterData>;
+  continueAsGuest: () => void;
 };
 
 type LoginData = {
@@ -42,6 +44,7 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  const [isGuest, setIsGuest] = React.useState<boolean>(false);
   const {
     data: user,
     error,
@@ -51,12 +54,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
+  // Function to continue as guest
+  const continueAsGuest = React.useCallback(() => {
+    setIsGuest(true);
+    toast({
+      title: "Guest Mode Activated",
+      description: "You're browsing as a guest. To save your votes and participate in races, please sign up.",
+    });
+  }, [toast]);
+
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       const res = await apiRequest("POST", "/api/login", credentials);
       return await res.json();
     },
     onSuccess: (user: SelectUser) => {
+      setIsGuest(false); // Clear guest mode when logging in
       queryClient.setQueryData(["/api/user"], user);
       toast({
         title: "Login successful",
@@ -80,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: (user: SelectUser) => {
+      setIsGuest(false); // Clear guest mode when registering
       queryClient.setQueryData(["/api/user"], user);
       toast({
         title: "Registration successful",
@@ -100,6 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await apiRequest("POST", "/api/logout");
     },
     onSuccess: () => {
+      setIsGuest(false); // Clear guest mode when logging out
       queryClient.setQueryData(["/api/user"], null);
       toast({
         title: "Logged out",
@@ -121,6 +136,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: user ?? null,
         isLoading,
         error,
+        isGuest,
+        continueAsGuest,
         loginMutation,
         logoutMutation,
         registerMutation,
