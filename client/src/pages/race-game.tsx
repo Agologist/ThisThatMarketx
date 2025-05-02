@@ -150,10 +150,23 @@ export default function RaceGame() {
     // Increment left votes
     setLeftVotes(prev => prev + 1);
     
-    // When left car gets votes, the right car gets pushed backward
-    // This means right car's position increases (moving it rightward away from center)
+    // Move both cars in opposite directions with the same amount
+    // Left car moves FORWARD toward the right - SUBTRACT from leftPosition 
+    // This will increase the left coordinate value when displayed (47 - leftPosition)
+    // Right car is pushed BACKWARD toward the right - ADD to rightPosition
+    // Both cars effectively move in the same rightward direction
+    
+    const moveAmount = MOVE_AMOUNT;
+    
+    // Left car moves FORWARD
+    setLeftPosition(prevLeftPos => {
+      // Decrease leftPosition to move car forward/rightward (pushing toward right car)
+      return Math.max(prevLeftPos - moveAmount, -MAX_POSITION); // Allow negative values to move forward
+    });
+    
+    // Right car gets pushed BACKWARD simultaneously
     setRightPosition(prevRightPos => {
-      const newRightPos = prevRightPos + MOVE_AMOUNT;
+      const newRightPos = prevRightPos + moveAmount;
       
       // Check if right car has fallen off the platform
       if (newRightPos >= MAX_POSITION) {
@@ -173,9 +186,6 @@ export default function RaceGame() {
       
       return newRightPos;
     });
-    
-    // The left car doesn't move in this implementation - only the right car moves
-    // This creates the illusion that the left car is pushing the right car
   };
   
   // Cleanup on unmount
@@ -362,9 +372,9 @@ export default function RaceGame() {
                            style={{ 
                              // Position from center based on leftPosition value
                              // At start (0), car is at 47% from left (at the center line)
-                             // In this implementation, the left car stays stationary at the center
-                             // Only the right car moves when votes are cast
-                             left: `47%`, 
+                             // As leftPosition decreases, car moves forward/right by ADDING to position
+                             // When leftPosition is negative, the car moves forward
+                             left: `${47 - leftPosition}%`, 
                              transition: 'left 0.3s ease-out',
                              zIndex: 10
                            }}>
