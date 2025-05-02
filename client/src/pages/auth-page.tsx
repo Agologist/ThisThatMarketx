@@ -173,6 +173,13 @@ export default function AuthPage() {
             variant: "destructive",
             duration: 10000
           });
+        } else if (error.code === 'auth/missing-oauth-client-secret' || error.message?.includes('request token')) {
+          toast({
+            title: "Twitter configuration issue",
+            description: "There's an issue with the Twitter API credentials or callback URL configuration. Make sure you've properly configured your Twitter app in both Twitter Developer Portal and Firebase console.",
+            variant: "destructive",
+            duration: 10000
+          });
         } else {
           toast({
             title: "Authentication failed",
