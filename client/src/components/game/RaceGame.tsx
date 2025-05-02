@@ -43,37 +43,68 @@ export default function RaceGame({ races, pollId }: RaceGameProps) {
     try {
       // Only try API call if a poll ID is provided
       if (pollId) {
-        await apiRequest('POST', `/api/polls/${pollId}/vote`, { option });
-      }
-      
-      // Update the UI regardless of API call
-      if (option === 'A') {
-        setCarPositions(prev => ({
-          ...prev,
-          carA: Math.min(100, prev.carA + 10) // Move right
-        }));
+        const response = await apiRequest('POST', `/api/polls/${pollId}/vote`, { option });
+        const data = await response.json();
+        
+        // Update the UI after successful API call
+        if (option === 'A') {
+          setCarPositions(prev => ({
+            ...prev,
+            carA: Math.min(100, prev.carA + 10) // Move right
+          }));
+          
+          toast({
+            title: `Voted for ${pollData.optionA}!`,
+            description: "Your vote moved the car forward",
+          });
+        } else {
+          setCarPositions(prev => ({
+            ...prev,
+            carB: Math.min(100, prev.carB + 10) // Move left
+          }));
+          
+          toast({
+            title: `Voted for ${pollData.optionB}!`,
+            description: "Your vote moved the car forward",
+          });
+        }
+      } else {
+        // For demo mode without a poll ID, just update UI
+        if (option === 'A') {
+          setCarPositions(prev => ({
+            ...prev,
+            carA: Math.min(100, prev.carA + 10) // Move right
+          }));
+        } else {
+          setCarPositions(prev => ({
+            ...prev,
+            carB: Math.min(100, prev.carB + 10) // Move left
+          }));
+        }
         
         toast({
-          title: `Voted for ${pollData.optionA}!`,
-          description: "Your vote moved the car forward",
+          title: `Voted for ${option === 'A' ? pollData.optionA : pollData.optionB}!`,
+          description: "Demo mode: Your vote moved the car forward",
+        });
+      }
+    } catch (error: any) {
+      // Error message is now properly extracted by our throwIfResNotOk
+      const errorMessage = error.message || "Please try again";
+      
+      // Check if this is a "already voted" error
+      if (errorMessage.includes("already voted")) {
+        toast({
+          title: "Already voted",
+          description: "You have already voted on this challenge",
+          variant: "destructive"
         });
       } else {
-        setCarPositions(prev => ({
-          ...prev,
-          carB: Math.min(100, prev.carB + 10) // Move left
-        }));
-        
         toast({
-          title: `Voted for ${pollData.optionB}!`,
-          description: "Your vote moved the car forward",
+          title: "Voting failed",
+          description: errorMessage,
+          variant: "destructive"
         });
       }
-    } catch (error) {
-      toast({
-        title: "Voting failed",
-        description: "Please try again or sign in to vote",
-        variant: "destructive"
-      });
     }
   };
   
