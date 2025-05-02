@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ImageIcon, HelpCircle, Upload, Camera } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { searchImages, getFallbackImage } from "@/utils/imageSearch";
+import { searchImages, getFallbackImage, compressImageDataUrl } from "@/utils/imageSearch";
 import { useLocation } from "wouter";
 
 const pollFormSchema = z.object({
@@ -107,14 +107,33 @@ export default function PollCreator() {
           endTime.setHours(now.getHours() + 24);
       }
       
+      // Compress images before submitting to reduce payload size
+      let compressedOptionAImage = optionAImage;
+      let compressedOptionBImage = optionBImage;
+      
+      try {
+        // Compress option A image if it exists
+        if (optionAImage) {
+          compressedOptionAImage = await compressImageDataUrl(optionAImage, 800, 0.7);
+        }
+        
+        // Compress option B image if it exists  
+        if (optionBImage) {
+          compressedOptionBImage = await compressImageDataUrl(optionBImage, 800, 0.7);
+        }
+      } catch (error) {
+        console.error("Error compressing images:", error);
+        // Continue with uncompressed images if compression fails
+      }
+      
       // Ensure we have all required fields with proper types
       const pollData = {
         userId: user?.id,
         question: values.question,
         optionAText: values.optionAText,
-        optionAImage: optionAImage || null,
+        optionAImage: compressedOptionAImage || null,
         optionBText: values.optionBText,
-        optionBImage: optionBImage || null,
+        optionBImage: compressedOptionBImage || null,
         endTime: endTime.toISOString(),
         isPublic: values.audience === "public" ? true : false,
       };
@@ -256,14 +275,30 @@ export default function PollCreator() {
     if (option === "A") setIsSearchingA(true);
     else setIsSearchingB(true);
     
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const result = e.target?.result as string;
-      if (option === "A") {
-        setOptionAImage(result);
-        setIsSearchingA(false);
-      } else {
-        setOptionBImage(result);
-        setIsSearchingB(false);
+      
+      try {
+        // Compress image immediately after loading
+        const compressedImage = await compressImageDataUrl(result, 800, 0.7);
+        
+        if (option === "A") {
+          setOptionAImage(compressedImage);
+          setIsSearchingA(false);
+        } else {
+          setOptionBImage(compressedImage);
+          setIsSearchingB(false);
+        }
+      } catch (error) {
+        console.error("Error compressing uploaded image:", error);
+        // Fall back to uncompressed image if compression fails
+        if (option === "A") {
+          setOptionAImage(result);
+          setIsSearchingA(false);
+        } else {
+          setOptionBImage(result);
+          setIsSearchingB(false);
+        }
       }
     };
     
@@ -312,9 +347,32 @@ export default function PollCreator() {
         const images = await searchImages(searchText);
         
         if (images && images.length > 0) {
-          if (option === "A") setOptionAImage(images[0].url);
-          else setOptionBImage(images[0].url);
-          return;
+          try {
+            // For external URLs, we'll need to fetch and convert to data URL first
+            const response = await fetch(images[0].url);
+            const blob = await response.blob();
+            
+            // Convert blob to data URL
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+              const dataUrl = e.target?.result as string;
+              
+              // Compress the image
+              const compressedImage = await compressImageDataUrl(dataUrl, 800, 0.7);
+              
+              if (option === "A") setOptionAImage(compressedImage);
+              else setOptionBImage(compressedImage);
+            };
+            
+            reader.readAsDataURL(blob);
+            return;
+          } catch (fetchError) {
+            console.error("Error fetching/compressing image:", fetchError);
+            // Fall back to direct URL if fetch/compression fails
+            if (option === "A") setOptionAImage(images[0].url);
+            else setOptionBImage(images[0].url);
+            return;
+          }
         }
       } catch (apiError) {
         console.log("Image API search failed, using fallback:", apiError);
