@@ -24,10 +24,10 @@ const CENTER_POSITION = 0; // Starting position at center
 
 // Race car images - white cars for better visibility
 const carImages = [
-  "https://cdn-icons-png.flaticon.com/512/5030/5030786.png", // White car
-  "https://cdn-icons-png.flaticon.com/512/5030/5030786.png", // White car
-  "https://cdn-icons-png.flaticon.com/512/5030/5030786.png", // White car
-  "https://cdn-icons-png.flaticon.com/512/5030/5030786.png"  // White car
+  "https://cdn-icons-png.flaticon.com/512/741/741407.png", // White car
+  "https://cdn-icons-png.flaticon.com/512/741/741407.png", // White car
+  "https://cdn-icons-png.flaticon.com/512/741/741407.png", // White car
+  "https://cdn-icons-png.flaticon.com/512/741/741407.png"  // White car
 ];
 
 export default function RaceGame() {
