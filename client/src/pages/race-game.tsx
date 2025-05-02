@@ -164,9 +164,27 @@ export default function RaceGame() {
       
       // Calculate new positions after this push
       // Left car pushes with PUSH_POWER units of force
-      // We move both cars to reflect the boundary shifting
       const pushAmount = PUSH_POWER;
+      
+      // Calculate new positions for both cars
+      const newLeftPos = currentLeftPos + pushAmount;
       const newRightPos = currentRightPos + pushAmount;
+      
+      // Check if left car would move too far and fall off
+      if (newLeftPos >= MAX_POSITION) {
+        // Left car falls off - show explosion
+        setLeftExploded(true);
+        setLeftPosition(MAX_POSITION); // Position at edge
+        
+        // Calculate race time
+        const elapsed = Date.now() - (startTimeRef.current || 0);
+        
+        // Delay end of race to show explosion animation
+        setTimeout(() => {
+          finishRace(false, elapsed); // Left car loses
+        }, 800);
+        return;
+      }
       
       // Check if right car falls off the platform
       if (newRightPos >= MAX_POSITION) {
@@ -181,13 +199,12 @@ export default function RaceGame() {
         setTimeout(() => {
           finishRace(true, elapsed); // Left car wins
         }, 800);
-      } else {
-        // Update positions - right car gets pushed back
-        setRightPosition(newRightPos);
-        
-        // Left car stays at the center
-        setLeftPosition(CENTER_POSITION);
+        return;
       }
+      
+      // If neither car falls off, update both positions
+      setLeftPosition(newLeftPos);
+      setRightPosition(newRightPos);
     }, 100); // Short delay for visual effect
   };
   
@@ -373,8 +390,10 @@ export default function RaceGame() {
                       {/* Left car (facing right - toward center) */}
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
-                             // In sumo-style game, left car stays at center
-                             left: `47%`, 
+                             // Left car moves forward as it gets votes
+                             // At center (0), car is at 47% from left 
+                             // As leftPosition increases, car moves right (forward)
+                             left: `${47 + leftPosition}%`, 
                              transition: 'left 0.3s ease-out',
                              zIndex: 10
                            }}>
