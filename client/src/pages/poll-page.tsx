@@ -233,9 +233,9 @@ export default function PollPage() {
                 <div 
                   className={`border rounded-md overflow-hidden transition-all 
                     ${selectedOption === "A" ? "ring-2 ring-primary" : ""} 
-                    ${!isPollActive ? "pointer-events-none" : "cursor-pointer"}
+                    ${!isPollActive || hasVoted ? "pointer-events-none" : "cursor-pointer"}
                     ${hasVoted && userVote?.option === "A" ? "bg-primary/10" : ""}`}
-                  onClick={() => isPollActive && setSelectedOption("A")}
+                  onClick={() => isPollActive && !hasVoted && setSelectedOption("A")}
                 >
                   {poll.optionAImage ? (
                     <div className="h-48 bg-muted">
@@ -274,9 +274,9 @@ export default function PollPage() {
                 <div 
                   className={`border rounded-md overflow-hidden transition-all 
                     ${selectedOption === "B" ? "ring-2 ring-primary" : ""} 
-                    ${!isPollActive ? "pointer-events-none" : "cursor-pointer"}
+                    ${!isPollActive || hasVoted ? "pointer-events-none" : "cursor-pointer"}
                     ${hasVoted && userVote?.option === "B" ? "bg-primary/10" : ""}`}
-                  onClick={() => isPollActive && setSelectedOption("B")}
+                  onClick={() => isPollActive && !hasVoted && setSelectedOption("B")}
                 >
                   {poll.optionBImage ? (
                     <div className="h-48 bg-muted">
@@ -318,7 +318,7 @@ export default function PollPage() {
                   <Button 
                     className="btn-gold w-full max-w-md" 
                     size="lg"
-                    disabled={!selectedOption || isVoting}
+                    disabled={!selectedOption || isVoting || hasVoted}
                     onClick={handleVote}
                   >
                     {isVoting ? (
@@ -327,7 +327,7 @@ export default function PollPage() {
                         Recording vote...
                       </>
                     ) : hasVoted ? (
-                      `Change vote to ${selectedOption || "another option"}`
+                      "You have already voted"
                     ) : (
                       `Vote for ${selectedOption ? poll[selectedOption === "A" ? "optionAText" : "optionBText"] : ""}`
                     )}
@@ -336,7 +336,7 @@ export default function PollPage() {
                   {hasVoted && (
                     <p className="text-xs text-muted-foreground mt-2">
                       You voted for {userVote?.option === "A" ? poll.optionAText : poll.optionBText}. 
-                      {selectedOption && selectedOption !== userVote?.option && " Select an option and click above to change your vote."}
+                      Votes cannot be changed once submitted.
                     </p>
                   )}
                 </div>
