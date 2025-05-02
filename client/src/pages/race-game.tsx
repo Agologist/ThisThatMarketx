@@ -19,7 +19,8 @@ import type {
 
 // Game constants
 const PUSH_POWER = 3; // How much pushing power each vote provides
-const MAX_POSITION = 22; // Position at the edge of the platform where car falls off (20% from center to edge)
+const MAX_POSITION = 30; // Maximum possible position value
+const PLATFORM_EDGE = 30; // Position at 20% from center where the platform edge is (visible white line)
 const CENTER_POSITION = 0; // Starting position at center
 
 // Using white racecar SVG images for better reliability
@@ -174,34 +175,44 @@ export default function RaceGame() {
       const newLeftPos = currentLeftPos + pushAmount;
       const newRightPos = currentRightPos + pushAmount;
       
-      // Check if left car would move too far and fall off
-      if (newLeftPos >= MAX_POSITION) {
-        // Left car falls off - show explosion
-        setLeftExploded(true);
-        setLeftPosition(MAX_POSITION); // Position at edge
+      // Calculate the actual position percentages relative to the container
+      // Platform edges are at 20% from each side (80% platform width in the middle)
+      // This means left car should explode when pushing beyond left 20% and right car when beyond right 20%
+      
+      // Left car position refers to distance from center toward right
+      // Right car position refers to distance from center toward right
+      
+      // Check if right car would move too far and fall off the right edge
+      // At rightPosition = 30, the right car should be at the edge (20% from center = right platform edge)
+      if (newRightPos >= PLATFORM_EDGE) {
+        // Right car falls off - show explosion
+        setRightExploded(true);
+        setRightPosition(PLATFORM_EDGE); // Position at edge
         
         // Calculate race time
         const elapsed = Date.now() - (startTimeRef.current || 0);
         
         // Delay end of race to show explosion animation
         setTimeout(() => {
-          finishRace(false, elapsed); // Left car loses
+          finishRace(true, elapsed); // Left car wins because right car fell off
         }, 800);
         return;
       }
       
-      // Check if right car falls off the platform
-      if (newRightPos >= MAX_POSITION) {
-        // Right car falls off - show explosion
-        setRightExploded(true);
-        setRightPosition(MAX_POSITION); // Position at edge
+      // Check if left car's position goes beyond its edge line
+      // As left car moves forward (rightward), leftPosition increases
+      // At leftPosition = 30, the left car should be at the edge
+      if (newLeftPos >= PLATFORM_EDGE) {
+        // Left car falls off - show explosion
+        setLeftExploded(true);
+        setLeftPosition(PLATFORM_EDGE); // Position at edge
         
         // Calculate race time
         const elapsed = Date.now() - (startTimeRef.current || 0);
         
         // Delay end of race to show explosion animation
         setTimeout(() => {
-          finishRace(true, elapsed); // Left car wins
+          finishRace(false, elapsed); // Left car loses because it fell off
         }, 800);
         return;
       }
