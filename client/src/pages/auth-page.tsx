@@ -39,7 +39,7 @@ export default function AuthPage() {
         body: JSON.stringify({
           uid: result.user.uid,
           email: result.user.email,
-          displayName: result.user.displayName,
+          displayName: result.user.displayName || result.user.providerData[0]?.displayName || 'Google User',
           photoURL: result.user.photoURL,
           provider: 'google'
         }),
@@ -48,11 +48,21 @@ export default function AuthPage() {
       if (res.ok) {
         window.location.href = '/';
       } else {
-        toast({
-          title: "Authentication failed",
-          description: "Failed to authenticate with Google",
-          variant: "destructive"
-        });
+        // Try to get detailed error message
+        try {
+          const errorData = await res.json();
+          toast({
+            title: "Authentication failed",
+            description: errorData.message || "Failed to authenticate with Google",
+            variant: "destructive"
+          });
+        } catch {
+          toast({
+            title: "Authentication failed",
+            description: "Failed to authenticate with Google",
+            variant: "destructive"
+          });
+        }
       }
     } catch (error) {
       console.error("Google sign-in error:", error);
@@ -63,6 +73,20 @@ export default function AuthPage() {
           toast({
             title: "Domain not authorized",
             description: "You need to add this domain to your Firebase authorized domains list in the Firebase Console: Authentication > Settings > Authorized domains",
+            variant: "destructive",
+            duration: 10000
+          });
+        } else if (error.code === 'auth/popup-closed-by-user') {
+          // This is a common error when the user closes the popup, no need for a destructive toast
+          toast({
+            title: "Authentication cancelled",
+            description: "You closed the Google login window",
+            variant: "default"
+          });
+        } else if (error.code === 'auth/operation-not-allowed') {
+          toast({
+            title: "Google login not enabled",
+            description: "Google authentication is not enabled in Firebase. Please enable it in the Firebase console: Authentication > Sign-in method > Google",
             variant: "destructive",
             duration: 10000
           });
@@ -97,8 +121,8 @@ export default function AuthPage() {
         },
         body: JSON.stringify({
           uid: result.user.uid,
-          email: result.user.email,
-          displayName: result.user.displayName,
+          email: result.user.email, // This might be null from Twitter
+          displayName: result.user.displayName || result.user.providerData[0]?.displayName || 'Twitter User',
           photoURL: result.user.photoURL,
           provider: 'twitter'
         }),
@@ -107,11 +131,21 @@ export default function AuthPage() {
       if (res.ok) {
         window.location.href = '/';
       } else {
-        toast({
-          title: "Authentication failed",
-          description: "Failed to authenticate with Twitter",
-          variant: "destructive"
-        });
+        // Try to get detailed error message
+        try {
+          const errorData = await res.json();
+          toast({
+            title: "Authentication failed",
+            description: errorData.message || "Failed to authenticate with Twitter",
+            variant: "destructive"
+          });
+        } catch {
+          toast({
+            title: "Authentication failed",
+            description: "Failed to authenticate with Twitter",
+            variant: "destructive"
+          });
+        }
       }
     } catch (error) {
       console.error("Twitter sign-in error:", error);
@@ -122,6 +156,20 @@ export default function AuthPage() {
           toast({
             title: "Domain not authorized",
             description: "You need to add this domain to your Firebase authorized domains list in the Firebase Console: Authentication > Settings > Authorized domains",
+            variant: "destructive",
+            duration: 10000
+          });
+        } else if (error.code === 'auth/popup-closed-by-user') {
+          // This is a common error when the user closes the popup, no need for a destructive toast
+          toast({
+            title: "Authentication cancelled",
+            description: "You closed the Twitter login window",
+            variant: "default"
+          });
+        } else if (error.code === 'auth/operation-not-allowed') {
+          toast({
+            title: "Twitter login not enabled",
+            description: "Twitter authentication is not enabled in Firebase. Please enable it in the Firebase console: Authentication > Sign-in method > Twitter",
             variant: "destructive",
             duration: 10000
           });
