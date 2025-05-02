@@ -20,14 +20,20 @@ export default function PollPage() {
   const { toast } = useToast();
   const [selectedOption, setSelectedOption] = useState<"A" | "B" | null>(null);
   const [isVoting, setIsVoting] = useState(false);
+  const [forceRefresh, setForceRefresh] = useState(0);
   
-  const { data: poll, isLoading } = useQuery<Poll>({
-    queryKey: [`/api/polls/${id}`],
+  const { data: poll, isLoading, refetch: refetchPoll } = useQuery<Poll>({
+    queryKey: [`/api/polls/${id}`, forceRefresh],
+    staleTime: 0, // Don't use cache
+    refetchOnMount: true, // Always refetch on mount
+    refetchOnWindowFocus: true, // Refetch when window is focused
   });
   
   const { data: userVoteData, refetch: refetchVoteData } = useQuery({
-    queryKey: [`/api/polls/${id}/vote`],
+    queryKey: [`/api/polls/${id}/vote`, forceRefresh],
     enabled: !!user && !!id,
+    staleTime: 0, // Don't use cache
+    refetchOnMount: true, // Always refetch on mount
   });
   
   const hasVoted = userVoteData?.hasVoted || false;
@@ -148,14 +154,27 @@ export default function PollPage() {
       queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}`] });
       queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}/vote`] });
       
+      // Use our force refresh state to trigger a brand new fetch
+      setForceRefresh(prev => prev + 1);
+      
       // Manually refetch the data to ensure it's updated properly
       setTimeout(async () => {
         try {
+          console.log("🔄 Manually fetching the latest poll data to ensure UI is up-to-date");
           const [voteResult, pollResult] = await Promise.all([
             refetchVoteData(),
-            queryClient.fetchQuery({ queryKey: [`/api/polls/${id}`] })
+            refetchPoll()
           ]);
-          console.log("After vote - refetched data:", { voteResult, pollResult });
+          console.log("🔄 After vote - refetched data:", { 
+            voteResult, 
+            pollResult,
+            currentPollData: pollResult.data,
+            optionAVotes: pollResult.data?.optionAVotes,
+            optionBVotes: pollResult.data?.optionBVotes,
+          });
+          
+          // Set force refresh again to make absolutely sure we get fresh data
+          setForceRefresh(prev => prev + 1);
         } catch (fetchError) {
           console.error("Error refetching data after vote:", fetchError);
         }
