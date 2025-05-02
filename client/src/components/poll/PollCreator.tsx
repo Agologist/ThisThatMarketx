@@ -21,9 +21,9 @@ const pollFormSchema = z.object({
   optionBText: z.string().min(1, "Challenger 2 title is required"),
   duration: z.string(),
   audience: z.string(),
-  // For custom duration
-  customHours: z.number().min(0).max(72).optional(),
-  customMinutes: z.number().min(0).max(59).optional(),
+  // For custom duration - support both string and number input types
+  customHours: z.coerce.number().min(0).max(72).optional(),
+  customMinutes: z.coerce.number().min(0).max(59).optional(),
 });
 
 type PollFormValues = z.infer<typeof pollFormSchema>;
