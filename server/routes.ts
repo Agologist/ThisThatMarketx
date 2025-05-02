@@ -6,9 +6,68 @@ import { z } from "zod";
 import { insertPollSchema, insertVoteSchema, insertRaceRecordSchema, insertUserAchievementSchema } from "@shared/schema";
 import axios from "axios";
 
+// Schema for Firebase user data
+const firebaseUserSchema = z.object({
+  uid: z.string(),
+  email: z.string().email(),
+  displayName: z.string().optional(),
+  photoURL: z.string().optional(),
+});
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
   setupAuth(app);
+  
+  // Firebase authentication endpoint
+  app.post("/api/auth/firebase", async (req, res) => {
+    try {
+      // Validate the Firebase user data
+      const firebaseData = firebaseUserSchema.parse(req.body);
+      
+      // Check if a user with this Firebase UID already exists
+      const existingUser = await storage.getUserByEmail(firebaseData.email);
+      
+      if (existingUser) {
+        // Log the user in
+        req.login(existingUser, (err) => {
+          if (err) {
+            console.error('Error logging in existing user:', err);
+            return res.status(500).json({ message: "Authentication failed" });
+          }
+          return res.status(200).json(existingUser);
+        });
+      } else {
+        // Create a new user
+        const username = `${firebaseData.email.split('@')[0]}_${Math.floor(Math.random() * 1000)}`;
+        const displayName = firebaseData.displayName || username;
+        
+        const newUser = await storage.createUser({
+          username,
+          email: firebaseData.email,
+          displayName,
+          password: `firebase_${firebaseData.uid}`, // Not used for login, just a placeholder
+          firebaseUid: firebaseData.uid,
+          photoURL: firebaseData.photoURL || null,
+          provider: "firebase"
+        });
+        
+        // Log the new user in
+        req.login(newUser, (err) => {
+          if (err) {
+            console.error('Error logging in new user:', err);
+            return res.status(500).json({ message: "Authentication failed" });
+          }
+          return res.status(201).json(newUser);
+        });
+      }
+    } catch (error) {
+      console.error('Firebase auth error:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid user data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Authentication failed" });
+    }
+  });
 
   // Poll routes
   app.get("/api/polls", async (req, res) => {
