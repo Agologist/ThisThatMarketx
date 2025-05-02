@@ -194,8 +194,11 @@ export default function PollCreator() {
     
     // Additional validation for "Custom" duration
     if (values.duration === "custom") {
-      const hours = parseInt(form.getValues("hours") || "0");
-      const minutes = parseInt(form.getValues("minutes") || "0");
+      // Get values from the custom fields
+      const hours = values.customHours || 0;
+      const minutes = values.customMinutes || 0;
+      
+      console.log("Duration validation:", { hours, minutes });
       
       // Ensure we have a minimum valid duration (at least 5 minutes)
       if (hours === 0 && minutes < 5) {
