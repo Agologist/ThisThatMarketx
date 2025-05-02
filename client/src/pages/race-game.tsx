@@ -390,9 +390,9 @@ export default function RaceGame() {
                       {/* Left car (facing right - toward center) */}
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
-                             // Left car starts exactly at center line (50%)
+                             // Left car starts 3% left of center line (47%)
                              // As leftPosition increases, car moves right (forward)
-                             left: `${50 + leftPosition}%`, 
+                             left: `${47 + leftPosition}%`, 
                              transition: 'left 0.3s ease-out',
                              zIndex: 10
                            }}>
@@ -419,9 +419,9 @@ export default function RaceGame() {
                       {/* Right car (facing left - toward center) */}
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
-                             // Right car starts exactly at center line (50%)
+                             // Right car starts 3% right of center line (53%)
                              // As rightPosition increases, right car gets pushed away from center
-                             left: `${50 + rightPosition}%`,
+                             left: `${53 + rightPosition}%`,
                              transition: 'left 0.3s ease-out',
                              zIndex: 9
                            }}>
