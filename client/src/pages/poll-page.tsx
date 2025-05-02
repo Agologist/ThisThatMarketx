@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Loader2, Share2, ChevronLeft, CheckIcon, XIcon } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { Poll } from "@shared/schema";
@@ -321,7 +321,7 @@ export default function PollPage() {
                   <div className="p-4">
                     <div className="flex justify-between items-center">
                       <h3 className="font-montserrat font-bold text-lg">{poll.optionBText}</h3>
-                      {hasVoted && userVote?.option === "B" && (
+                      {hasVoted && userVoteData?.option === "B" && (
                         <span className="bg-primary/20 text-primary text-xs rounded-full px-2 py-1 font-medium flex items-center">
                           <CheckIcon className="w-3 h-3 mr-1" /> Your vote
                         </span>
@@ -361,7 +361,7 @@ export default function PollPage() {
                   
                   {hasVoted && (
                     <p className="text-xs text-muted-foreground mt-2">
-                      You voted for {userVote?.option === "A" ? poll.optionAText : poll.optionBText}. 
+                      You voted for {userVoteData?.option === "A" ? poll.optionAText : poll.optionBText}. 
                       Votes cannot be changed once submitted.
                     </p>
                   )}
