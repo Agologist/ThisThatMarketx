@@ -10,11 +10,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FlagIcon, CheckIcon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { signInWithGoogle } from "@/lib/firebase";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation, continueAsGuest, isGuest } = useAuth();
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
+  const { toast } = useToast();
   
   // Redirect if already logged in or in guest mode
   useEffect(() => {
@@ -124,7 +127,42 @@ export default function AuthPage() {
                 <Button 
                   variant="outline" 
                   className="w-full mb-4 flex items-center justify-center gap-2"
-                  onClick={() => window.location.href = "/api/auth/google"}
+                  onClick={async () => {
+                    try {
+                      const result = await signInWithGoogle();
+                      
+                      // Call your server to register or login the Firebase user
+                      const res = await fetch('/api/auth/firebase', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          uid: result.user.uid,
+                          email: result.user.email,
+                          displayName: result.user.displayName,
+                          photoURL: result.user.photoURL,
+                        }),
+                      });
+                      
+                      if (res.ok) {
+                        window.location.href = '/';
+                      } else {
+                        toast({
+                          title: "Authentication failed",
+                          description: "Failed to authenticate with Google",
+                          variant: "destructive"
+                        });
+                      }
+                    } catch (error) {
+                      console.error("Google sign-in error:", error);
+                      toast({
+                        title: "Authentication failed",
+                        description: "Failed to authenticate with Google",
+                        variant: "destructive"
+                      });
+                    }
+                  }}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-5 h-5">
                     <path fill="#EA4335" d="M5.26 11c0-.67.12-1.31.34-1.9L1.55 6.6C.72 7.97.24 9.57.05 11.26a13 13 0 0 0 0 1.48c.19 1.69.67 3.29 1.5 4.66l4.05-2.5c-.22-.59-.34-1.23-.34-1.9"></path>
@@ -235,7 +273,42 @@ export default function AuthPage() {
                 <Button 
                   variant="outline" 
                   className="w-full mb-4 flex items-center justify-center gap-2"
-                  onClick={() => window.location.href = "/api/auth/google"}
+                  onClick={async () => {
+                    try {
+                      const result = await signInWithGoogle();
+                      
+                      // Call your server to register or login the Firebase user
+                      const res = await fetch('/api/auth/firebase', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          uid: result.user.uid,
+                          email: result.user.email,
+                          displayName: result.user.displayName,
+                          photoURL: result.user.photoURL,
+                        }),
+                      });
+                      
+                      if (res.ok) {
+                        window.location.href = '/';
+                      } else {
+                        toast({
+                          title: "Authentication failed",
+                          description: "Failed to authenticate with Google",
+                          variant: "destructive"
+                        });
+                      }
+                    } catch (error) {
+                      console.error("Google sign-in error:", error);
+                      toast({
+                        title: "Authentication failed",
+                        description: "Failed to authenticate with Google",
+                        variant: "destructive"
+                      });
+                    }
+                  }}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-5 h-5">
                     <path fill="#EA4335" d="M5.26 11c0-.67.12-1.31.34-1.9L1.55 6.6C.72 7.97.24 9.57.05 11.26a13 13 0 0 0 0 1.48c.19 1.69.67 3.29 1.5 4.66l4.05-2.5c-.22-.59-.34-1.23-.34-1.9"></path>
