@@ -40,7 +40,7 @@ export default function PollCreator() {
   const [typingTimeoutA, setTypingTimeoutA] = useState<NodeJS.Timeout | null>(null);
   const [typingTimeoutB, setTypingTimeoutB] = useState<NodeJS.Timeout | null>(null);
   
-  // Hidden file inputs for image uploads
+  // Refs for file inputs
   const fileInputA = useRef<HTMLInputElement>(null);
   const fileInputB = useRef<HTMLInputElement>(null);
   
@@ -319,7 +319,7 @@ export default function PollCreator() {
                       <div className="bg-black border border-primary/30 rounded overflow-hidden">
                         <div 
                           className="h-32 bg-black flex items-center justify-center relative"
-                          onClick={() => !isSearchingA && searchImageForOption("A")}
+                          onClick={() => !isSearchingA && openFilePicker("A")}
                         >
                           {optionAImage ? (
                             <img 
@@ -328,14 +328,20 @@ export default function PollCreator() {
                               className="w-full h-full object-cover" 
                             />
                           ) : (
-                            <div className="flex flex-col items-center justify-center cursor-pointer">
+                            <div 
+                              className="flex flex-col items-center justify-center cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openFilePicker("A");
+                              }}
+                            >
                               {isSearchingA ? (
                                 <Loader2 className="h-6 w-6 text-primary animate-spin" />
                               ) : (
-                                <ImageIcon className="h-6 w-6 text-primary/50" />
+                                <Upload className="h-8 w-8 text-primary/70" />
                               )}
                               <span className="text-xs text-muted-foreground mt-1">
-                                {isSearchingA ? "Searching..." : "Click to search images"}
+                                {isSearchingA ? "Processing..." : "Click to upload image"}
                               </span>
                             </div>
                           )}
@@ -421,7 +427,7 @@ export default function PollCreator() {
                       <div className="bg-black border border-primary/30 rounded overflow-hidden">
                         <div 
                           className="h-32 bg-black flex items-center justify-center relative"
-                          onClick={() => !isSearchingB && searchImageForOption("B")}
+                          onClick={() => !isSearchingB && openFilePicker("B")}
                         >
                           {optionBImage ? (
                             <img 
@@ -430,14 +436,20 @@ export default function PollCreator() {
                               className="w-full h-full object-cover" 
                             />
                           ) : (
-                            <div className="flex flex-col items-center justify-center cursor-pointer">
+                            <div 
+                              className="flex flex-col items-center justify-center cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openFilePicker("B");
+                              }}
+                            >
                               {isSearchingB ? (
                                 <Loader2 className="h-6 w-6 text-primary animate-spin" />
                               ) : (
-                                <ImageIcon className="h-6 w-6 text-primary/50" />
+                                <Upload className="h-8 w-8 text-primary/70" />
                               )}
                               <span className="text-xs text-muted-foreground mt-1">
-                                {isSearchingB ? "Searching..." : "Click to search images"}
+                                {isSearchingB ? "Processing..." : "Click to upload image"}
                               </span>
                             </div>
                           )}
