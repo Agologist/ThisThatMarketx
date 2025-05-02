@@ -176,22 +176,31 @@ export default function PollCreator() {
       if (option === "A") setIsSearchingA(true);
       else setIsSearchingB(true);
       
-      const images = await searchImages(searchText);
-      
-      if (images && images.length > 0) {
-        if (option === "A") setOptionAImage(images[0].url);
-        else setOptionBImage(images[0].url);
-      } else {
-        toast({
-          title: "No Images Found",
-          description: `No images found for "${searchText}"`,
-          variant: "destructive",
-        });
+      try {
+        // First try to get images from the API
+        const images = await searchImages(searchText);
+        
+        if (images && images.length > 0) {
+          if (option === "A") setOptionAImage(images[0].url);
+          else setOptionBImage(images[0].url);
+          return;
+        }
+      } catch (apiError) {
+        console.log("Image API search failed, using fallback:", apiError);
+        // If API fails, we'll continue to use the fallback
       }
+      
+      // If we're here, either the API failed or returned no images
+      // Generate a fallback image
+      const fallbackImage = getFallbackImage(searchText);
+      
+      if (option === "A") setOptionAImage(fallbackImage);
+      else setOptionBImage(fallbackImage);
+      
     } catch (error) {
       toast({
-        title: "Image Search Failed",
-        description: "Failed to search for images. Please try again.",
+        title: "Image Generation Failed",
+        description: "Failed to generate an image. Please try again.",
         variant: "destructive",
       });
     } finally {
