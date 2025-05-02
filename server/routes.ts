@@ -149,6 +149,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Route to check vote status before voting
+  app.get("/api/polls/:id/vote", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const pollId = parseInt(req.params.id);
+      const userId = req.user.id;
+      
+      // Check if the poll exists
+      const poll = await storage.getPoll(pollId);
+      if (!poll) {
+        return res.status(404).json({ message: "Challenge not found" });
+      }
+      
+      // Check if the user has already voted
+      const existingVote = await storage.getUserVoteForPoll(userId, pollId);
+      
+      // Debug log for checking vote status
+      console.log(`Checking vote status for user ${userId} on poll ${pollId}: ${existingVote ? 'Already voted' : 'Not voted yet'}`);
+      if (existingVote) {
+        console.log("Existing vote details:", existingVote);
+      }
+      
+      res.status(200).json({
+        hasVoted: !!existingVote,
+        poll,
+        userId,
+        pollId
+      });
+    } catch (error) {
+      console.error("Error checking vote status:", error);
+      res.status(500).json({ message: "Failed to check vote status" });
+    }
+  });
+
   app.post("/api/polls/:id/vote", async (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -157,6 +194,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const pollId = parseInt(req.params.id);
       const { option } = req.body;
+      const userId = req.user.id;
+      
+      console.log(`Processing vote for user ${userId} on poll ${pollId}, option ${option}`);
       
       // Validate option
       if (option !== "A" && option !== "B") {
@@ -164,18 +204,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check if user already voted
-      const existingVote = await storage.getUserVoteForPoll(req.user.id, pollId);
+      const existingVote = await storage.getUserVoteForPoll(userId, pollId);
+      console.log(`Found existing vote: ${!!existingVote}`);
+      
       if (existingVote) {
-        return res.status(400).json({ message: "You have already voted on this poll" });
+        return res.status(400).json({ message: "You have already voted on this challenge" });
       }
       
+      // Create the vote
       const voteData = insertVoteSchema.parse({
         pollId,
-        userId: req.user.id,
+        userId,
         option,
       });
       
+      // Debug log to see how vote data is being created
+      console.log("Creating new vote with data:", JSON.stringify(voteData));
+      
       const vote = await storage.createVote(voteData);
+      console.log("Vote created:", vote);
       
       // Update poll vote count
       await storage.incrementPollVote(pollId, option);
@@ -185,6 +232,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.status(201).json({ vote, poll: updatedPoll });
     } catch (error) {
+      console.error("Vote creation error:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid vote data", errors: error.errors });
       }

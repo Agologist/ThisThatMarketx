@@ -198,9 +198,31 @@ export class MemStorage implements IStorage {
   }
   
   async getUserVoteForPoll(userId: number, pollId: number): Promise<Vote | undefined> {
-    return Array.from(this.votes.values()).find(
+    console.log(`Checking for vote: userId=${userId}, pollId=${pollId}`);
+    console.log(`Total votes in storage: ${this.votes.size}`);
+    
+    // List all votes for debugging
+    if (this.votes.size > 0) {
+      console.log("Current votes in storage:");
+      Array.from(this.votes.values()).forEach(vote => {
+        console.log(`Vote ID: ${vote.id}, UserID: ${vote.userId}, PollID: ${vote.pollId}, Option: ${vote.option}`);
+      });
+    }
+    
+    // Check for votes for this poll
+    const votesForPoll = Array.from(this.votes.values()).filter(
+      vote => vote.pollId === pollId
+    );
+    console.log(`Votes for this poll: ${votesForPoll.length}`);
+    
+    // Find the user's vote
+    const userVote = Array.from(this.votes.values()).find(
       vote => vote.userId === userId && vote.pollId === pollId
     );
+    
+    console.log(`Found vote for user ${userId} on poll ${pollId}: ${userVote ? 'Yes' : 'No'}`);
+    
+    return userVote;
   }
   
   // Race methods
@@ -429,9 +451,34 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getUserVoteForPoll(userId: number, pollId: number): Promise<Vote | undefined> {
-    const [vote] = await db.select().from(votes)
-      .where(and(eq(votes.userId, userId), eq(votes.pollId, pollId)));
-    return vote;
+    console.log(`DB: Checking for vote: userId=${userId}, pollId=${pollId}`);
+    
+    try {
+      // Get all votes for debugging
+      const allVotes = await db.select().from(votes);
+      console.log(`DB: Total votes in database: ${allVotes.length}`);
+      
+      if (allVotes.length > 0) {
+        console.log("DB: Current votes in database:");
+        allVotes.forEach(vote => {
+          console.log(`Vote ID: ${vote.id}, UserID: ${vote.userId}, PollID: ${vote.pollId}, Option: ${vote.option}`);
+        });
+      }
+      
+      // Get all votes for this poll
+      const pollVotes = await db.select().from(votes).where(eq(votes.pollId, pollId));
+      console.log(`DB: Votes for this poll: ${pollVotes.length}`);
+      
+      // Find the specific vote
+      const [vote] = await db.select().from(votes)
+        .where(and(eq(votes.userId, userId), eq(votes.pollId, pollId)));
+      
+      console.log(`DB: Found vote for user ${userId} on poll ${pollId}: ${vote ? 'Yes' : 'No'}`);
+      return vote;
+    } catch (error) {
+      console.error("DB: Error checking for vote:", error);
+      return undefined;
+    }
   }
   
   // Race methods
