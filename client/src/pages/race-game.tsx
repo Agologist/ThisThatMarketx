@@ -17,6 +17,10 @@ import type {
   UserAchievement 
 } from "../../../shared/schema";
 
+// Game constants
+const MOVE_AMOUNT = 2; // How much each car moves with each vote (percentage)
+const MAX_POSITION = 30; // Position where a car falls off the track (percentage from center)
+
 // Race car images
 const carImages = [
   "https://cdn-icons-png.flaticon.com/512/4955/4955169.png",
@@ -30,31 +34,28 @@ export default function RaceGame() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   
+  // Game state
   const [gameState, setGameState] = useState<"ready" | "countdown" | "racing" | "finished">("ready");
   const [countdownValue, setCountdownValue] = useState(3);
   const [raceTime, setRaceTime] = useState(0);
-  // Define constants for game mechanics
-  const MOVE_STEP = 3; // Position increment for each vote
-  const MAX_CAR_POSITION = 30; // Maximum position before falling off
   
-  // Position values in a 0-30 range where:
-  // - Both cars start at position 0 (center line)
-  // - As values increase, cars move away from center
-  // Right car moves right (toward its side) as value increases
-  const [leftPosition, setLeftPosition] = useState(0); // Start at center line
-  const [rightPosition, setRightPosition] = useState(0); // Start at center line
+  // Car positions: from 0 (center) to MAX_POSITION (edge)
+  const [leftPosition, setLeftPosition] = useState(0);
+  const [rightPosition, setRightPosition] = useState(0);
+  
+  // Vote counts
   const [leftVotes, setLeftVotes] = useState(0);
   const [rightVotes, setRightVotes] = useState(0);
+  
+  // Car selection, game result and state
   const [selectedCar, setSelectedCar] = useState(0);
   const [gameResult, setGameResult] = useState<{ won: boolean; time: number } | null>(null);
   const [leftExploded, setLeftExploded] = useState(false);
   const [rightExploded, setRightExploded] = useState(false);
   
+  // Refs for timers
   const raceTimerRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
-  
-  // Constants for the race game
-  const PLATFORM_WIDTH = 60; // Percentage of the track width
   
   const { data: userRaces, isLoading: racesLoading } = useQuery<RaceRecord[]>({
     queryKey: ["/api/user/races"],
@@ -130,76 +131,54 @@ export default function RaceGame() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (gameState !== "racing") return;
       
-      // Left arrow or 'A' key votes for the left car
+      // Left arrow or 'A' key votes for the left car (test mode)
       if (e.code === "ArrowLeft" || e.code === "KeyA") {
         e.preventDefault();
-        
-        // Increment left votes
-        setLeftVotes(prev => prev + 1);
-        
-        // Move both cars accordingly
-        const moveAmount = MOVE_STEP;
-        
-        // Left car moves forward
-        const newLeftPos = leftPosition + moveAmount;
-        setLeftPosition(newLeftPos);
-        
-        // Right car position tracks left car position
-        const newRightPos = newLeftPos;
-        
-        // Check if right car falls off
-        if (newRightPos >= 30) {
-          setRightExploded(true);
-          const elapsed = Date.now() - (startTimeRef.current || 0);
-          setRightPosition(30);
-          
-          setTimeout(() => {
-            finishRace(true, elapsed);
-          }, 800);
-        } else {
-          setRightPosition(newRightPos);
-        }
+        handleLeftVote();
       }
-      
-      // No implementation for right car voting (D key) in test mode
-      // If you want to re-enable right car voting, uncomment this
-      /*
-      if (e.code === "ArrowRight" || e.code === "KeyD") {
-        e.preventDefault();
-        // Increment right votes
-        setRightVotes(prev => prev + 1);
-        
-        // Move both cars accordingly
-        const moveAmount = MOVE_STEP;
-        const currentLeftPos = leftPosition;
-        const currentRightPos = rightPosition;
-        
-        // Right car moves forward
-        const newRightPos = currentRightPos + moveAmount;
-        setRightPosition(newRightPos);
-        
-        // Left car gets pushed back
-        const newLeftPos = currentLeftPos + moveAmount;
-        
-        // Check if left car falls off
-        if (newLeftPos >= 30) {
-          setLeftExploded(true);
-          const elapsed = Date.now() - (startTimeRef.current || 0);
-          setLeftPosition(30);
-          
-          setTimeout(() => {
-            finishRace(false, elapsed);
-          }, 800);
-        } else {
-          setLeftPosition(newLeftPos);
-        }
-      }
-      */
     };
     
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [gameState, leftPosition, rightPosition]);
+  }, [gameState]);
+  
+  // Handle a vote for the left car
+  const handleLeftVote = () => {
+    // Only process if the game is still racing
+    if (gameState !== "racing") return;
+    
+    // Increment left votes
+    setLeftVotes(prev => prev + 1);
+    
+    // Left car moves forward by MOVE_AMOUNT
+    setLeftPosition(prevLeftPos => {
+      const newLeftPos = prevLeftPos + MOVE_AMOUNT;
+      return newLeftPos;
+    });
+    
+    // Right car gets pushed back by the same amount
+    setRightPosition(prevRightPos => {
+      const newRightPos = prevRightPos + MOVE_AMOUNT;
+      
+      // Check if right car has fallen off the platform
+      if (newRightPos >= MAX_POSITION) {
+        // Car has fallen off, show explosion
+        setRightExploded(true);
+        
+        // Calculate elapsed time
+        const elapsed = Date.now() - (startTimeRef.current || 0);
+        
+        // Delay finish to show explosion animation
+        setTimeout(() => {
+          finishRace(true, elapsed); // Left car wins
+        }, 800);
+        
+        return MAX_POSITION; // Position right at the edge for explosion
+      }
+      
+      return newRightPos;
+    });
+  };
   
   // Cleanup on unmount
   useEffect(() => {
@@ -582,46 +561,8 @@ export default function RaceGame() {
                         <button 
                           className="w-16 h-16 rounded-full bg-primary mb-4 flex items-center justify-center text-black hover:bg-primary/80 transition-colors"
                           onClick={() => {
-                            // For testing, always vote for the left car (user's car)
-                            const newLeftVotes = leftVotes + 1;
-                            setLeftVotes(newLeftVotes);
-                            
-                            // After voting, left car pushes right car
-                            setTimeout(() => {
-                              const moveAmount = MOVE_STEP;
-                              
-                              // In the corrected push mechanics:
-                              // 1. We only modify the left position directly with user input
-                              // 2. Right car position is calculated based on platform size and left car position
-                              
-                              // Left car moves forward (away from center)
-                              const newLeftPos = leftPosition + moveAmount;
-                              setLeftPosition(newLeftPos);
-                              
-                              // Right car is pushed to maintain the same total position sum
-                              // If platform is 60 units wide, and both cars start at 0:
-                              // - When left car moves to position 5, right car moves to position 5
-                              // - This maintains both cars within platform constraints
-                              
-                              // Total platform space constraint (60 units wide)
-                              // Position is conserved: if left goes +5, right must go +5
-                              const newRightPos = newLeftPos; // Right car moves same as left car
-                              
-                              // Check if right car falls off the platform
-                              if (newRightPos >= 30) {
-                                setRightExploded(true);
-                                const elapsed = Date.now() - (startTimeRef.current || 0);
-                                setRightPosition(30); // Position at edge of platform
-                                
-                                // Delay finish to show explosion
-                                setTimeout(() => {
-                                  finishRace(true, elapsed); // Left wins
-                                }, 800);
-                              } else {
-                                // Otherwise just update the position
-                                setRightPosition(newRightPos);
-                              }
-                            }, 500); // Short delay to show the vote count change first
+                            // Handle the vote for the left car using our centralized function
+                            handleLeftVote();
                           }}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
