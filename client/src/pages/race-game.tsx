@@ -284,24 +284,50 @@ export default function RaceGame() {
                   {/* Race track - single line with cars facing each other */}
                   <div className={`bg-black rounded-lg p-4 mb-4 ${gameState === "ready" ? "opacity-70" : ""}`}>
                     {/* Vote counters */}
-                    <div className="flex justify-between mb-2">
-                      <div className="flex items-center space-x-2">
-                        <div className="bg-primary/20 text-primary font-bold px-3 py-1 rounded-full">
+                    <div className="flex justify-between mb-4">
+                      <div className="flex flex-col items-center">
+                        <div className="text-sm uppercase font-bold text-muted-foreground mb-1">Left</div>
+                        <div className="bg-primary/30 border border-primary/50 text-primary font-racing text-xl px-4 py-1 rounded-md shadow-inner shadow-primary/10">
                           {leftVotes}
                         </div>
-                        <span className="text-xs text-muted-foreground">votes</span>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xs text-muted-foreground">votes</span>
-                        <div className="bg-destructive/20 text-destructive font-bold px-3 py-1 rounded-full">
+                      <div className="flex flex-col items-center">
+                        <div className="text-sm uppercase font-bold text-muted-foreground mb-1">Total</div>
+                        <div className="bg-muted text-foreground font-bold text-lg px-4 py-1 rounded-md shadow-inner">
+                          {leftVotes + rightVotes}
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <div className="text-sm uppercase font-bold text-muted-foreground mb-1">Right</div>
+                        <div className="bg-destructive/30 border border-destructive/50 text-destructive font-racing text-xl px-4 py-1 rounded-md shadow-inner shadow-destructive/10">
                           {rightVotes}
                         </div>
                       </div>
                     </div>
                     
-                    <div className="relative h-24 rounded-lg overflow-hidden bg-gradient-to-r from-neutral-800 to-neutral-900 flex items-center">
-                      {/* Visualize the platform */}
-                      <div className="absolute left-1/2 top-0 bottom-0 transform -translate-x-1/2 w-[60%] h-full border-x-2 border-white/20"></div>
+                    <div className="relative h-32 rounded-lg overflow-hidden bg-gradient-to-r from-neutral-800 to-neutral-900 flex items-center">
+                      {/* Main platform in the middle */}
+                      <div className="absolute left-1/2 top-0 bottom-0 transform -translate-x-1/2 w-[60%] h-full border-x-4 border-white/30 bg-black/40"></div>
+                      
+                      {/* Ramps on each side with diagonal stripes */}
+                      <div className="absolute left-0 top-0 bottom-0 w-[20%] bg-gradient-to-r from-red-900/50 to-red-700/30 overflow-hidden">
+                        {/* Diagonal stripes for ramp effect */}
+                        <div className="absolute inset-0" style={{ 
+                          backgroundImage: 'repeating-linear-gradient(145deg, transparent, transparent 8px, rgba(255, 0, 0, 0.2) 8px, rgba(255, 0, 0, 0.2) 16px)',
+                          backgroundSize: '32px 32px'
+                        }}></div>
+                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-red-500/70"></div>
+                        <div className="absolute top-0 left-0 right-0 h-1 bg-red-800/40"></div>
+                      </div>
+                      <div className="absolute right-0 top-0 bottom-0 w-[20%] bg-gradient-to-l from-red-900/50 to-red-700/30 overflow-hidden">
+                        {/* Diagonal stripes for ramp effect, mirrored */}
+                        <div className="absolute inset-0" style={{ 
+                          backgroundImage: 'repeating-linear-gradient(215deg, transparent, transparent 8px, rgba(255, 0, 0, 0.2) 8px, rgba(255, 0, 0, 0.2) 16px)',
+                          backgroundSize: '32px 32px'
+                        }}></div>
+                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-red-500/70"></div>
+                        <div className="absolute top-0 left-0 right-0 h-1 bg-red-800/40"></div>
+                      </div>
                       
                       {/* Center divider line */}
                       <div className="absolute top-0 bottom-0 left-1/2 transform -translate-x-1/2 w-px h-full bg-primary"></div>
@@ -317,17 +343,17 @@ export default function RaceGame() {
                             <img 
                               src={carImages[selectedCar]} 
                               alt="Left car" 
-                              className="h-10 w-auto opacity-50"
+                              className="h-12 w-auto opacity-50"
                             />
                             <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="text-destructive text-xl">💥</div>
+                              <div className="text-destructive text-2xl">💥</div>
                             </div>
                           </div>
                         ) : (
                           <img 
                             src={carImages[selectedCar]} 
                             alt="Left car" 
-                            className="h-10 w-auto"
+                            className="h-12 w-auto"
                           />
                         )}
                       </div>
@@ -343,26 +369,26 @@ export default function RaceGame() {
                             <img 
                               src={carImages[(selectedCar + 2) % carImages.length]} 
                               alt="Right car" 
-                              className="h-10 w-auto opacity-50"
+                              className="h-12 w-auto opacity-50"
                               style={{ transform: 'scaleX(-1)' }}
                             />
                             <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="text-destructive text-xl">💥</div>
+                              <div className="text-destructive text-2xl">💥</div>
                             </div>
                           </div>
                         ) : (
                           <img 
                             src={carImages[(selectedCar + 2) % carImages.length]} 
                             alt="Right car" 
-                            className="h-10 w-auto"
+                            className="h-12 w-auto"
                             style={{ transform: 'scaleX(-1)' }}
                           />
                         )}
                       </div>
 
-                      {/* Platform edges */}
-                      <div className="absolute left-[20%] top-0 bottom-0 w-1 bg-white opacity-70"></div>
-                      <div className="absolute right-[20%] top-0 bottom-0 w-1 bg-white opacity-70"></div>
+                      {/* Platform edges - more visible */}
+                      <div className="absolute left-[20%] top-0 bottom-0 w-1 bg-white opacity-90"></div>
+                      <div className="absolute right-[20%] top-0 bottom-0 w-1 bg-white opacity-90"></div>
                       
                       {/* Countdown overlay */}
                       {gameState === "countdown" && (
@@ -480,11 +506,10 @@ export default function RaceGame() {
                               setRightVotes(newRightVotes);
                             }
                             
-                            // After voting, determine which car moves
+                            // After voting, move the car that received the vote forward, pushing the other car
                             setTimeout(() => {
-                              // Calculate which car has more votes
-                              if (newLeftVotes > newRightVotes) {
-                                // Left car wins - move right car backwards
+                              if (random > 0.5) {
+                                // Left car got the vote - push right car back
                                 setRightPosition(prev => {
                                   const newPos = prev + MOVE_STEP;
                                   
@@ -501,8 +526,8 @@ export default function RaceGame() {
                                   
                                   return newPos;
                                 });
-                              } else if (newRightVotes > newLeftVotes) {
-                                // Right car wins - move left car backwards
+                              } else {
+                                // Right car got the vote - push left car back
                                 setLeftPosition(prev => {
                                   const newPos = prev + MOVE_STEP;
                                   
