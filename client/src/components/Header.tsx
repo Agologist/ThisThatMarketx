@@ -8,9 +8,9 @@ import { FlagIcon, User, LogOut, Menu, X, UserIcon } from "lucide-react";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const { user, isGuest, logoutMutation } = useAuth();
-  
+
   const handleLogout = async () => {
     try {
       // Import Firebase signOut dynamically to avoid circular dependencies
@@ -21,12 +21,21 @@ export default function Header() {
         await signOut();
       }
       
-      // Then perform the regular logout through our API
-      logoutMutation.mutate();
+      // Perform the server-side logout
+      logoutMutation.mutate(undefined, {
+        onSuccess: () => {
+          // Force hard navigation to the auth page after successful logout
+          window.location.href = '/auth';
+        },
+        onError: () => {
+          // Still redirect even if there's an error (client-side cleanup)
+          window.location.href = '/auth';
+        }
+      });
     } catch (error) {
       console.error('Logout error:', error);
       // Fallback to regular logout if Firebase logout fails
-      logoutMutation.mutate();
+      window.location.href = '/auth';
     }
   };
   
