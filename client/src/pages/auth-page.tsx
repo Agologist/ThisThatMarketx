@@ -12,16 +12,16 @@ import { FlagIcon, CheckIcon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 export default function AuthPage() {
-  const { user, loginMutation, registerMutation } = useAuth();
+  const { user, loginMutation, registerMutation, continueAsGuest, isGuest } = useAuth();
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   
-  // Redirect if already logged in
+  // Redirect if already logged in or in guest mode
   useEffect(() => {
-    if (user) {
+    if (user || isGuest) {
       navigate("/");
     }
-  }, [user, navigate]);
+  }, [user, isGuest, navigate]);
   
   // Login form
   const loginForm = useForm({
@@ -49,6 +49,10 @@ export default function AuthPage() {
   
   const onRegisterSubmit = (data: any) => {
     registerMutation.mutate(data);
+  };
+  
+  const handleGuestAccess = () => {
+    continueAsGuest();
   };
   
   return (
@@ -134,7 +138,7 @@ export default function AuthPage() {
                 <Button 
                   variant="ghost" 
                   className="w-full mt-4 text-muted-foreground"
-                  onClick={() => navigate("/?guest=true")}
+                  onClick={handleGuestAccess}
                 >
                   Continue as Guest
                 </Button>
@@ -240,6 +244,14 @@ export default function AuthPage() {
                     <path fill="#34A853" d="M23.5 12c0-.57-.05-1.19-.15-1.82H12v3.88h6.47c-.29 1.52-1.16 2.8-2.48 3.67l3.81 2.93c2.24-2.09 3.55-5.17 3.7-8.66"></path>
                   </svg>
                   Sign up with Google
+                </Button>
+                
+                <Button 
+                  variant="ghost" 
+                  className="w-full mt-4 text-muted-foreground"
+                  onClick={handleGuestAccess}
+                >
+                  Continue as Guest
                 </Button>
               </TabsContent>
             </Tabs>

@@ -1,4 +1,4 @@
-import React, { createContext, ReactNode, useContext } from "react";
+import React, { createContext, ReactNode, useContext, useEffect } from "react";
 import {
   useQuery,
   useMutation,
@@ -8,6 +8,7 @@ import { insertUserSchema, User as SelectUser } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import { useLocation } from "wouter";
 
 type AuthContextType = {
   user: SelectUser | null;
@@ -44,11 +45,21 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  const [location, setLocation] = useLocation();
   const [isGuest, setIsGuest] = React.useState<boolean>(false);
+  
+  // Check if URL contains guest parameter
+  React.useEffect(() => {
+    if (location.includes('?guest=true')) {
+      setIsGuest(true);
+    }
+  }, [location]);
+  
   const {
     data: user,
     error,
     isLoading,
+    refetch
   } = useQuery<SelectUser | null, Error>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
@@ -61,7 +72,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       title: "Guest Mode Activated",
       description: "You're browsing as a guest. To save your votes and participate in races, please sign up.",
     });
-  }, [toast]);
+    // Navigate to home with guest parameter
+    setLocation("/?guest=true");
+  }, [toast, setLocation]);
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
@@ -75,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "Login successful",
         description: `Welcome back, ${user.displayName || user.username}!`,
       });
+      setLocation("/"); // Redirect to home page after login
     },
     onError: (error: Error) => {
       toast({
@@ -99,6 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "Registration successful",
         description: `Welcome to Votes and Wars, ${user.displayName || user.username}!`,
       });
+      setLocation("/"); // Redirect to home page after registration
     },
     onError: (error: Error) => {
       toast({
@@ -120,6 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "Logged out",
         description: "You have been successfully logged out",
       });
+      setLocation("/auth"); // Redirect to auth page after logout
     },
     onError: (error: Error) => {
       toast({
@@ -129,6 +145,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
   });
+
+  // Refetch user data when auth state changes
+  useEffect(() => {
+    if (!isLoading) {
+      refetch();
+    }
+  }, [isGuest, refetch, isLoading]);
 
   return (
     <AuthContext.Provider

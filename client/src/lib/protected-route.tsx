@@ -11,11 +11,11 @@ export function ProtectedRoute({
   component: () => React.JSX.Element;
   requireAuth?: boolean;
 }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isGuest } = useAuth();
   const [location] = useLocation();
   
-  // Check for guest mode in query parameter
-  const isGuestMode = location.includes('?guest=true') || !requireAuth;
+  // Also check for guest mode in query parameter for backwards compatibility
+  const urlHasGuestParam = location.includes('?guest=true');
 
   if (isLoading) {
     return (
@@ -28,7 +28,7 @@ export function ProtectedRoute({
   }
 
   // Allow access if logged in or in guest mode
-  if (!user && !isGuestMode && requireAuth) {
+  if (!user && !isGuest && !urlHasGuestParam && requireAuth) {
     return (
       <Route path={path}>
         <Redirect to="/auth" />
