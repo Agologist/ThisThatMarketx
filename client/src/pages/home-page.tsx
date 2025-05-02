@@ -11,23 +11,24 @@ import { Loader2, InfoIcon } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { Poll, RaceRecord, UserAchievement, Achievement } from "@shared/schema";
 
 export default function HomePage() {
-  const { user, isGuest } = useAuth();
+  const { user, isGuest, exitGuestMode } = useAuth();
   
-  const { data: polls, isLoading: pollsLoading } = useQuery({
+  const { data: polls = [], isLoading: pollsLoading } = useQuery<Poll[]>({
     queryKey: ["/api/polls"],
     // Guest users can still see polls
     enabled: true
   });
   
   // Only fetch user-specific data if not in guest mode
-  const { data: userAchievements, isLoading: achievementsLoading } = useQuery({
+  const { data: userAchievements = [], isLoading: achievementsLoading } = useQuery<(UserAchievement & Achievement)[]>({
     queryKey: ["/api/user/achievements"],
     enabled: !isGuest && !!user
   });
   
-  const { data: races, isLoading: racesLoading } = useQuery({
+  const { data: races = [], isLoading: racesLoading } = useQuery<RaceRecord[]>({
     queryKey: ["/api/user/races"],
     enabled: !isGuest && !!user
   });
@@ -65,8 +66,12 @@ export default function HomePage() {
           <AlertTitle>You're browsing as a guest</AlertTitle>
           <AlertDescription className="flex items-center justify-between">
             <span>Sign in to create polls, vote, and participate in races.</span>
-            <Button asChild variant="outline" className="ml-4 border-primary text-primary">
-              <Link href="/auth">Sign in or Register</Link>
+            <Button 
+              variant="outline" 
+              className="ml-4 border-primary text-primary"
+              onClick={exitGuestMode}
+            >
+              Sign in or Register
             </Button>
           </AlertDescription>
         </Alert>
@@ -96,16 +101,16 @@ export default function HomePage() {
           
           {!isGuest && (
             <StatCards 
-              pollCount={polls?.length || 0} 
-              raceWins={races?.filter(race => race.won).length || 0}
-              achievements={userAchievements?.length || 0}
+              pollCount={polls.length} 
+              raceWins={races.filter(race => race.won).length}
+              achievements={userAchievements.length}
             />
           )}
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {!isGuest && <PollCreator />}
             <div className={isGuest ? "lg:col-span-2" : ""}>
-              <ActivePolls polls={polls || []} />
+              <ActivePolls polls={polls} />
             </div>
           </div>
           
