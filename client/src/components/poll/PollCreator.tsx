@@ -73,22 +73,33 @@ export default function PollCreator() {
   
   const createPollMutation = useMutation({
     mutationFn: async (values: PollFormValues) => {
-      // Calculate end time based on duration
+      // Calculate end time based on duration using milliseconds for precision
       const now = new Date();
-      let endTime = new Date(now);
+      let endTimeMs = now.getTime(); // Base timestamp in milliseconds
+      
+      console.log("Current time:", now.toISOString());
       
       switch (values.duration) {
         case "1h":
-          endTime.setHours(now.getHours() + 1);
+          endTimeMs += 1 * 60 * 60 * 1000; // 1 hour in ms
+          break;
+        case "3h":
+          endTimeMs += 3 * 60 * 60 * 1000; // 3 hours in ms
+          break;
+        case "6h":
+          endTimeMs += 6 * 60 * 60 * 1000; // 6 hours in ms
+          break;
+        case "12h":
+          endTimeMs += 12 * 60 * 60 * 1000; // 12 hours in ms
           break;
         case "48h":
-          endTime.setHours(now.getHours() + 48);
+          endTimeMs += 48 * 60 * 60 * 1000; // 48 hours in ms
           break;
         case "72h":
-          endTime.setHours(now.getHours() + 72);
+          endTimeMs += 72 * 60 * 60 * 1000; // 72 hours in ms
           break;
         case "1w":
-          endTime.setDate(now.getDate() + 7);
+          endTimeMs += 7 * 24 * 60 * 60 * 1000; // 7 days in ms
           break;
         case "custom":
           // Add custom hours and minutes
@@ -100,12 +111,17 @@ export default function PollCreator() {
             throw new Error("Challenge duration must be at least 5 minutes");
           }
           
-          endTime.setHours(now.getHours() + hours);
-          endTime.setMinutes(now.getMinutes() + minutes);
+          // Convert hours and minutes to milliseconds and add to current time
+          const hoursMs = hours * 60 * 60 * 1000;
+          const minutesMs = minutes * 60 * 1000;
+          endTimeMs += hoursMs + minutesMs;
           break;
         default: // 24h
-          endTime.setHours(now.getHours() + 24);
+          endTimeMs += 24 * 60 * 60 * 1000; // 24 hours in ms
       }
+      
+      const endTime = new Date(endTimeMs);
+      console.log("Calculated end time:", endTime.toISOString());
       
       // Compress images before submitting to reduce payload size
       let compressedOptionAImage = optionAImage;
