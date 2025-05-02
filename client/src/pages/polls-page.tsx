@@ -11,19 +11,20 @@ import PollCreator from "@/components/poll/PollCreator";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Poll } from "@shared/schema";
 
 export default function PollsPage() {
-  const { user, isGuest } = useAuth();
+  const { user, isGuest, exitGuestMode } = useAuth();
   const [activeTab, setActiveTab] = useState<"all" | "my" | "trending">("all");
   
   // Fetch all polls
-  const { data: polls, isLoading: pollsLoading } = useQuery({
+  const { data: polls = [], isLoading: pollsLoading } = useQuery<Poll[]>({
     queryKey: ["/api/polls"],
     enabled: true
   });
   
   // Fetch user polls (only if authenticated)
-  const { data: userPolls, isLoading: userPollsLoading } = useQuery({
+  const { data: userPolls = [], isLoading: userPollsLoading } = useQuery<Poll[]>({
     queryKey: ["/api/user/polls"],
     enabled: !isGuest && !!user
   });
@@ -55,8 +56,12 @@ export default function PollsPage() {
           <AlertTitle>You're browsing as a guest</AlertTitle>
           <AlertDescription className="flex items-center justify-between">
             <span>Sign in to create polls, vote, and participate in races.</span>
-            <Button asChild variant="outline" className="ml-4 border-primary text-primary">
-              <Link href="/auth">Sign in or Register</Link>
+            <Button 
+              variant="outline" 
+              className="ml-4 border-primary text-primary"
+              onClick={exitGuestMode}
+            >
+              Sign in or Register
             </Button>
           </AlertDescription>
         </Alert>
@@ -116,19 +121,23 @@ export default function PollsPage() {
             {/* Right side - Poll listings */}
             <div className="lg:col-span-3">
               <TabsContent value="all" className="mt-0">
-                <ActivePolls polls={polls || []} />
+                <ActivePolls polls={polls} />
               </TabsContent>
               
               <TabsContent value="my" className="mt-0">
                 {!isGuest ? (
-                  <ActivePolls polls={userPolls || []} />
+                  <ActivePolls polls={userPolls} />
                 ) : (
                   <Card className="bg-card border-primary/30">
                     <CardContent className="pt-6">
                       <div className="text-center py-8">
                         <p className="text-muted-foreground mb-4">You need to sign in to see your polls</p>
-                        <Button asChild variant="outline" className="border-primary text-primary">
-                          <Link href="/auth">Sign in</Link>
+                        <Button 
+                          variant="outline" 
+                          className="border-primary text-primary"
+                          onClick={exitGuestMode}
+                        >
+                          Sign in
                         </Button>
                       </div>
                     </CardContent>
@@ -137,7 +146,7 @@ export default function PollsPage() {
               </TabsContent>
               
               <TabsContent value="trending" className="mt-0">
-                <ActivePolls polls={(polls || []).slice(0, 3)} />
+                <ActivePolls polls={polls.slice(0, 3)} />
               </TabsContent>
             </div>
           </div>

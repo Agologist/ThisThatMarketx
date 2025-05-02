@@ -117,9 +117,9 @@ export default function HomePage() {
           {!isGuest && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2">
-                <RaceGame races={races || []} pollId={1} />
+                <RaceGame races={races} pollId={1} />
               </div>
-              <Achievements achievements={userAchievements || []} />
+              <Achievements achievements={userAchievements} />
             </div>
           )}
         </div>
