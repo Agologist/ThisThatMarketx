@@ -33,9 +33,10 @@ export default function RaceGame() {
   const [gameState, setGameState] = useState<"ready" | "countdown" | "racing" | "finished">("ready");
   const [countdownValue, setCountdownValue] = useState(3);
   const [raceTime, setRaceTime] = useState(0);
-  // Position from center (in %) - 0 means at center, higher values mean further from center
-  // Left car: 0 = at center, positive value = left of center
-  // Right car: 0 = at center, positive value = right of center
+  // Position values - represents distance from center
+  // Both cars start at center (0), and move away from center as value increases
+  // Left car moves left (toward its side) as value increases
+  // Right car moves right (toward its side) as value increases
   const [leftPosition, setLeftPosition] = useState(0); // Start at center line
   const [rightPosition, setRightPosition] = useState(0); // Start at center line
   const [leftVotes, setLeftVotes] = useState(0);
@@ -103,10 +104,9 @@ export default function RaceGame() {
   // Start the race
   const startRace = () => {
     setGameState("racing");
-    // Initial position - cars start at opposite sides with some space from the platform edge
-    // These values will position the cars a bit away from the edge of the platform
-    setLeftPosition(20); // Left car starts 20% from center toward left
-    setRightPosition(20); // Right car starts 20% from center toward right
+    // Initial position - cars start nose-to-nose at the center line
+    setLeftPosition(0); // Left car starts at center
+    setRightPosition(0); // Right car starts at center 
     setLeftVotes(0);
     setRightVotes(0);
     setLeftExploded(false);
@@ -190,8 +190,8 @@ export default function RaceGame() {
   const resetGame = () => {
     setGameState("ready");
     setGameResult(null);
-    setLeftPosition(20); // Match initial position from startRace
-    setRightPosition(20); // Match initial position from startRace
+    setLeftPosition(0); // Match initial position from startRace
+    setRightPosition(0); // Match initial position from startRace
     setLeftVotes(0);
     setRightVotes(0);
     setLeftExploded(false);
@@ -347,9 +347,9 @@ export default function RaceGame() {
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
                              // Position from center based on leftPosition value
-                             // At start (20), car is at 30% from left (closer to center)
-                             // As leftPosition increases, car moves away from center
-                             left: `${30 + (leftPosition - 20)}%`, 
+                             // At start (0), car is at 47% from left (right at center line)
+                             // As leftPosition increases, car moves left away from center
+                             left: `${47 - leftPosition}%`, 
                              transition: 'left 0.3s ease-out',
                              zIndex: 10
                            }}>
@@ -377,9 +377,9 @@ export default function RaceGame() {
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
                              // Position from center based on rightPosition value
-                             // At start (20), car is at 30% from right (closer to center)
-                             // As rightPosition increases, car moves away from center
-                             right: `${30 + (rightPosition - 20)}%`, 
+                             // At start (0), car is at 47% from right (right at center line)
+                             // As rightPosition increases, car moves right away from center
+                             right: `${47 - rightPosition}%`, 
                              transition: 'right 0.3s ease-out',
                              zIndex: 9
                            }}>
@@ -569,14 +569,15 @@ export default function RaceGame() {
                                   const newPos = prev + moveAmount;
                                   
                                   // Check if car fell off the platform
-                                  if (newPos >= PLATFORM_WIDTH / 2) {
+                                  // PLATFORM_WIDTH = 60 (percentage), so cars fall at 30 position
+                                  if (newPos >= 30) {
                                     setRightExploded(true);
                                     const elapsed = Date.now() - (startTimeRef.current || 0);
                                     // Delay finish to show explosion
                                     setTimeout(() => {
                                       finishRace(true, elapsed); // Left wins
                                     }, 800);
-                                    return PLATFORM_WIDTH / 2;
+                                    return 30; // Return the platform edge position
                                   }
                                   
                                   return newPos;
