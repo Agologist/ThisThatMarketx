@@ -42,6 +42,7 @@ export default function PollCreator() {
     { value: "1h", label: "1 hour" },
     { value: "24h", label: "24 hours" },
     { value: "48h", label: "48 hours" },
+    { value: "72h", label: "72 hours" },
     { value: "1w", label: "1 week" },
     { value: "custom", label: "Custom" },
   ];
@@ -76,6 +77,9 @@ export default function PollCreator() {
           break;
         case "48h":
           endTime.setHours(now.getHours() + 48);
+          break;
+        case "72h":
+          endTime.setHours(now.getHours() + 72);
           break;
         case "1w":
           endTime.setDate(now.getDate() + 7);
@@ -113,8 +117,8 @@ export default function PollCreator() {
     },
     onSuccess: (data) => {
       toast({
-        title: "Poll Created",
-        description: "Your poll has been created successfully",
+        title: "Challenge Created",
+        description: "Your challenge has been created successfully",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/polls"] });
       navigate(`/polls/${data.id}`);
@@ -124,8 +128,8 @@ export default function PollCreator() {
     },
     onError: (error) => {
       toast({
-        title: "Failed to create poll",
-        description: error.message || "An error occurred while creating the poll",
+        title: "Failed to create challenge",
+        description: error.message || "An error occurred while creating the challenge",
         variant: "destructive",
       });
     },
@@ -135,7 +139,7 @@ export default function PollCreator() {
     if (!user) {
       toast({
         title: "Authentication Required",
-        description: "Please log in to create a poll",
+        description: "Please log in to create a challenge",
         variant: "destructive",
       });
       return;
@@ -343,33 +347,82 @@ export default function PollCreator() {
             </div>
             
             <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="duration"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Poll Duration</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="bg-black border-primary/30">
-                          <SelectValue placeholder="Select duration" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {durations.map((duration) => (
-                          <SelectItem key={duration.value} value={duration.value}>
-                            {duration.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
+              <div>
+                <FormField
+                  control={form.control}
+                  name="duration"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Challenge Duration</FormLabel>
+                      <Select 
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          setShowCustomDuration(value === "custom");
+                        }} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="bg-black border-primary/30">
+                            <SelectValue placeholder="Select duration" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {durations.map((duration) => (
+                            <SelectItem key={duration.value} value={duration.value}>
+                              {duration.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {showCustomDuration && (
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <FormField
+                      control={form.control}
+                      name="customHours"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">Hours</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              max="72"
+                              className="bg-black border-primary/30"
+                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              value={field.value}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="customMinutes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">Minutes</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              max="59"
+                              className="bg-black border-primary/30"
+                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              value={field.value}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 )}
-              />
+              </div>
               
               <FormField
                 control={form.control}
