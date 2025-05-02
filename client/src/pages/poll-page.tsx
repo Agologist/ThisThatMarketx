@@ -205,8 +205,11 @@ export default function PollPage() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div 
-                  className={`border rounded-md overflow-hidden transition-all ${selectedOption === "A" ? "ring-2 ring-primary" : ""} ${!isPollActive || hasVoted ? "pointer-events-none" : "cursor-pointer"}`}
-                  onClick={() => isPollActive && !hasVoted && setSelectedOption("A")}
+                  className={`border rounded-md overflow-hidden transition-all 
+                    ${selectedOption === "A" ? "ring-2 ring-primary" : ""} 
+                    ${!isPollActive ? "pointer-events-none" : "cursor-pointer"}
+                    ${hasVoted && userVote?.option === "A" ? "bg-primary/10" : ""}`}
+                  onClick={() => isPollActive && setSelectedOption("A")}
                 >
                   {poll.optionAImage ? (
                     <div className="h-48 bg-muted">
@@ -232,21 +235,22 @@ export default function PollPage() {
                       )}
                     </div>
                     
-                    {hasVoted && (
-                      <div className="mt-3">
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="text-sm font-medium">{poll.optionAVotes} votes</span>
-                          <span className="text-sm font-medium">{optionAPercentage}%</span>
-                        </div>
-                        <Progress value={optionAPercentage} className="h-2" />
+                    <div className="mt-3">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm font-medium">{poll.optionAVotes} votes</span>
+                        <span className="text-sm font-medium">{optionAPercentage}%</span>
                       </div>
-                    )}
+                      <Progress value={optionAPercentage} className="h-2" />
+                    </div>
                   </div>
                 </div>
                 
                 <div 
-                  className={`border rounded-md overflow-hidden transition-all ${selectedOption === "B" ? "ring-2 ring-primary" : ""} ${!isPollActive || hasVoted ? "pointer-events-none" : "cursor-pointer"}`}
-                  onClick={() => isPollActive && !hasVoted && setSelectedOption("B")}
+                  className={`border rounded-md overflow-hidden transition-all 
+                    ${selectedOption === "B" ? "ring-2 ring-primary" : ""} 
+                    ${!isPollActive ? "pointer-events-none" : "cursor-pointer"}
+                    ${hasVoted && userVote?.option === "B" ? "bg-primary/10" : ""}`}
+                  onClick={() => isPollActive && setSelectedOption("B")}
                 >
                   {poll.optionBImage ? (
                     <div className="h-48 bg-muted">
@@ -272,21 +276,19 @@ export default function PollPage() {
                       )}
                     </div>
                     
-                    {hasVoted && (
-                      <div className="mt-3">
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="text-sm font-medium">{poll.optionBVotes} votes</span>
-                          <span className="text-sm font-medium">{optionBPercentage}%</span>
-                        </div>
-                        <Progress value={optionBPercentage} className="h-2" />
+                    <div className="mt-3">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm font-medium">{poll.optionBVotes} votes</span>
+                        <span className="text-sm font-medium">{optionBPercentage}%</span>
                       </div>
-                    )}
+                      <Progress value={optionBPercentage} className="h-2" />
+                    </div>
                   </div>
                 </div>
               </div>
               
-              {isPollActive && !hasVoted && (
-                <div className="mt-6 flex justify-center">
+              {isPollActive && (
+                <div className="mt-6 flex flex-col items-center">
                   <Button 
                     className="btn-gold w-full max-w-md" 
                     size="lg"
@@ -298,28 +300,45 @@ export default function PollPage() {
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Recording vote...
                       </>
+                    ) : hasVoted ? (
+                      `Change vote to ${selectedOption || "another option"}`
                     ) : (
-                      `Vote for Option ${selectedOption || ""}`
+                      `Vote for ${selectedOption ? poll[selectedOption === "A" ? "optionAText" : "optionBText"] : ""}`
                     )}
                   </Button>
+                  
+                  {hasVoted && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      You voted for {userVote?.option === "A" ? poll.optionAText : poll.optionBText}. 
+                      {selectedOption && selectedOption !== userVote?.option && " Select an option and click above to change your vote."}
+                    </p>
+                  )}
                 </div>
               )}
               
-              {hasVoted && (
-                <div className="mt-6">
-                  <Separator className="my-4" />
-                  <div className="text-center">
-                    <h3 className="font-medium text-xl mb-2">Total Votes: {totalVotes}</h3>
-                    <p className="text-muted-foreground">
-                      {optionAPercentage > optionBPercentage 
-                        ? `Option A is winning by ${optionAPercentage - optionBPercentage}%` 
+              <div className="mt-6">
+                <Separator className="my-4" />
+                <div className="text-center">
+                  <h3 className="font-medium text-xl mb-2">Total Votes: {totalVotes}</h3>
+                  <p className={isPollActive ? "text-muted-foreground" : "font-bold text-primary"}>
+                    {!isPollActive ? (
+                      // Show final result for ended polls
+                      optionAPercentage > optionBPercentage 
+                        ? `${poll.optionAText} has won with ${optionAPercentage}% of the votes!` 
                         : optionBPercentage > optionAPercentage
-                          ? `Option B is winning by ${optionBPercentage - optionAPercentage}%`
-                          : "It's a tie!"}
-                    </p>
-                  </div>
+                          ? `${poll.optionBText} has won with ${optionBPercentage}% of the votes!`
+                          : "The challenge ended in a tie!"
+                    ) : (
+                      // Show current status for active polls
+                      optionAPercentage > optionBPercentage 
+                        ? `${poll.optionAText} is leading by ${optionAPercentage - optionBPercentage}%` 
+                        : optionBPercentage > optionAPercentage
+                          ? `${poll.optionBText} is leading by ${optionBPercentage - optionAPercentage}%`
+                          : "It's currently a tie!"
+                    )}
+                  </p>
                 </div>
-              )}
+              </div>
             </CardContent>
             
             <CardFooter className="border-t pt-4 flex justify-between">
