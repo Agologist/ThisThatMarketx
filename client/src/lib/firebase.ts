@@ -39,24 +39,60 @@ export const signInWithGoogle = async (): Promise<UserCredential> => {
   return signInWithPopup(auth, googleProvider);
 };
 
+// Check for an existing Twitter session
+const hasTwitterSession = (): boolean => {
+  try {
+    // Check if we have a cookie indicating active Twitter auth
+    return document.cookie.includes('twitter_auth_session=true');
+  } catch (e) {
+    return false;
+  }
+};
+
+// Set a Twitter session cookie
+const setTwitterSession = () => {
+  try {
+    // Set a cookie that expires in 1 day
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + 1);
+    document.cookie = `twitter_auth_session=true; expires=${expiryDate.toUTCString()}; path=/; SameSite=Lax`;
+  } catch (e) {
+    console.error("Could not set Twitter session cookie", e);
+  }
+};
+
 // Twitter sign-in function with popup
 export const signInWithTwitter = async (): Promise<UserCredential> => {
-  // Add additional parameters specific to Twitter authentication
-  twitterProvider.setCustomParameters({
-    // Don't force login if already logged in to Twitter
-    'force_login': 'false',
-    // Pass the callback URL if available in environment
-    'oauth_callback': window.location.origin
+  // For Twitter, we'll need to modify the provider approach
+  // Create a fresh provider each time to avoid caching issues
+  const freshTwitterProvider = new TwitterAuthProvider();
+  
+  // Twitter has special requirements for session persistence
+  // Setting specific parameters to prevent re-auth prompts
+  freshTwitterProvider.setCustomParameters({
+    // Only force login if we don't have an active session
+    'force_login': hasTwitterSession() ? 'false' : 'true',
+    // Use 'true' to skip email collection which can cause session issues
+    'skip_status': 'true',
+    // Include the callback URL
+    'oauth_callback': window.location.origin,
+    // Add a unique value to prevent caching issues
+    'state': `twitter_auth_${Date.now()}`,
   });
   
   try {
-    // Try with popup first
-    return await signInWithPopup(auth, twitterProvider);
+    // Try with popup first which is more user-friendly
+    const result = await signInWithPopup(auth, freshTwitterProvider);
+    
+    // If successful, remember this Twitter session
+    setTwitterSession();
+    
+    return result;
   } catch (error: any) {
     console.log("Popup authentication failed, trying redirect...", error.code);
     // Fallback to redirect for more seamless auth if popup fails
     if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
-      signInWithRedirect(auth, twitterProvider);
+      signInWithRedirect(auth, freshTwitterProvider);
       // This will redirect, so we won't return directly
       // The redirect result will be handled elsewhere
       return new Promise(() => {}); // This won't resolve as page will redirect
