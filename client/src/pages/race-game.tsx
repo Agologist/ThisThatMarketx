@@ -30,11 +30,19 @@ export default function RaceGame() {
   const [raceTime, setRaceTime] = useState(0);
   const [leftPosition, setLeftPosition] = useState(0);
   const [rightPosition, setRightPosition] = useState(0);
+  const [leftVotes, setLeftVotes] = useState(0);
+  const [rightVotes, setRightVotes] = useState(0);
   const [selectedCar, setSelectedCar] = useState(0);
   const [gameResult, setGameResult] = useState<{ won: boolean; time: number } | null>(null);
+  const [leftExploded, setLeftExploded] = useState(false);
+  const [rightExploded, setRightExploded] = useState(false);
   
   const raceTimerRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
+  
+  // Constants for the race game
+  const PLATFORM_WIDTH = 60; // Percentage of the track width
+  const MOVE_STEP = 5; // Percentage to move when a car wins a round
   
   const { data: userRaces, isLoading: racesLoading } = useQuery({
     queryKey: ["/api/user/races"],
@@ -89,6 +97,10 @@ export default function RaceGame() {
     setGameState("racing");
     setLeftPosition(0);
     setRightPosition(0);
+    setLeftVotes(0);
+    setRightVotes(0);
+    setLeftExploded(false);
+    setRightExploded(false);
     setRaceTime(0);
     
     startTimeRef.current = Date.now();
@@ -170,6 +182,10 @@ export default function RaceGame() {
     setGameResult(null);
     setLeftPosition(0);
     setRightPosition(0);
+    setLeftVotes(0);
+    setRightVotes(0);
+    setLeftExploded(false);
+    setRightExploded(false);
   };
   
   // Calculate best time
@@ -267,11 +283,25 @@ export default function RaceGame() {
                   
                   {/* Race track - single line with cars facing each other */}
                   <div className={`bg-black rounded-lg p-4 mb-4 ${gameState === "ready" ? "opacity-70" : ""}`}>
-                    <div className="relative h-24 rounded-lg overflow-hidden bg-gradient-to-r from-neutral-800 to-neutral-900 flex items-center">
-                      {/* Track markings - Single middle line */}
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-full h-px bg-white opacity-30"></div>
+                    {/* Vote counters */}
+                    <div className="flex justify-between mb-2">
+                      <div className="flex items-center space-x-2">
+                        <div className="bg-primary/20 text-primary font-bold px-3 py-1 rounded-full">
+                          {leftVotes}
+                        </div>
+                        <span className="text-xs text-muted-foreground">votes</span>
                       </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs text-muted-foreground">votes</span>
+                        <div className="bg-destructive/20 text-destructive font-bold px-3 py-1 rounded-full">
+                          {rightVotes}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="relative h-24 rounded-lg overflow-hidden bg-gradient-to-r from-neutral-800 to-neutral-900 flex items-center">
+                      {/* Visualize the platform */}
+                      <div className="absolute left-1/2 top-0 bottom-0 transform -translate-x-1/2 w-[60%] h-full border-x-2 border-white/20"></div>
                       
                       {/* Center divider line */}
                       <div className="absolute top-0 bottom-0 left-1/2 transform -translate-x-1/2 w-px h-full bg-primary"></div>
@@ -279,33 +309,60 @@ export default function RaceGame() {
                       {/* Left car (facing right) */}
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
-                             left: `${45 - leftPosition}%`, 
-                             transition: 'left 0.1s ease-out' 
+                             left: `${Math.max(20, 50 - leftPosition)}%`, 
+                             transition: 'left 0.3s ease-out' 
                            }}>
-                        <img 
-                          src={carImages[selectedCar]} 
-                          alt="Left car" 
-                          className="h-10 w-auto"
-                        />
+                        {leftExploded ? (
+                          <div className="relative">
+                            <img 
+                              src={carImages[selectedCar]} 
+                              alt="Left car" 
+                              className="h-10 w-auto opacity-50"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="text-destructive text-xl">💥</div>
+                            </div>
+                          </div>
+                        ) : (
+                          <img 
+                            src={carImages[selectedCar]} 
+                            alt="Left car" 
+                            className="h-10 w-auto"
+                          />
+                        )}
                       </div>
                       
                       {/* Right car (facing left) */}
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
-                             right: `${45 - rightPosition}%`, 
-                             transition: 'right 0.1s ease-out' 
+                             right: `${Math.max(20, 50 - rightPosition)}%`, 
+                             transition: 'right 0.3s ease-out' 
                            }}>
-                        <img 
-                          src={carImages[(selectedCar + 2) % carImages.length]} 
-                          alt="Right car" 
-                          className="h-10 w-auto"
-                          style={{ transform: 'scaleX(-1)' }}
-                        />
+                        {rightExploded ? (
+                          <div className="relative">
+                            <img 
+                              src={carImages[(selectedCar + 2) % carImages.length]} 
+                              alt="Right car" 
+                              className="h-10 w-auto opacity-50"
+                              style={{ transform: 'scaleX(-1)' }}
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="text-destructive text-xl">💥</div>
+                            </div>
+                          </div>
+                        ) : (
+                          <img 
+                            src={carImages[(selectedCar + 2) % carImages.length]} 
+                            alt="Right car" 
+                            className="h-10 w-auto"
+                            style={{ transform: 'scaleX(-1)' }}
+                          />
+                        )}
                       </div>
 
-                      {/* Finish lines on both sides */}
-                      <div className="absolute left-[2%] top-0 bottom-0 w-1 bg-white opacity-70"></div>
-                      <div className="absolute right-[2%] top-0 bottom-0 w-1 bg-white opacity-70"></div>
+                      {/* Platform edges */}
+                      <div className="absolute left-[20%] top-0 bottom-0 w-1 bg-white opacity-70"></div>
+                      <div className="absolute right-[20%] top-0 bottom-0 w-1 bg-white opacity-70"></div>
                       
                       {/* Countdown overlay */}
                       {gameState === "countdown" && (
@@ -408,29 +465,50 @@ export default function RaceGame() {
                         <button 
                           className="w-16 h-16 rounded-full bg-primary mb-4 flex items-center justify-center text-black hover:bg-primary/80 transition-colors"
                           onClick={() => {
-                            // Randomly decide which car moves further
+                            // Generate a vote for either the left or right car
                             const random = Math.random();
                             if (random > 0.5) {
-                              setLeftPosition(prev => {
-                                const newPos = prev + 5; // Move 5% each press
-                                if (newPos >= 100) {
-                                  const elapsed = Date.now() - (startTimeRef.current || 0);
-                                  finishRace(true, elapsed);
-                                  return 100;
-                                }
-                                return newPos;
-                              });
+                              // Vote for left car
+                              setLeftVotes(prev => prev + 1);
                             } else {
-                              setRightPosition(prev => {
-                                const newPos = prev + 5; // Move 5% each press
-                                if (newPos >= 100) {
-                                  const elapsed = Date.now() - (startTimeRef.current || 0);
-                                  finishRace(false, elapsed);
-                                  return 100;
-                                }
-                                return newPos;
-                              });
+                              // Vote for right car
+                              setRightVotes(prev => prev + 1);
                             }
+                            
+                            // After voting, determine which car moves
+                            setTimeout(() => {
+                              // Calculate which car has more votes
+                              if (leftVotes > rightVotes) {
+                                // Left car wins - move right car backwards
+                                setRightPosition(prev => {
+                                  const newPos = prev + MOVE_STEP;
+                                  
+                                  // Check if car fell off the platform
+                                  if (newPos >= PLATFORM_WIDTH / 2) {
+                                    const elapsed = Date.now() - (startTimeRef.current || 0);
+                                    finishRace(true, elapsed); // Left wins
+                                    return PLATFORM_WIDTH / 2;
+                                  }
+                                  
+                                  return newPos;
+                                });
+                              } else if (rightVotes > leftVotes) {
+                                // Right car wins - move left car backwards
+                                setLeftPosition(prev => {
+                                  const newPos = prev + MOVE_STEP;
+                                  
+                                  // Check if car fell off the platform
+                                  if (newPos >= PLATFORM_WIDTH / 2) {
+                                    const elapsed = Date.now() - (startTimeRef.current || 0);
+                                    finishRace(false, elapsed); // Right wins
+                                    return PLATFORM_WIDTH / 2;
+                                  }
+                                  
+                                  return newPos;
+                                });
+                              }
+                              // If votes are tied, neither car moves
+                            }, 500); // Short delay to show the vote count change first
                           }}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
