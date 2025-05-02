@@ -1,7 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import StatCards from "@/components/dashboard/StatCards";
 import PollCreator from "@/components/poll/PollCreator";
 import ActivePolls from "@/components/poll/ActivePolls";
 import { useQuery } from "@tanstack/react-query";
@@ -97,13 +96,7 @@ export default function HomePage() {
             )}
           </div>
           
-          {!isGuest && (
-            <StatCards 
-              pollCount={polls.length} 
-              raceWins={races.filter(race => race.won).length}
-              achievements={userAchievements.length}
-            />
-          )}
+          {/* Stats cards section removed */}
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {!isGuest && <PollCreator />}
