@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
+import PollsPage from "@/pages/polls-page";
 import PollPage from "@/pages/poll-page";
 import RaceGame from "@/pages/race-game";
 import { ProtectedRoute } from "./lib/protected-route";
@@ -13,6 +14,7 @@ function Router() {
   return (
     <Switch>
       <ProtectedRoute path="/" component={HomePage} />
+      <ProtectedRoute path="/polls" component={PollsPage} />
       <ProtectedRoute path="/polls/:id" component={PollPage} />
       <ProtectedRoute path="/race" component={RaceGame} />
       <Route path="/auth" component={AuthPage} />
