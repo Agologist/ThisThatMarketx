@@ -24,10 +24,10 @@ const CENTER_POSITION = 0; // Starting position at center
 
 // Cybertruck images - white and futuristic
 const carImages = [
-  "https://cdn-icons-png.flaticon.com/512/6354/6354425.png", // White Cybertruck
-  "https://cdn-icons-png.flaticon.com/512/6354/6354425.png", // White Cybertruck
-  "https://cdn-icons-png.flaticon.com/512/6354/6354425.png", // White Cybertruck
-  "https://cdn-icons-png.flaticon.com/512/6354/6354425.png"  // White Cybertruck
+  "https://cdn-icons-png.flaticon.com/512/3097/3097140.png", // White car
+  "https://cdn-icons-png.flaticon.com/512/3097/3097140.png", // White car
+  "https://cdn-icons-png.flaticon.com/512/3097/3097140.png", // White car
+  "https://cdn-icons-png.flaticon.com/512/3097/3097140.png"  // White car
 ];
 
 export default function RaceGame() {
