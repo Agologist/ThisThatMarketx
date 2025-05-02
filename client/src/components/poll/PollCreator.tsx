@@ -343,22 +343,7 @@ export default function PollCreator() {
                             </div>
                           )}
                           
-                          {optionAImage && (
-                            <div className="absolute bottom-2 right-2">
-                              <Button 
-                                type="button"
-                                variant="ghost" 
-                                size="sm" 
-                                className="bg-black/50 hover:bg-black/70 h-8 w-8 p-0"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  searchImageForOption("A");
-                                }}
-                              >
-                                <ImageIcon className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          )}
+                          {/* Image search button removed */}
                           
                           <input
                             type="file"
@@ -376,20 +361,7 @@ export default function PollCreator() {
                               {...field}
                               onChange={(e) => {
                                 field.onChange(e);
-                                // Clear previous timeout if it exists
-                                if (typingTimeoutA) {
-                                  clearTimeout(typingTimeoutA);
-                                }
-                                
-                                // Only search for images if the text is at least 3 characters
-                                if (e.target.value.length >= 3) {
-                                  // Set a new timeout to search for images after typing stops
-                                  const timeout = setTimeout(() => {
-                                    searchImageForOption("A");
-                                  }, 800); // Wait 800ms after typing stops
-                                  
-                                  setTypingTimeoutA(timeout);
-                                }
+                                // Auto image search removed
                               }}
                             />
                           </FormControl>
@@ -438,22 +410,7 @@ export default function PollCreator() {
                             </div>
                           )}
                           
-                          {optionBImage && (
-                            <div className="absolute bottom-2 right-2">
-                              <Button 
-                                type="button"
-                                variant="ghost" 
-                                size="sm" 
-                                className="bg-black/50 hover:bg-black/70 h-8 w-8 p-0"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  searchImageForOption("B");
-                                }}
-                              >
-                                <ImageIcon className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          )}
+                          {/* Image search button for option B removed */}
                           
                           <input
                             type="file"
@@ -471,20 +428,7 @@ export default function PollCreator() {
                               {...field}
                               onChange={(e) => {
                                 field.onChange(e);
-                                // Clear previous timeout if it exists
-                                if (typingTimeoutB) {
-                                  clearTimeout(typingTimeoutB);
-                                }
-                                
-                                // Only search for images if the text is at least 3 characters
-                                if (e.target.value.length >= 3) {
-                                  // Set a new timeout to search for images after typing stops
-                                  const timeout = setTimeout(() => {
-                                    searchImageForOption("B");
-                                  }, 800); // Wait 800ms after typing stops
-                                  
-                                  setTypingTimeoutB(timeout);
-                                }
+                                // Auto image search removed
                               }}
                             />
                           </FormControl>
