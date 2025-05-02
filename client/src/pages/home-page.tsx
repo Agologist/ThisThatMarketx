@@ -86,11 +86,17 @@ export default function HomePage() {
             {!isGuest && (
               <div className="mt-4 md:mt-0">
                 <button 
-                  onClick={() => window.location.href = "/polls/new"} 
+                  onClick={() => {
+                    // Scroll to the PollCreator section
+                    const pollCreatorElement = document.getElementById("poll-creator");
+                    if (pollCreatorElement) {
+                      pollCreatorElement.scrollIntoView({ behavior: "smooth" });
+                    }
+                  }}
                   className="btn-gold py-2 px-6 rounded-md flex items-center"
                 >
                   <i className="mr-2">+</i>
-                  New Poll
+                  Create Challenge
                 </button>
               </div>
             )}
@@ -99,7 +105,7 @@ export default function HomePage() {
           {/* Stats cards section removed */}
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            {!isGuest && <PollCreator />}
+            {!isGuest && <div id="poll-creator"><PollCreator /></div>}
             <div className={isGuest ? "lg:col-span-2" : ""}>
               <ActivePolls polls={polls} />
             </div>
