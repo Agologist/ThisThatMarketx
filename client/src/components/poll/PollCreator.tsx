@@ -135,7 +135,7 @@ export default function PollCreator() {
       setOptionAImage(null);
       setOptionBImage(null);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Challenge creation error:", error);
       
       // Try to extract detailed error information if available
@@ -145,15 +145,22 @@ export default function PollCreator() {
         errorMsg = error.message;
       }
       
-      // If there's a response with more details
+      // If there's a response with more details (axios error format)
       if (error.response && error.response.data) {
         console.error("Error details:", error.response.data);
         
         if (error.response.data.errors) {
-          // Format validation errors
-          errorMsg = Object.entries(error.response.data.errors)
-            .map(([field, msgs]) => `${field}: ${msgs}`)
-            .join(', ');
+          if (Array.isArray(error.response.data.errors)) {
+            // Format validation errors from array format
+            errorMsg = error.response.data.errors
+              .map((err: any) => `${err.path.join('.')}: ${err.message}`)
+              .join(', ');
+          } else {
+            // Format validation errors from object format
+            errorMsg = Object.entries(error.response.data.errors)
+              .map(([field, msgs]) => `${field}: ${msgs}`)
+              .join(', ');
+          }
         } else if (error.response.data.message) {
           errorMsg = error.response.data.message;
         }
@@ -183,6 +190,32 @@ export default function PollCreator() {
         variant: "destructive",
       });
       return;
+    }
+    
+    // Additional validation for "Custom" duration
+    if (values.duration === "custom") {
+      const hours = parseInt(form.getValues("hours") || "0");
+      const minutes = parseInt(form.getValues("minutes") || "0");
+      
+      // Ensure we have a minimum valid duration (at least 5 minutes)
+      if (hours === 0 && minutes < 5) {
+        toast({
+          title: "Invalid Duration",
+          description: "Challenge duration must be at least 5 minutes",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Ensure we have a valid duration
+      if (hours === 0 && minutes === 0) {
+        toast({
+          title: "Invalid Duration",
+          description: "Please specify a valid challenge duration",
+          variant: "destructive",
+        });
+        return;
+      }
     }
     
     createPollMutation.mutate(values);

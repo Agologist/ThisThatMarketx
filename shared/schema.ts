@@ -42,16 +42,21 @@ export const polls = pgTable("polls", {
   isPublic: boolean("is_public").default(true),
 });
 
-export const insertPollSchema = createInsertSchema(polls).pick({
-  userId: true,
-  question: true,
-  optionAText: true,
-  optionAImage: true,
-  optionBText: true,
-  optionBImage: true,
-  endTime: true,
-  isPublic: true,
-});
+export const insertPollSchema = createInsertSchema(polls)
+  .pick({
+    userId: true,
+    question: true,
+    optionAText: true,
+    optionAImage: true,
+    optionBText: true,
+    optionBImage: true,
+    endTime: true,
+    isPublic: true,
+  })
+  .extend({
+    // Allow endTime to be a string (ISO format) or Date object
+    endTime: z.union([z.string(), z.date()]),
+  });
 
 // Vote model
 export const votes = pgTable("votes", {
