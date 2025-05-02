@@ -3,23 +3,79 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RaceRecord } from "@shared/schema";
-import { Trophy, Flag, Timer } from "lucide-react";
+import { Trophy, Flag, Timer, ThumbsUp } from "lucide-react";
 import { useLocation } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface RaceGameProps {
   races: RaceRecord[];
+  pollId?: number;
 }
 
-export default function RaceGame({ races }: RaceGameProps) {
+export default function RaceGame({ races, pollId }: RaceGameProps) {
   const [, navigate] = useLocation();
+  const { toast } = useToast();
+  const [carPositions, setCarPositions] = useState({
+    carA: 0, // percentage from left
+    carB: 0  // percentage from right
+  });
   
-  // Car images from free open source stock
-  const carImages = [
-    "https://cdn-icons-png.flaticon.com/512/4955/4955169.png",
-    "https://cdn-icons-png.flaticon.com/512/4955/4955198.png",
-    "https://cdn-icons-png.flaticon.com/512/4955/4955126.png",
-    "https://cdn-icons-png.flaticon.com/512/4955/4955139.png"
-  ];
+  // Car images from free open source stock (now facing each other)
+  const carImages = {
+    leftCar: "https://cdn-icons-png.flaticon.com/512/4955/4955169.png", // right-facing car
+    rightCar: "https://cdn-icons-png.flaticon.com/512/4955/4955198.png"  // left-facing car
+  };
+  
+  // Mock poll data for demonstration
+  const pollData = {
+    id: pollId || 1,
+    optionA: "Dogs",
+    optionB: "Cats",
+    votes: {
+      optionA: 12,
+      optionB: 15
+    }
+  };
+  
+  // Vote and move cars
+  const handleVote = async (option: 'A' | 'B') => {
+    try {
+      // Only try API call if a poll ID is provided
+      if (pollId) {
+        await apiRequest('POST', `/api/polls/${pollId}/vote`, { option });
+      }
+      
+      // Update the UI regardless of API call
+      if (option === 'A') {
+        setCarPositions(prev => ({
+          ...prev,
+          carA: Math.min(100, prev.carA + 10) // Move right
+        }));
+        
+        toast({
+          title: `Voted for ${pollData.optionA}!`,
+          description: "Your vote moved the car forward",
+        });
+      } else {
+        setCarPositions(prev => ({
+          ...prev,
+          carB: Math.min(100, prev.carB + 10) // Move left
+        }));
+        
+        toast({
+          title: `Voted for ${pollData.optionB}!`,
+          description: "Your vote moved the car forward",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Voting failed",
+        description: "Please try again or sign in to vote",
+        variant: "destructive"
+      });
+    }
+  };
   
   // Calculate stats
   const getBestTime = () => {
@@ -47,56 +103,96 @@ export default function RaceGame({ races }: RaceGameProps) {
     <Card className="bg-card border-primary/30">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <CardTitle className="text-xl font-montserrat font-bold">Data Race Game</CardTitle>
+          <CardTitle className="text-xl font-montserrat font-bold">Votes and Wars Race</CardTitle>
           <Button
             asChild
             size="sm"
             className="bg-primary/20 text-primary text-xs font-medium py-1 px-3 rounded-full hover:bg-primary/30 transition-colors"
           >
-            <a href="/race">Play Now</a>
+            <a href="/race">Play Full Game</a>
           </Button>
         </div>
         <CardDescription>
-          Race to collect data faster than your opponent
+          Race between poll options - vote to advance your choice!
         </CardDescription>
       </CardHeader>
       
       <CardContent>
         <div className="bg-black rounded-lg p-4 mb-4">
-          <div className="game-track h-32 rounded-lg flex items-end relative overflow-hidden bg-gradient-to-r from-neutral-800 to-neutral-900">
+          {/* Poll information */}
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex items-center">
+              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+                {pollData.optionA}
+              </Badge>
+            </div>
+            <span className="text-sm font-semibold">VS</span>
+            <div className="flex items-center">
+              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+                {pollData.optionB}
+              </Badge>
+            </div>
+          </div>
+          
+          {/* Race track - single line with cars facing each other */}
+          <div className="game-track h-24 rounded-lg flex items-center relative overflow-hidden bg-gradient-to-r from-neutral-800 to-neutral-900">
             <div className="absolute inset-0 bg-black bg-opacity-40"></div>
             
-            {/* Race track lines */}
-            <div className="absolute inset-0 flex flex-col justify-between py-10">
-              <div className="h-px bg-white opacity-30"></div>
-              <div className="h-px bg-white opacity-30"></div>
+            {/* Race track middle line */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-full h-px bg-white opacity-30"></div>
             </div>
             
-            {/* Race cars */}
-            <div className="car-track absolute top-1/3 transform -translate-y-1/2 left-4 right-4 h-8">
+            {/* Center divider */}
+            <div className="absolute top-0 bottom-0 left-1/2 transform -translate-x-1/2 w-px h-full bg-primary"></div>
+            
+            {/* Left car (facing right) */}
+            <div className="absolute top-1/2 transform -translate-y-1/2 left-5" style={{ 
+              left: `calc(5% + ${carPositions.carA}%)`, 
+              transition: 'left 0.5s ease-out' 
+            }}>
               <img 
-                src={carImages[0]} 
-                alt="Race car" 
-                className="absolute left-0 h-8 w-auto race-car"
-                style={{ animationDuration: "12s" }}
+                src={carImages.leftCar}
+                alt="Left Car" 
+                className="h-10 w-auto"
               />
             </div>
             
-            <div className="car-track absolute top-2/3 transform -translate-y-1/2 left-4 right-4 h-8">
+            {/* Right car (facing left) */}
+            <div className="absolute top-1/2 transform -translate-y-1/2 right-5" style={{ 
+              right: `calc(5% + ${carPositions.carB}%)`, 
+              transition: 'right 0.5s ease-out' 
+            }}>
               <img 
-                src={carImages[2]} 
-                alt="Race car" 
-                className="absolute left-0 h-8 w-auto race-car"
-                style={{ animationDuration: "8s" }}
+                src={carImages.rightCar}
+                alt="Right Car" 
+                className="h-10 w-auto transform scale-x-[-1]" // Flip horizontally
               />
             </div>
             
-            {/* Finish line */}
-            <div className="absolute right-4 top-0 bottom-0 w-2 bg-white opacity-70 flex flex-col">
-              <div className="h-1/4 bg-black"></div>
-              <div className="h-1/4 bg-black"></div>
-              <div className="h-1/4 bg-black"></div>
-              <div className="h-1/4 bg-black"></div>
+            {/* Vote buttons */}
+            <div className="absolute bottom-2 left-5">
+              <Button 
+                size="sm"
+                variant="outline"
+                className="bg-primary/20 text-primary border-primary/30 hover:bg-primary/30"
+                onClick={() => handleVote('A')}
+              >
+                <ThumbsUp className="h-4 w-4 mr-1" />
+                Vote
+              </Button>
+            </div>
+            
+            <div className="absolute bottom-2 right-5">
+              <Button 
+                size="sm"
+                variant="outline"
+                className="bg-primary/20 text-primary border-primary/30 hover:bg-primary/30"
+                onClick={() => handleVote('B')}
+              >
+                <ThumbsUp className="h-4 w-4 mr-1" />
+                Vote
+              </Button>
             </div>
           </div>
           
@@ -114,24 +210,21 @@ export default function RaceGame({ races }: RaceGameProps) {
                 </svg>
               </Button>
               <div>
-                <h4 className="text-sm font-medium">Data Speed Race</h4>
-                <p className="text-xs text-muted-foreground">Race to visualize your data faster</p>
+                <h4 className="text-sm font-medium">Poll Racing Game</h4>
+                <p className="text-xs text-muted-foreground">Vote to advance your choice!</p>
               </div>
             </div>
             
             <div className="hidden md:flex items-center space-x-2">
+              <span className="text-xs text-muted-foreground">Current votes:</span>
               <div className="flex items-center">
-                <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                  <span className="text-xs">P</span>
-                </div>
-                <span className="text-xs ml-1">You</span>
-              </div>
-              <span className="text-xs text-muted-foreground">vs</span>
-              <div className="flex items-center">
-                <div className="w-6 h-6 rounded-full bg-destructive/20 flex items-center justify-center text-destructive">
-                  <span className="text-xs">AI</span>
-                </div>
-                <span className="text-xs ml-1">CPU</span>
+                <Badge variant="outline" className="bg-primary/5 text-primary border-primary/30">
+                  {pollData.votes.optionA}
+                </Badge>
+                <span className="text-xs mx-1">-</span>
+                <Badge variant="outline" className="bg-primary/5 text-primary border-primary/30">
+                  {pollData.votes.optionB}
+                </Badge>
               </div>
             </div>
           </div>

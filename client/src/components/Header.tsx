@@ -36,10 +36,10 @@ export default function Header() {
     <header className="bg-black border-b border-primary/50">
       <div className="container mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
-          <div className="flex items-center">
+          <Link href="/" className="flex items-center">
             <FlagIcon className="text-primary h-6 w-6 mr-2" />
-            <h1 className="font-racing text-primary text-2xl">DataRacer</h1>
-          </div>
+            <h1 className="font-racing text-primary text-2xl">Votes and Wars</h1>
+          </Link>
           
           {/* Mobile Nav Toggle */}
           <button 
