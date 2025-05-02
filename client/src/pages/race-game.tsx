@@ -103,9 +103,10 @@ export default function RaceGame() {
   // Start the race
   const startRace = () => {
     setGameState("racing");
-    // Initial position - cars start at center line (nose-to-nose)
-    setLeftPosition(0); // Left car starts at center
-    setRightPosition(0); // Right car starts at center
+    // Initial position - cars start at opposite sides with some space from the platform edge
+    // These values will position the cars a bit away from the edge of the platform
+    setLeftPosition(20); // Left car starts 20% from center toward left
+    setRightPosition(20); // Right car starts 20% from center toward right
     setLeftVotes(0);
     setRightVotes(0);
     setLeftExploded(false);
@@ -189,8 +190,8 @@ export default function RaceGame() {
   const resetGame = () => {
     setGameState("ready");
     setGameResult(null);
-    setLeftPosition(0); // Initial position matches startRace - at center
-    setRightPosition(0); // Initial position matches startRace - at center
+    setLeftPosition(20); // Match initial position from startRace
+    setRightPosition(20); // Match initial position from startRace
     setLeftVotes(0);
     setRightVotes(0);
     setLeftExploded(false);
@@ -345,9 +346,10 @@ export default function RaceGame() {
                       {/* Left car (facing right - toward center) */}
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
-                             // Position from center: 50% - position%
-                             // This way when position decreases (car moves forward), it gets closer to center
-                             left: `${50 - leftPosition}%`, 
+                             // Position from center based on leftPosition value
+                             // At start (20), car is at 30% from left (closer to center)
+                             // As leftPosition increases, car moves away from center
+                             left: `${30 + (leftPosition - 20)}%`, 
                              transition: 'left 0.3s ease-out',
                              zIndex: 10
                            }}>
@@ -374,9 +376,10 @@ export default function RaceGame() {
                       {/* Right car (facing left - toward center) */}
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
-                             // Position from center: 50% - position%
-                             // This way when position decreases (car moves forward), it gets closer to center
-                             right: `${50 - rightPosition}%`, 
+                             // Position from center based on rightPosition value
+                             // At start (20), car is at 30% from right (closer to center)
+                             // As rightPosition increases, car moves away from center
+                             right: `${30 + (rightPosition - 20)}%`, 
                              transition: 'right 0.3s ease-out',
                              zIndex: 9
                            }}>
@@ -550,17 +553,19 @@ export default function RaceGame() {
                             setTimeout(() => {
                               const moveAmount = MOVE_STEP;
                               
-                              // Left car moves forward (decreasing value to get closer to center)
+                              // When left car gets voted:
+                              // 1. Left car moves forward (value increases - further from center line)
+                              // 2. Right car gets pushed back (value increases - further from center line)
                               setLeftPosition(prev => {
-                                // Moving forward means getting closer to center (reducing value)
-                                const newPos = Math.max(0, prev - moveAmount);
+                                // Forward means away from center for left car (increasing value)
+                                const newPos = prev + moveAmount;
                                 return newPos;
                               });
                               
-                              // Right car gets pushed back (increasing value to move away from center)
+                              // Right car gets pushed back simultaneously
                               setTimeout(() => {
                                 setRightPosition(prev => {
-                                  // Being pushed back means moving away from center (increasing value)
+                                  // Being pushed back means away from center (increasing value)
                                   const newPos = prev + moveAmount;
                                   
                                   // Check if car fell off the platform
