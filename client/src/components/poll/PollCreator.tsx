@@ -17,8 +17,8 @@ import { useLocation } from "wouter";
 
 const pollFormSchema = z.object({
   question: z.string().min(5, "Challenge title must be at least 5 characters"),
-  optionAText: z.string().min(1, "Challenger 1 name is required"),
-  optionBText: z.string().min(1, "Challenger 2 name is required"),
+  optionAText: z.string().min(1, "Challenger 1 title is required"),
+  optionBText: z.string().min(1, "Challenger 2 title is required"),
   duration: z.string(),
   audience: z.string(),
   // For custom duration
@@ -270,7 +270,7 @@ export default function PollCreator() {
                         <div className="p-3">
                           <FormControl>
                             <Input 
-                              placeholder="Challenger 1 name"
+                              placeholder="Challenger 1 title"
                               className="bg-black border-0"
                               {...field}
                             />
@@ -332,7 +332,7 @@ export default function PollCreator() {
                         <div className="p-3">
                           <FormControl>
                             <Input 
-                              placeholder="Challenger 2 name"
+                              placeholder="Challenger 2 title"
                               className="bg-black border-0"
                               {...field}
                             />
