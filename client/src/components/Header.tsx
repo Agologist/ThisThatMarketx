@@ -47,9 +47,10 @@ export default function Header() {
   });
   
   // Calculate stats
-  const activePolls = userPolls.length;
-  const raceWins = userRaces.filter((race: any) => race.won).length;
-  const totalAchievements = userAchievements.length;
+  const challengeCount = userPolls.length;
+  const voteCount = (user?.id && !isGuest) ? userRaces.length : 0; // Consider using a proper votes count query when available
+  const warCount = userRaces.filter((race: any) => race.won).length;
+  const achievementCount = userAchievements.length;
 
   const handleLogout = async () => {
     try {
@@ -172,32 +173,28 @@ export default function Header() {
                           <FileText className="text-primary h-4 w-4 mr-1.5" />
                           <div className="text-xs">
                             <p className="text-muted-foreground">Challenges</p>
-                            <p className="font-bold">{activePolls}</p>
+                            <p className="font-bold">{challengeCount}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center">
+                          <FileText className="text-primary h-4 w-4 mr-1.5 rotate-90" />
+                          <div className="text-xs">
+                            <p className="text-muted-foreground">Votes</p>
+                            <p className="font-bold">{voteCount}</p>
                           </div>
                         </div>
                         <div className="flex items-center">
                           <Trophy className="text-primary h-4 w-4 mr-1.5" />
                           <div className="text-xs">
-                            <p className="text-muted-foreground">Race Wins</p>
-                            <p className="font-bold">{raceWins}</p>
+                            <p className="text-muted-foreground">Wars</p>
+                            <p className="font-bold">{warCount}</p>
                           </div>
                         </div>
                         <div className="flex items-center">
                           <Award className="text-primary h-4 w-4 mr-1.5" />
                           <div className="text-xs">
                             <p className="text-muted-foreground">Achievements</p>
-                            <p className="font-bold">{totalAchievements}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center">
-                          <UserIcon className="text-primary h-4 w-4 mr-1.5" />
-                          <div className="text-xs">
-                            <p className="text-muted-foreground">Rank</p>
-                            <p className="font-bold">
-                              {totalAchievements >= 10 ? "King" : 
-                               totalAchievements >= 5 ? "Queen" : 
-                               totalAchievements >= 3 ? "Jack" : "Egg"}
-                            </p>
+                            <p className="font-bold">{achievementCount}</p>
                           </div>
                         </div>
                       </div>
@@ -260,16 +257,24 @@ export default function Header() {
                   <div className="flex items-center p-2 bg-primary/10 rounded-md">
                     <FileText className="text-primary h-5 w-5 mr-2" />
                     <div>
-                      <p className="text-sm font-medium">Active Challenges</p>
-                      <p className="text-xl font-bold text-primary">{activePolls}</p>
+                      <p className="text-sm font-medium">Challenges</p>
+                      <p className="text-xl font-bold text-primary">{challengeCount}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center p-2 bg-primary/10 rounded-md">
+                    <FileText className="text-primary h-5 w-5 mr-2 rotate-90" />
+                    <div>
+                      <p className="text-sm font-medium">Votes</p>
+                      <p className="text-xl font-bold text-primary">{voteCount}</p>
                     </div>
                   </div>
                   
                   <div className="flex items-center p-2 bg-primary/10 rounded-md">
                     <Trophy className="text-primary h-5 w-5 mr-2" />
                     <div>
-                      <p className="text-sm font-medium">Race Wins</p>
-                      <p className="text-xl font-bold text-primary">{raceWins}</p>
+                      <p className="text-sm font-medium">Wars</p>
+                      <p className="text-xl font-bold text-primary">{warCount}</p>
                     </div>
                   </div>
                   
@@ -277,19 +282,7 @@ export default function Header() {
                     <Award className="text-primary h-5 w-5 mr-2" />
                     <div>
                       <p className="text-sm font-medium">Achievements</p>
-                      <p className="text-xl font-bold text-primary">{totalAchievements}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center p-2 bg-primary/10 rounded-md">
-                    <UserIcon className="text-primary h-5 w-5 mr-2" />
-                    <div>
-                      <p className="text-sm font-medium">Rank</p>
-                      <p className="text-xl font-bold text-primary">
-                        {totalAchievements >= 10 ? "King" : 
-                         totalAchievements >= 5 ? "Queen" : 
-                         totalAchievements >= 3 ? "Jack" : "Egg"}
-                      </p>
+                      <p className="text-xl font-bold text-primary">{achievementCount}</p>
                     </div>
                   </div>
                 </div>
