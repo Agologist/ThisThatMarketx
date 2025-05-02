@@ -25,12 +25,13 @@ export default function PollPage() {
     queryKey: [`/api/polls/${id}`],
   });
   
-  const { data: userVote } = useQuery({
+  const { data: userVoteData } = useQuery({
     queryKey: [`/api/polls/${id}/vote`],
     enabled: !!user && !!id,
   });
   
-  const hasVoted = !!userVote;
+  const hasVoted = userVoteData?.hasVoted || false;
+  const userVote = userVoteData?.hasVoted ? userVoteData : null;
   
   // Calculate poll percentages for display
   const totalVotes = (poll?.optionAVotes || 0) + (poll?.optionBVotes || 0);
@@ -39,22 +40,42 @@ export default function PollPage() {
   
   // Calculate remaining time
   const getRemainingTime = () => {
-    if (!poll?.endTime) return { hours: 0, minutes: 0 };
+    if (!poll?.endTime) return { hours: 0, minutes: 0, seconds: 0 };
     
     const now = new Date();
     const end = new Date(poll.endTime);
     const diff = end.getTime() - now.getTime();
     
-    if (diff <= 0) return { hours: 0, minutes: 0 };
+    if (diff <= 0) return { hours: 0, minutes: 0, seconds: 0 };
     
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
     
-    return { hours, minutes };
+    return { hours, minutes, seconds };
   };
   
-  const { hours, minutes } = getRemainingTime();
-  const isPollActive = hours > 0 || minutes > 0;
+  const [timeState, setTimeState] = useState(() => getRemainingTime());
+  const { hours, minutes, seconds } = timeState;
+  const isPollActive = hours > 0 || minutes > 0 || seconds > 0;
+  
+  // Add a timer update effect
+  useEffect(() => {
+    if (!isPollActive) return;
+    
+    const intervalId = setInterval(() => {
+      const newTime = getRemainingTime();
+      setTimeState(newTime);
+      
+      if (newTime.hours <= 0 && newTime.minutes <= 0 && newTime.seconds <= 0) {
+        // Poll has ended, refresh the poll data
+        queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}`] });
+        clearInterval(intervalId);
+      }
+    }, 1000); // Update every second
+    
+    return () => clearInterval(intervalId);
+  }, [isPollActive, id]);
   
   const handleVote = async () => {
     if (!selectedOption || !isPollActive) return;
@@ -209,7 +230,12 @@ export default function PollPage() {
                           ></circle>
                         </svg>
                         <span>
-                          {hours > 0 && `${hours}h `}{minutes}m remaining
+                          {hours >= 24 
+                            ? `${hours}h remaining` 
+                            : hours > 0 
+                              ? `${hours}h ${minutes}m ${seconds}s remaining`
+                              : `${minutes}m ${seconds}s remaining`
+                          }
                         </span>
                       </span>
                     ) : (
@@ -254,7 +280,7 @@ export default function PollPage() {
                   <div className="p-4">
                     <div className="flex justify-between items-center">
                       <h3 className="font-montserrat font-bold text-lg">{poll.optionAText}</h3>
-                      {hasVoted && userVote?.option === "A" && (
+                      {hasVoted && userVoteData?.option === "A" && (
                         <span className="bg-primary/20 text-primary text-xs rounded-full px-2 py-1 font-medium flex items-center">
                           <CheckIcon className="w-3 h-3 mr-1" /> Your vote
                         </span>
@@ -275,7 +301,7 @@ export default function PollPage() {
                   className={`border rounded-md overflow-hidden transition-all 
                     ${selectedOption === "B" ? "ring-2 ring-primary" : ""} 
                     ${!isPollActive || hasVoted ? "pointer-events-none" : "cursor-pointer"}
-                    ${hasVoted && userVote?.option === "B" ? "bg-primary/10" : ""}`}
+                    ${hasVoted && userVoteData?.option === "B" ? "bg-primary/10" : ""}`}
                   onClick={() => isPollActive && !hasVoted && setSelectedOption("B")}
                 >
                   {poll.optionBImage ? (
