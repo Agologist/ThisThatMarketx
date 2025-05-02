@@ -39,75 +39,119 @@ export const signInWithGoogle = async (): Promise<UserCredential> => {
   return signInWithPopup(auth, googleProvider);
 };
 
-// Check for an existing Twitter session
-const hasTwitterSession = (): boolean => {
-  try {
-    // Check if we have a cookie indicating active Twitter auth
-    return document.cookie.includes('twitter_auth_session=true');
-  } catch (e) {
-    return false;
-  }
-};
-
-// Set a Twitter session cookie
-const setTwitterSession = () => {
-  try {
-    // Set a cookie that expires in 1 day
-    const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + 1);
-    document.cookie = `twitter_auth_session=true; expires=${expiryDate.toUTCString()}; path=/; SameSite=Lax`;
-  } catch (e) {
-    console.error("Could not set Twitter session cookie", e);
-  }
-};
-
-// Twitter sign-in function with popup
+/**
+ * Twitter authentication strategy that improves user experience:
+ * 1. First tries to check for any existing auth state (users already logged in)
+ * 2. If already logged in with Twitter, returns the auth data immediately
+ * 3. If not logged in, tries popup authentication which is more user-friendly
+ * 4. If popup fails or is blocked, falls back to redirect authentication
+ */
 export const signInWithTwitter = async (): Promise<UserCredential> => {
-  // For Twitter, we'll need to modify the provider approach
   // Create a fresh provider each time to avoid caching issues
-  const freshTwitterProvider = new TwitterAuthProvider();
+  const twitterProvider = new TwitterAuthProvider();
   
-  // Twitter has special requirements for session persistence
-  // Setting specific parameters to prevent re-auth prompts
-  freshTwitterProvider.setCustomParameters({
-    // Only force login if we don't have an active session
-    'force_login': hasTwitterSession() ? 'false' : 'true',
-    // Use 'true' to skip email collection which can cause session issues
-    'skip_status': 'true',
-    // Include the callback URL
+  // First check if we already have a user logged in with Twitter
+  const currentUser = auth.currentUser;
+  if (currentUser) {
+    // Check if this user is logged in with Twitter
+    const twitterProvider = currentUser.providerData.find(
+      provider => provider.providerId === 'twitter.com'
+    );
+    
+    if (twitterProvider) {
+      console.log("User already authenticated with Twitter");
+      
+      // Return a promise that resolves with the current user credential
+      // We need to format this to match UserCredential structure
+      return {
+        user: currentUser,
+        providerId: 'twitter.com',
+        operationType: 'signIn'
+      } as UserCredential;
+    }
+  }
+  
+  // Configure Twitter provider with parameters for better experience
+  twitterProvider.setCustomParameters({
+    // Don't force login prompt
+    'force_login': 'false',
+    // Include callback URL for better redirect handling
     'oauth_callback': window.location.origin,
-    // Add a unique value to prevent caching issues
-    'state': `twitter_auth_${Date.now()}`,
+    // Add cache-busting parameter
+    'state': `auth_${Math.random().toString(36).substring(2, 10)}_${Date.now()}`
   });
   
+  // Create a flag to prevent double auth attempts
+  let authInProgress = false;
+  
   try {
-    // Try with popup first which is more user-friendly
-    const result = await signInWithPopup(auth, freshTwitterProvider);
-    
-    // If successful, remember this Twitter session
-    setTwitterSession();
-    
-    return result;
+    // First, try popup auth for better user experience
+    authInProgress = true;
+    return await signInWithPopup(auth, twitterProvider);
   } catch (error: any) {
-    console.log("Popup authentication failed, trying redirect...", error.code);
-    // Fallback to redirect for more seamless auth if popup fails
-    if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
-      signInWithRedirect(auth, freshTwitterProvider);
-      // This will redirect, so we won't return directly
-      // The redirect result will be handled elsewhere
-      return new Promise(() => {}); // This won't resolve as page will redirect
+    console.log("Popup auth error:", error.code);
+    
+    // If popup is blocked or closed, try redirect instead
+    if (!authInProgress || error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
+      // Track that we're doing a redirect auth
+      localStorage.setItem('auth_redirect_in_progress', 'twitter');
+      
+      // Perform redirect auth
+      await signInWithRedirect(auth, twitterProvider);
+      
+      // This line will not execute as the page will redirect
+      return new Promise(() => {});
     }
-    throw error; // Re-throw if not a popup issue
+    
+    // If it's another error, throw it
+    throw error;
   }
 };
 
 // Function to handle authentication redirect result
 export const handleRedirectResult = async (): Promise<UserCredential | null> => {
   try {
+    // Check if we were in the middle of a redirect authentication
+    const redirectProvider = localStorage.getItem('auth_redirect_in_progress');
+    
+    // Get the redirect result
     const result = await getRedirectResult(auth);
-    return result;
+    
+    // If we have a result, clear the "in progress" flag
+    if (result) {
+      localStorage.removeItem('auth_redirect_in_progress');
+      console.log("Redirect authentication successful", result.user.providerData[0]?.providerId);
+      return result;
+    } 
+    
+    // If we were in the middle of a redirect but didn't get a result,
+    // and we're already logged in, construct a result
+    else if (redirectProvider && auth.currentUser) {
+      // Clear the "in progress" flag
+      localStorage.removeItem('auth_redirect_in_progress');
+      
+      // Check if the current user has the provider we were redirecting for
+      const hasProvider = auth.currentUser.providerData.some(
+        provider => provider.providerId === `${redirectProvider}.com`
+      );
+      
+      if (hasProvider) {
+        console.log("User already authenticated after redirect");
+        
+        // Return a synthetic credential that matches the shape expected
+        return {
+          user: auth.currentUser,
+          providerId: `${redirectProvider}.com`,
+          operationType: 'signIn'
+        } as UserCredential;
+      }
+    }
+    
+    return null;
   } catch (error) {
     console.error("Redirect result error:", error);
+    // Clear the "in progress" flag on error
+    localStorage.removeItem('auth_redirect_in_progress');
     throw error;
   }
 };

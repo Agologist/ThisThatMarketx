@@ -22,15 +22,36 @@ export default function AuthPage() {
     }
   }, [user, isGuest, navigate]);
   
-  // Handle redirect result when the page loads (for Twitter auth)
+  // Handle redirect result when the page loads (for Twitter/Google auth)
   useEffect(() => {
     const checkRedirectResult = async () => {
       try {
+        // Check if we were in a redirect flow
+        const wasRedirecting = localStorage.getItem('auth_redirect_in_progress');
+        
+        if (wasRedirecting) {
+          // Show loading message
+          toast({
+            title: "Completing authentication...",
+            description: "Please wait while we complete your sign-in.",
+            duration: 3000
+          });
+        }
+        
+        // Get the redirect result
         const result = await handleRedirectResult();
         
         // If we have a result from redirect, process it
         if (result && result.user) {
           console.log("Processing redirect result for:", result.user.providerData[0]?.providerId);
+          
+          // Determine provider - extract root name without '.com'
+          const providerId = result.user.providerData[0]?.providerId || '';
+          const provider = providerId.includes('twitter') 
+            ? 'twitter' 
+            : providerId.includes('google')
+              ? 'google'
+              : 'unknown';
           
           // Call your server to register or login the Firebase user
           const res = await fetch('/api/auth/firebase', {
@@ -43,12 +64,22 @@ export default function AuthPage() {
               email: result.user.email, // This might be null from Twitter
               displayName: result.user.displayName || result.user.providerData[0]?.displayName || 'Auth User',
               photoURL: result.user.photoURL,
-              provider: result.user.providerData[0]?.providerId.includes('twitter') ? 'twitter' : 'google'
+              provider
             }),
           });
           
           if (res.ok) {
-            window.location.href = '/';
+            // Success toast
+            toast({
+              title: "Authentication successful",
+              description: `Signed in with ${provider.charAt(0).toUpperCase() + provider.slice(1)}`,
+              variant: "default"
+            });
+            
+            // Small delay for the toast to be visible
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 1000);
           } else {
             toast({
               title: "Authentication failed",
@@ -59,7 +90,15 @@ export default function AuthPage() {
         }
       } catch (error) {
         console.error("Error handling redirect result:", error);
-        // Don't show error toast here as it might be confusing on initial page load
+        // Only show error toast if we were explicitly in a redirect flow
+        if (localStorage.getItem('auth_redirect_in_progress')) {
+          localStorage.removeItem('auth_redirect_in_progress');
+          toast({
+            title: "Authentication error",
+            description: "There was an error completing your sign-in. Please try again.",
+            variant: "destructive"
+          });
+        }
       }
     };
     
