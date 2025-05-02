@@ -478,16 +478,25 @@ export class DatabaseStorage implements IStorage {
   
   async incrementPollVote(pollId: number, option: string): Promise<void> {
     const [poll] = await db.select().from(polls).where(eq(polls.id, pollId));
-    if (!poll) return;
+    if (!poll) {
+      console.log(`DB: Poll ${pollId} not found for vote increment`);
+      return;
+    }
+    
+    console.log(`DB: Incrementing vote for poll ${pollId}, option ${option}. Current counts - A:${poll.optionAVotes}, B:${poll.optionBVotes}`);
     
     if (option === "A") {
+      const newCount = (poll.optionAVotes || 0) + 1;
       await db.update(polls)
-        .set({ optionAVotes: (poll.optionAVotes || 0) + 1 })
+        .set({ optionAVotes: newCount })
         .where(eq(polls.id, pollId));
+      console.log(`DB: Updated option A count to ${newCount}`);
     } else if (option === "B") {
+      const newCount = (poll.optionBVotes || 0) + 1;
       await db.update(polls)
-        .set({ optionBVotes: (poll.optionBVotes || 0) + 1 })
+        .set({ optionBVotes: newCount })
         .where(eq(polls.id, pollId));
+      console.log(`DB: Updated option B count to ${newCount}`);
     }
   }
   

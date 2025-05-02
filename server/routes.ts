@@ -287,8 +287,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update poll vote count
       await storage.incrementPollVote(pollId, option);
       
-      // Get updated poll
+      // Get updated poll - make sure to wait for the latest data
       const updatedPoll = await storage.getPoll(pollId);
+      console.log("Updated poll after vote:", {
+        id: updatedPoll?.id,
+        optionAVotes: updatedPoll?.optionAVotes,
+        optionBVotes: updatedPoll?.optionBVotes
+      });
       
       res.status(201).json({ vote, poll: updatedPoll });
     } catch (error) {
