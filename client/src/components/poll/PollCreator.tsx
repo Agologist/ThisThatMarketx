@@ -96,7 +96,7 @@ export default function PollCreator() {
           const minutes = values.customMinutes || 0;
           
           // Ensure at least 5 minutes total duration
-          if (hours === 0 && minutes < 5) {
+          if ((hours === 0 && minutes < 5) || (hours === 0 && minutes === 0)) {
             throw new Error("Challenge duration must be at least 5 minutes");
           }
           
