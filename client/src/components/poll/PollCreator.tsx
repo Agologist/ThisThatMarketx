@@ -156,7 +156,7 @@ export default function PollCreator() {
     if (!searchText) {
       toast({
         title: "Input Required",
-        description: `Please enter text for Option ${option} first`,
+        description: `Please enter text for Challenger ${option} first`,
         variant: "destructive",
       });
       return;
@@ -236,7 +236,7 @@ export default function PollCreator() {
                           {optionAImage ? (
                             <img 
                               src={optionAImage} 
-                              alt="Option A" 
+                              alt="Challenger 1" 
                               className="w-full h-full object-cover" 
                             />
                           ) : (
@@ -298,7 +298,7 @@ export default function PollCreator() {
                           {optionBImage ? (
                             <img 
                               src={optionBImage} 
-                              alt="Option B" 
+                              alt="Challenger 2" 
                               className="w-full h-full object-cover" 
                             />
                           ) : (
@@ -467,7 +467,7 @@ export default function PollCreator() {
                 ) : (
                   <>
                     <span className="mr-2">+</span>
-                    Create Poll
+                    Create Challenge
                   </>
                 )}
               </Button>
