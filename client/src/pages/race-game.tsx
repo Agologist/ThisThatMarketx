@@ -396,7 +396,7 @@ export default function RaceGame() {
                            style={{ 
                              // Left car with nose touching center line
                              // As leftPosition increases, car moves right (forward)
-                             right: `calc(50% + ${leftPosition}%)`, 
+                             right: `calc(50% - ${leftPosition}%)`, 
                              transition: 'right 0.3s ease-out',
                              zIndex: 10
                            }}>
