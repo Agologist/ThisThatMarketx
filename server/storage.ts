@@ -136,11 +136,12 @@ export class MemStorage implements IStorage {
     const id = this.currentId.polls++;
     const now = new Date();
     
-    // Ensure image properties are explicitly null if undefined
+    // Ensure all optional fields are explicitly null if undefined
     const sanitizedData = {
       ...insertPoll,
       optionAImage: insertPoll.optionAImage || null,
       optionBImage: insertPoll.optionBImage || null,
+      isPublic: insertPoll.isPublic ?? true,
     };
     
     const poll: Poll = { 
@@ -347,12 +348,21 @@ export class DatabaseStorage implements IStorage {
   }
   
   async createPoll(insertPoll: InsertPoll): Promise<Poll> {
-    const [poll] = await db.insert(polls).values({
+    // Ensure all optional fields are explicitly null if undefined
+    const sanitizedData = {
       ...insertPoll,
+      optionAImage: insertPoll.optionAImage || null,
+      optionBImage: insertPoll.optionBImage || null,
+      isPublic: insertPoll.isPublic ?? true,
+    };
+    
+    const [poll] = await db.insert(polls).values({
+      ...sanitizedData,
       optionAVotes: 0,
       optionBVotes: 0,
       createdAt: new Date()
     }).returning();
+    
     return poll;
   }
   
