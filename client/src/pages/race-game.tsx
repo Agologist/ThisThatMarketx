@@ -22,12 +22,12 @@ const PUSH_POWER = 3; // How much pushing power each vote provides
 const MAX_POSITION = 30; // Position at the edge of the platform where car falls off
 const CENTER_POSITION = 0; // Starting position at center
 
-// Race car images
+// Race car images - white cars for better visibility
 const carImages = [
-  "https://cdn-icons-png.flaticon.com/512/4955/4955169.png",
-  "https://cdn-icons-png.flaticon.com/512/4955/4955198.png",
-  "https://cdn-icons-png.flaticon.com/512/4955/4955126.png",
-  "https://cdn-icons-png.flaticon.com/512/4955/4955139.png"
+  "https://cdn-icons-png.flaticon.com/512/4955/4955044.png", // White car
+  "https://cdn-icons-png.flaticon.com/512/4955/4955044.png", // White car
+  "https://cdn-icons-png.flaticon.com/512/4955/4955044.png", // White car
+  "https://cdn-icons-png.flaticon.com/512/4955/4955044.png"  // White car
 ];
 
 export default function RaceGame() {
@@ -390,10 +390,9 @@ export default function RaceGame() {
                       {/* Left car (facing right - toward center) */}
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
-                             // Left car moves forward as it gets votes
-                             // At center (0), car is at 47% from left 
+                             // Left car starts at center line and moves forward as it gets votes
                              // As leftPosition increases, car moves right (forward)
-                             left: `${47 + leftPosition}%`, 
+                             left: `${49.5 + leftPosition}%`, 
                              transition: 'left 0.3s ease-out',
                              zIndex: 10
                            }}>
@@ -420,9 +419,9 @@ export default function RaceGame() {
                       {/* Right car (facing left - toward center) */}
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
-                             // Right car gets pushed by the left car 
+                             // Right car starts at center line and gets pushed by the left car
                              // As rightPosition increases, right car gets pushed away from center
-                             left: `${53 + rightPosition}%`,
+                             left: `${50.5 + rightPosition}%`,
                              transition: 'left 0.3s ease-out',
                              zIndex: 9
                            }}>
