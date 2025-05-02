@@ -61,7 +61,7 @@ export default function AuthPage() {
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/20 text-primary mb-2">
                 <FlagIcon className="w-6 h-6" />
               </div>
-              <h2 className="font-racing text-primary text-2xl">DataRacer</h2>
+              <h2 className="font-racing text-primary text-2xl">Votes and Wars</h2>
               <p className="text-muted-foreground mt-2">Your creative poll and race platform</p>
             </div>
             
@@ -250,7 +250,7 @@ export default function AuthPage() {
       {/* Right side - Hero section */}
       <div className="w-full md:w-1/2 bg-black p-6 md:p-12 flex items-center">
         <div className="max-w-lg mx-auto">
-          <h1 className="font-racing text-5xl text-primary mb-6">DataRacer</h1>
+          <h1 className="font-racing text-5xl text-primary mb-6">Votes and Wars</h1>
           <h2 className="text-3xl font-bold mb-6">Creative "This or That" Polls with a Racing Twist</h2>
           
           <div className="space-y-6 text-lg">
