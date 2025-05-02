@@ -41,7 +41,7 @@ export default function PollPage() {
   // Calculate remaining time
   const getRemainingTime = () => {
     if (!poll?.endTime) {
-      console.log("DEBUG: No endTime found in poll:", poll);
+      console.warn("DEBUG: No endTime found in poll:", poll);
       return { hours: 0, minutes: 0, seconds: 0 };
     }
     
@@ -74,7 +74,16 @@ export default function PollPage() {
     return { hours, minutes, seconds };
   };
   
-  const [timeState, setTimeState] = useState(() => getRemainingTime());
+  // Initialize with zeros first and then update when poll data is available
+  const [timeState, setTimeState] = useState({ hours: 0, minutes: 0, seconds: 0 });
+  
+  // Update time state when poll data is available
+  useEffect(() => {
+    if (poll?.endTime) {
+      setTimeState(getRemainingTime());
+    }
+  }, [poll?.endTime]);
+  
   const { hours, minutes, seconds } = timeState;
   const isPollActive = hours > 0 || minutes > 0 || seconds > 0;
   

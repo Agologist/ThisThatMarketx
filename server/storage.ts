@@ -159,6 +159,17 @@ export class MemStorage implements IStorage {
         throw new Error("Invalid endTime format");
       }
       
+      // Log time debug information to trace the issue
+      console.log("Poll time debug:", {
+        method: "createPoll",
+        nowRaw: now,
+        nowIso: now.toISOString(),
+        endTimeRaw: endTime,
+        endTimeIso: endTime.toISOString(),
+        diffMs: endTime.getTime() - now.getTime(),
+        diffMinutes: (endTime.getTime() - now.getTime()) / (1000 * 60)
+      });
+      
       const poll: Poll = { 
         ...sanitizedData,
         endTime, // Use the parsed Date object 
@@ -169,7 +180,7 @@ export class MemStorage implements IStorage {
       };
       
       this.polls.set(id, poll);
-      console.log("Poll created successfully:", poll);
+      console.log("Poll created successfully with id:", id);
       return poll;
     } catch (error) {
       console.error("Error creating poll in memory storage:", error);
@@ -436,15 +447,28 @@ export class DatabaseStorage implements IStorage {
         throw new Error("Invalid endTime format");
       }
       
+      const now = new Date();
+      
+      // Log time debug information to trace the issue
+      console.log("Poll time debug (database):", {
+        method: "createPoll",
+        nowRaw: now,
+        nowIso: now.toISOString(),
+        endTimeRaw: endTime,
+        endTimeIso: endTime.toISOString(),
+        diffMs: endTime.getTime() - now.getTime(),
+        diffMinutes: (endTime.getTime() - now.getTime()) / (1000 * 60)
+      });
+      
       const [poll] = await db.insert(polls).values({
         ...sanitizedData,
         endTime, // Use the proper Date object
         optionAVotes: 0,
         optionBVotes: 0,
-        createdAt: new Date()
+        createdAt: now
       }).returning();
       
-      console.log("Poll created successfully:", poll);
+      console.log("Poll created successfully with id:", poll.id);
       return poll;
     } catch (error) {
       console.error("Error creating poll in storage:", error);
