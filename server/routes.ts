@@ -27,7 +27,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check if a user with this Firebase UID already exists
       let existingUser = null;
-      if (firebaseData.email) {
+      
+      // First try to find by Firebase UID (most accurate)
+      existingUser = await storage.getUserByFirebaseUid(firebaseData.uid);
+      
+      // If not found by Firebase UID, try by email if available
+      if (!existingUser && firebaseData.email) {
         existingUser = await storage.getUserByEmail(firebaseData.email);
       }
       
