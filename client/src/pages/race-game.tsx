@@ -109,9 +109,9 @@ export default function RaceGame() {
   // Start the race
   const startRace = () => {
     setGameState("racing");
-    // Initial position - cars start nose-to-nose at the center line
-    setLeftPosition(0); // Left car starts at center
-    setRightPosition(0); // Right car starts at center 
+    // Initial position - cars start nose-to-nose near the center line
+    setLeftPosition(0); // Initial offset is added to base position (40%)
+    setRightPosition(0); // Initial offset is added to base position (60%)
     setLeftVotes(0);
     setRightVotes(0);
     setLeftExploded(false);
@@ -390,9 +390,9 @@ export default function RaceGame() {
                       {/* Left car (facing right - toward center) */}
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
-                             // Left car starts 3% left of center line (47%)
+                             // Left car starts 10% left of center line (40%)
                              // As leftPosition increases, car moves right (forward)
-                             left: `${47 + leftPosition}%`, 
+                             left: `${40 + leftPosition}%`, 
                              transition: 'left 0.3s ease-out',
                              zIndex: 10
                            }}>
@@ -419,9 +419,9 @@ export default function RaceGame() {
                       {/* Right car (facing left - toward center) */}
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
-                             // Right car starts 3% right of center line (53%)
+                             // Right car starts 10% right of center line (60%)
                              // As rightPosition increases, right car gets pushed away from center
-                             left: `${53 + rightPosition}%`,
+                             left: `${60 + rightPosition}%`,
                              transition: 'left 0.3s ease-out',
                              zIndex: 9
                            }}>
