@@ -280,11 +280,8 @@ export default function PollCreator() {
   
   return (
     <Card className="bg-card border-primary/30">
-      <CardHeader className="flex justify-between items-center pb-4">
+      <CardHeader className="pb-4">
         <CardTitle className="text-xl font-montserrat font-bold">Create a New Challenge</CardTitle>
-        <Button variant="ghost" size="icon">
-          <HelpCircle className="h-5 w-5" />
-        </Button>
       </CardHeader>
       
       <CardContent>
@@ -346,21 +343,8 @@ export default function PollCreator() {
                             </div>
                           )}
                           
-                          <div className="absolute bottom-2 right-2 flex gap-1">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="bg-black/50 hover:bg-black/70 h-8 w-8 p-0"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openFilePicker("A");
-                              }}
-                            >
-                              <Upload className="h-4 w-4" />
-                            </Button>
-                            
-                            {optionAImage && (
+                          {optionAImage && (
+                            <div className="absolute bottom-2 right-2">
                               <Button 
                                 type="button"
                                 variant="ghost" 
@@ -373,8 +357,8 @@ export default function PollCreator() {
                               >
                                 <ImageIcon className="h-4 w-4" />
                               </Button>
-                            )}
-                          </div>
+                            </div>
+                          )}
                           
                           <input
                             type="file"
@@ -454,21 +438,8 @@ export default function PollCreator() {
                             </div>
                           )}
                           
-                          <div className="absolute bottom-2 right-2 flex gap-1">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="bg-black/50 hover:bg-black/70 h-8 w-8 p-0"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openFilePicker("B");
-                              }}
-                            >
-                              <Upload className="h-4 w-4" />
-                            </Button>
-                            
-                            {optionBImage && (
+                          {optionBImage && (
+                            <div className="absolute bottom-2 right-2">
                               <Button 
                                 type="button"
                                 variant="ghost" 
@@ -481,8 +452,8 @@ export default function PollCreator() {
                               >
                                 <ImageIcon className="h-4 w-4" />
                               </Button>
-                            )}
-                          </div>
+                            </div>
+                          )}
                           
                           <input
                             type="file"
