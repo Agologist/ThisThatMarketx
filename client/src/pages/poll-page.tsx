@@ -31,7 +31,7 @@ export default function PollPage() {
   });
   
   const hasVoted = userVoteData?.hasVoted || false;
-  const userVote = userVoteData?.hasVoted ? userVoteData : null;
+  const userVoteOption = userVoteData?.option || null;
   
   // Calculate poll percentages for display
   const totalVotes = (poll?.optionAVotes || 0) + (poll?.optionBVotes || 0);
@@ -288,7 +288,7 @@ export default function PollPage() {
                   className={`border rounded-md overflow-hidden transition-all 
                     ${selectedOption === "A" ? "ring-2 ring-primary" : ""} 
                     ${!isPollActive || hasVoted ? "pointer-events-none" : "cursor-pointer"}
-                    ${hasVoted && userVote?.option === "A" ? "bg-primary/10" : ""}`}
+                    ${hasVoted && userVoteOption === "A" ? "bg-primary/10" : ""}`}
                   onClick={() => isPollActive && !hasVoted && setSelectedOption("A")}
                 >
                   {poll.optionAImage ? (
@@ -308,7 +308,7 @@ export default function PollPage() {
                   <div className="p-4">
                     <div className="flex justify-between items-center">
                       <h3 className="font-montserrat font-bold text-lg">{poll.optionAText}</h3>
-                      {hasVoted && userVoteData?.option === "A" && (
+                      {hasVoted && userVoteOption === "A" && (
                         <span className="bg-primary/20 text-primary text-xs rounded-full px-2 py-1 font-medium flex items-center">
                           <CheckIcon className="w-3 h-3 mr-1" /> Your vote
                         </span>
@@ -329,7 +329,7 @@ export default function PollPage() {
                   className={`border rounded-md overflow-hidden transition-all 
                     ${selectedOption === "B" ? "ring-2 ring-primary" : ""} 
                     ${!isPollActive || hasVoted ? "pointer-events-none" : "cursor-pointer"}
-                    ${hasVoted && userVoteData?.option === "B" ? "bg-primary/10" : ""}`}
+                    ${hasVoted && userVoteOption === "B" ? "bg-primary/10" : ""}`}
                   onClick={() => isPollActive && !hasVoted && setSelectedOption("B")}
                 >
                   {poll.optionBImage ? (
@@ -349,7 +349,7 @@ export default function PollPage() {
                   <div className="p-4">
                     <div className="flex justify-between items-center">
                       <h3 className="font-montserrat font-bold text-lg">{poll.optionBText}</h3>
-                      {hasVoted && userVoteData?.option === "B" && (
+                      {hasVoted && userVoteOption === "B" && (
                         <span className="bg-primary/20 text-primary text-xs rounded-full px-2 py-1 font-medium flex items-center">
                           <CheckIcon className="w-3 h-3 mr-1" /> Your vote
                         </span>
@@ -389,7 +389,7 @@ export default function PollPage() {
                   
                   {hasVoted && (
                     <p className="text-xs text-muted-foreground mt-2">
-                      You voted for {userVoteData?.option === "A" ? poll.optionAText : poll.optionBText}. 
+                      You voted for {userVoteOption === "A" ? poll.optionAText : poll.optionBText}. 
                       Votes cannot be changed once submitted.
                     </p>
                   )}

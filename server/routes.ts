@@ -233,7 +233,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         hasVoted: !!existingVote,
         poll,
         userId,
-        pollId
+        pollId,
+        option: existingVote ? existingVote.option : null
       });
     } catch (error) {
       console.error("Error checking vote status:", error);
