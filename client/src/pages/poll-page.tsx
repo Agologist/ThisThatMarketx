@@ -25,7 +25,7 @@ export default function PollPage() {
     queryKey: [`/api/polls/${id}`],
   });
   
-  const { data: userVoteData } = useQuery({
+  const { data: userVoteData, refetch: refetchVoteData } = useQuery({
     queryKey: [`/api/polls/${id}/vote`],
     enabled: !!user && !!id,
   });
@@ -138,9 +138,12 @@ export default function PollPage() {
         });
       }
       
-      // Additionally, invalidate the queries to ensure fresh data
-      queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}/vote`] });
+      // Additionally, manually refetch the data to ensure it's updated
+      await Promise.all([
+        refetchVoteData(),
+        queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}`] }),
+        queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}/vote`] })
+      ]);
       
       toast({
         title: "Vote recorded!",
