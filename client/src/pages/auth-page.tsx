@@ -12,6 +12,7 @@ import { FlagIcon, CheckIcon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { signInWithGoogle } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
+import { FirebaseError } from "firebase/app";
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation, continueAsGuest, isGuest } = useAuth();
@@ -89,18 +90,27 @@ export default function AuthPage() {
     } catch (error) {
       console.error("Google sign-in error:", error);
       
-      // Check for unauthorized domain error
-      if (error?.code === 'auth/unauthorized-domain') {
-        toast({
-          title: "Domain not authorized",
-          description: "You need to add this domain to your Firebase authorized domains list in the Firebase Console: Authentication > Settings > Authorized domains",
-          variant: "destructive",
-          duration: 10000
-        });
+      // Check if this is a Firebase error
+      if (error instanceof FirebaseError) {
+        if (error.code === 'auth/unauthorized-domain') {
+          toast({
+            title: "Domain not authorized",
+            description: "You need to add this domain to your Firebase authorized domains list in the Firebase Console: Authentication > Settings > Authorized domains",
+            variant: "destructive",
+            duration: 10000
+          });
+        } else {
+          toast({
+            title: "Authentication failed",
+            description: `Failed to authenticate with Google: ${error.message || error.code || 'Unknown error'}`,
+            variant: "destructive"
+          });
+        }
       } else {
+        // Handle generic errors
         toast({
           title: "Authentication failed",
-          description: `Failed to authenticate with Google: ${error?.message || error?.code || 'Unknown error'}`,
+          description: error instanceof Error ? error.message : "Unknown error occurred",
           variant: "destructive"
         });
       }

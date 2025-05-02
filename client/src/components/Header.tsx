@@ -11,8 +11,23 @@ export default function Header() {
   const [location] = useLocation();
   const { user, isGuest, logoutMutation } = useAuth();
   
-  const handleLogout = () => {
-    logoutMutation.mutate();
+  const handleLogout = async () => {
+    try {
+      // Import Firebase signOut dynamically to avoid circular dependencies
+      const { signOut } = await import('@/lib/firebase');
+      
+      // First sign out from Firebase if user was authenticated with it
+      if (user?.provider === 'firebase') {
+        await signOut();
+      }
+      
+      // Then perform the regular logout through our API
+      logoutMutation.mutate();
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Fallback to regular logout if Firebase logout fails
+      logoutMutation.mutate();
+    }
   };
   
   const toggleMenu = () => {
