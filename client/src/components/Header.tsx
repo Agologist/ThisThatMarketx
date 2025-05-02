@@ -1,15 +1,55 @@
 import React, { useState } from "react";
 import { useLocation, Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { FlagIcon, User, LogOut, Menu, X, UserIcon } from "lucide-react";
+import { FlagIcon, User, LogOut, Menu, X, UserIcon, Trophy, Award, FileText } from "lucide-react";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [location, navigate] = useLocation();
   const { user, isGuest, logoutMutation, exitGuestMode } = useAuth();
+  
+  // Fetch user stats
+  const { data: userPolls = [] } = useQuery({
+    queryKey: ["/api/user/polls"],
+    queryFn: async () => {
+      if (!user) return [];
+      const res = await fetch("/api/user/polls", { credentials: "include" });
+      if (!res.ok) return [];
+      return await res.json();
+    },
+    enabled: !!user && !isGuest
+  });
+  
+  const { data: userRaces = [] } = useQuery({
+    queryKey: ["/api/user/races"],
+    queryFn: async () => {
+      if (!user) return [];
+      const res = await fetch("/api/user/races", { credentials: "include" });
+      if (!res.ok) return [];
+      return await res.json();
+    },
+    enabled: !!user && !isGuest
+  });
+  
+  const { data: userAchievements = [] } = useQuery({
+    queryKey: ["/api/user/achievements"],
+    queryFn: async () => {
+      if (!user) return [];
+      const res = await fetch("/api/user/achievements", { credentials: "include" });
+      if (!res.ok) return [];
+      return await res.json();
+    },
+    enabled: !!user && !isGuest
+  });
+  
+  // Calculate stats
+  const activePolls = userPolls.length;
+  const raceWins = userRaces.filter((race: any) => race.won).length;
+  const totalAchievements = userAchievements.length;
 
   const handleLogout = async () => {
     try {
@@ -124,6 +164,47 @@ export default function Header() {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   
+                  {/* Stats for desktop dropdown */}
+                  {(!isGuest && user) && (
+                    <>
+                      <div className="px-2 py-1.5 grid grid-cols-2 gap-2">
+                        <div className="flex items-center">
+                          <FileText className="text-primary h-4 w-4 mr-1.5" />
+                          <div className="text-xs">
+                            <p className="text-muted-foreground">Challenges</p>
+                            <p className="font-bold">{activePolls}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center">
+                          <Trophy className="text-primary h-4 w-4 mr-1.5" />
+                          <div className="text-xs">
+                            <p className="text-muted-foreground">Race Wins</p>
+                            <p className="font-bold">{raceWins}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center">
+                          <Award className="text-primary h-4 w-4 mr-1.5" />
+                          <div className="text-xs">
+                            <p className="text-muted-foreground">Achievements</p>
+                            <p className="font-bold">{totalAchievements}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center">
+                          <UserIcon className="text-primary h-4 w-4 mr-1.5" />
+                          <div className="text-xs">
+                            <p className="text-muted-foreground">Rank</p>
+                            <p className="font-bold">
+                              {totalAchievements >= 10 ? "King" : 
+                               totalAchievements >= 5 ? "Queen" : 
+                               totalAchievements >= 3 ? "Jack" : "Egg"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  
                   {isGuest ? (
                     <DropdownMenuItem onClick={exitGuestMode} className="cursor-pointer">
                       <User className="mr-2 h-4 w-4" />
@@ -172,6 +253,47 @@ export default function Header() {
                   {link.label}
                 </Link>
               ))}
+              
+              {/* User Stats Grid for mobile */}
+              {(!isGuest && user) && (
+                <div className="grid grid-cols-2 gap-3 py-2">
+                  <div className="flex items-center p-2 bg-primary/10 rounded-md">
+                    <FileText className="text-primary h-5 w-5 mr-2" />
+                    <div>
+                      <p className="text-sm font-medium">Active Challenges</p>
+                      <p className="text-xl font-bold text-primary">{activePolls}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center p-2 bg-primary/10 rounded-md">
+                    <Trophy className="text-primary h-5 w-5 mr-2" />
+                    <div>
+                      <p className="text-sm font-medium">Race Wins</p>
+                      <p className="text-xl font-bold text-primary">{raceWins}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center p-2 bg-primary/10 rounded-md">
+                    <Award className="text-primary h-5 w-5 mr-2" />
+                    <div>
+                      <p className="text-sm font-medium">Achievements</p>
+                      <p className="text-xl font-bold text-primary">{totalAchievements}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center p-2 bg-primary/10 rounded-md">
+                    <UserIcon className="text-primary h-5 w-5 mr-2" />
+                    <div>
+                      <p className="text-sm font-medium">Rank</p>
+                      <p className="text-xl font-bold text-primary">
+                        {totalAchievements >= 10 ? "King" : 
+                         totalAchievements >= 5 ? "Queen" : 
+                         totalAchievements >= 3 ? "Jack" : "Egg"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               {showUserProfile ? (
                 <>
