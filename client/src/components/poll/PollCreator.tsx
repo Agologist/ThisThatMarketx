@@ -16,11 +16,14 @@ import { searchImages } from "@/utils/imageSearch";
 import { useLocation } from "wouter";
 
 const pollFormSchema = z.object({
-  question: z.string().min(5, "Question must be at least 5 characters"),
-  optionAText: z.string().min(1, "Option A text is required"),
-  optionBText: z.string().min(1, "Option B text is required"),
+  question: z.string().min(5, "Challenge title must be at least 5 characters"),
+  optionAText: z.string().min(1, "Challenger 1 name is required"),
+  optionBText: z.string().min(1, "Challenger 2 name is required"),
   duration: z.string(),
   audience: z.string(),
+  // For custom duration
+  customHours: z.number().min(0).max(72).optional(),
+  customMinutes: z.number().min(0).max(59).optional(),
 });
 
 type PollFormValues = z.infer<typeof pollFormSchema>;
@@ -33,12 +36,14 @@ export default function PollCreator() {
   const [optionBImage, setOptionBImage] = useState<string | null>(null);
   const [isSearchingA, setIsSearchingA] = useState(false);
   const [isSearchingB, setIsSearchingB] = useState(false);
+  const [showCustomDuration, setShowCustomDuration] = useState(false);
   
   const durations = [
     { value: "1h", label: "1 hour" },
     { value: "24h", label: "24 hours" },
     { value: "48h", label: "48 hours" },
     { value: "1w", label: "1 week" },
+    { value: "custom", label: "Custom" },
   ];
   
   const audiences = [
@@ -54,6 +59,8 @@ export default function PollCreator() {
       optionBText: "",
       duration: "24h",
       audience: "public",
+      customHours: 1,
+      customMinutes: 0,
     },
   });
   
@@ -72,6 +79,19 @@ export default function PollCreator() {
           break;
         case "1w":
           endTime.setDate(now.getDate() + 7);
+          break;
+        case "custom":
+          // Add custom hours and minutes
+          const hours = values.customHours || 0;
+          const minutes = values.customMinutes || 0;
+          
+          // Ensure at least 5 minutes total duration
+          if (hours === 0 && minutes < 5) {
+            throw new Error("Challenge duration must be at least 5 minutes");
+          }
+          
+          endTime.setHours(now.getHours() + hours);
+          endTime.setMinutes(now.getMinutes() + minutes);
           break;
         default: // 24h
           endTime.setHours(now.getHours() + 24);
@@ -169,7 +189,7 @@ export default function PollCreator() {
   return (
     <Card className="bg-card border-primary/30">
       <CardHeader className="flex justify-between items-center pb-4">
-        <CardTitle className="text-xl font-montserrat font-bold">Create a New Poll</CardTitle>
+        <CardTitle className="text-xl font-montserrat font-bold">Create a New Challenge</CardTitle>
         <Button variant="ghost" size="icon">
           <HelpCircle className="h-5 w-5" />
         </Button>
@@ -183,10 +203,10 @@ export default function PollCreator() {
               name="question"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Poll Question</FormLabel>
+                  <FormLabel>Title of the Challenge</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="Which design works better?" 
+                      placeholder="Which one is better?" 
                       className="bg-black border-primary/30"
                       {...field} 
                     />
@@ -203,7 +223,7 @@ export default function PollCreator() {
                   name="optionAText"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Option A</FormLabel>
+                      <FormLabel>Challenger 1</FormLabel>
                       <div className="bg-black border border-primary/30 rounded overflow-hidden">
                         <div 
                           className="h-32 bg-black flex items-center justify-center relative"
@@ -246,7 +266,7 @@ export default function PollCreator() {
                         <div className="p-3">
                           <FormControl>
                             <Input 
-                              placeholder="Option A name"
+                              placeholder="Challenger 1 name"
                               className="bg-black border-0"
                               {...field}
                             />
@@ -265,7 +285,7 @@ export default function PollCreator() {
                   name="optionBText"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Option B</FormLabel>
+                      <FormLabel>Challenger 2</FormLabel>
                       <div className="bg-black border border-primary/30 rounded overflow-hidden">
                         <div 
                           className="h-32 bg-black flex items-center justify-center relative"
@@ -308,7 +328,7 @@ export default function PollCreator() {
                         <div className="p-3">
                           <FormControl>
                             <Input 
-                              placeholder="Option B name"
+                              placeholder="Challenger 2 name"
                               className="bg-black border-0"
                               {...field}
                             />
