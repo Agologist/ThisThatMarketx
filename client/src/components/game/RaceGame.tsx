@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RaceRecord } from "@shared/schema";
-import { Trophy, Flag, Timer, ThumbsUp } from "lucide-react";
+import { ThumbsUp } from "lucide-react";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -108,27 +108,7 @@ export default function RaceGame({ races, pollId }: RaceGameProps) {
     }
   };
   
-  // Calculate stats
-  const getBestTime = () => {
-    if (!races || races.length === 0) return "N/A";
-    
-    const bestRace = [...races].sort((a, b) => a.time - b.time)[0];
-    return `${(bestRace.time / 1000).toFixed(2)}s`;
-  };
-  
-  const getTotalRaces = () => {
-    return races?.length || 0;
-  };
-  
-  const getRank = () => {
-    const winCount = races?.filter(race => race.won).length || 0;
-    
-    if (winCount >= 20) return "Diamond";
-    if (winCount >= 10) return "Platinum";
-    if (winCount >= 5) return "Gold";
-    if (winCount >= 3) return "Silver";
-    return "Bronze";
-  };
+  // Stats calculation functions removed
   
   return (
     <Card className="bg-card border-primary/30">
