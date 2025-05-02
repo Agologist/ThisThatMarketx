@@ -22,12 +22,16 @@ const PUSH_POWER = 3; // How much pushing power each vote provides
 const MAX_POSITION = 30; // Position at the edge of the platform where car falls off
 const CENTER_POSITION = 0; // Starting position at center
 
-// Using SVG car images for better reliability
+// Using white racecar SVG images for better reliability
 const carImages = [
-  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0yMSw3SDEzVjVoNlYzSDEwQzguMzQsMyw3LDQuMzQsNyw2djNINUM0LjQ1LDksNCw5LjQ1LDQsMTB2NmMwLDAuNTUsMC40NSwxLDEsMWgyYzAuNTUsMCwxLTAuNDUsMS0xdi0xaDhWMTUgYzAsMC41NSwwLjQ1LDEsMSwxaDJjMC41NSwwLDEtMC40NSwxLTF2LTZDMjIsOS40NSwyMS41NSw5LDIxLDl6IE03LjI1LDE0Ljc1Yy0wLjY5LDAtMS4yNS0wLjU2LTEuMjUtMS4yNXMwLjU2LTEuMjUsMS4yNS0xLjI1IHMxLjI1LDAuNTYsMS4yNSwxLjI1UzcuOTQsMTQuNzUsNy4yNSwxNC43NXogTTE3Ljc1LDE0Ljc1Yy0wLjY5LDAtMS4yNS0wLjU2LTEuMjUtMS4yNXMwLjU2LTEuMjUsMS4yNS0xLjI1czEuMjUsMC41NiwxLjI1LDEuMjUgUzE4LjQ0LDE0Ljc1LDE3Ljc1LDE0Ljc1eiBNMTgsOUg2VjZoMTJWOXoiPjwvcGF0aD48L3N2Zz4=", // White car SVG
-  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0yMSw3SDEzVjVoNlYzSDEwQzguMzQsMyw3LDQuMzQsNyw2djNINUM0LjQ1LDksNCw5LjQ1LDQsMTB2NmMwLDAuNTUsMC40NSwxLDEsMWgyYzAuNTUsMCwxLTAuNDUsMS0xdi0xaDhWMTUgYzAsMC41NSwwLjQ1LDEsMSwxaDJjMC41NSwwLDEtMC40NSwxLTF2LTZDMjIsOS40NSwyMS41NSw5LDIxLDl6IE03LjI1LDE0Ljc1Yy0wLjY5LDAtMS4yNS0wLjU2LTEuMjUtMS4yNXMwLjU2LTEuMjUsMS4yNS0xLjI1IHMxLjI1LDAuNTYsMS4yNSwxLjI1UzcuOTQsMTQuNzUsNy4yNSwxNC43NXogTTE3Ljc1LDE0Ljc1Yy0wLjY5LDAtMS4yNS0wLjU2LTEuMjUtMS4yNXMwLjU2LTEuMjUsMS4yNS0xLjI1czEuMjUsMC41NiwxLjI1LDEuMjUgUzE4LjQ0LDE0Ljc1LDE3Ljc1LDE0Ljc1eiBNMTgsOUg2VjZoMTJWOXoiPjwvcGF0aD48L3N2Zz4=", // White car SVG
-  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0yMSw3SDEzVjVoNlYzSDEwQzguMzQsMyw3LDQuMzQsNyw2djNINUM0LjQ1LDksNCw5LjQ1LDQsMTB2NmMwLDAuNTUsMC40NSwxLDEsMWgyYzAuNTUsMCwxLTAuNDUsMS0xdi0xaDhWMTUgYzAsMC41NSwwLjQ1LDEsMSwxaDJjMC41NSwwLDEtMC40NSwxLTF2LTZDMjIsOS40NSwyMS41NSw5LDIxLDl6IE03LjI1LDE0Ljc1Yy0wLjY5LDAtMS4yNS0wLjU2LTEuMjUtMS4yNXMwLjU2LTEuMjUsMS4yNS0xLjI1IHMxLjI1LDAuNTYsMS4yNSwxLjI1UzcuOTQsMTQuNzUsNy4yNSwxNC43NXogTTE3Ljc1LDE0Ljc1Yy0wLjY5LDAtMS4yNS0wLjU2LTEuMjUtMS4yNXMwLjU2LTEuMjUsMS4yNS0xLjI1czEuMjUsMC41NiwxLjI1LDEuMjUgUzE4LjQ0LDE0Ljc1LDE3Ljc1LDE0Ljc1eiBNMTgsOUg2VjZoMTJWOXoiPjwvcGF0aD48L3N2Zz4=", // White car SVG
-  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0yMSw3SDEzVjVoNlYzSDEwQzguMzQsMyw3LDQuMzQsNyw2djNINUM0LjQ1LDksNCw5LjQ1LDQsMTB2NmMwLDAuNTUsMC40NSwxLDEsMWgyYzAuNTUsMCwxLTAuNDUsMS0xdi0xaDhWMTUgYzAsMC41NSwwLjQ1LDEsMSwxaDJjMC41NSwwLDEtMC40NSwxLTF2LTZDMjIsOS40NSwyMS41NSw5LDIxLDl6IE03LjI1LDE0Ljc1Yy0wLjY5LDAtMS4yNS0wLjU2LTEuMjUtMS4yNXMwLjU2LTEuMjUsMS4yNS0xLjI1IHMxLjI1LDAuNTYsMS4yNSwxLjI1UzcuOTQsMTQuNzUsNy4yNSwxNC43NXogTTE3Ljc1LDE0Ljc1Yy0wLjY5LDAtMS4yNS0wLjU2LTEuMjUtMS4yNXMwLjU2LTEuMjUsMS4yNS0xLjI1czEuMjUsMC41NiwxLjI1LDEuMjUgUzE4LjQ0LDE0Ljc1LDE3Ljc1LDE0Ljc1eiBNMTgsOUg2VjZoMTJWOXoiPjwvcGF0aD48L3N2Zz4="   // White car SVG
+  // White racing car with front/hood at right side (for left car)
+  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgY2xhc3M9Imx1Y2lkZSBsdWNpZGUtY2FyIj48cGF0aCBkPSJNMTkgMTdINW0wIDB2MmMwIDEuMS45IDIgMiAyaDEwYTIgMiAwIDAgMCAyLTJ2LTJtMC0zVjZhMiAyIDAgMSAwLTQgMHY0TTUgMTRsMi01aDEyYzAgMCAxLjMgMS40MyAxLjUgM2EuNSA1IDAgMCAxLS41IDJoLTNtLTUgMGgtNyIvPjxjaXJjbGUgY3g9IjguNSIgY3k9IjE3LjUiIHI9IjIuNSIvPjxjaXJjbGUgY3g9IjE1LjUiIGN5PSIxNy41IiByPSIyLjUiLz48L3N2Zz4=",
+  // Same white racing car 2
+  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgY2xhc3M9Imx1Y2lkZSBsdWNpZGUtY2FyIj48cGF0aCBkPSJNMTkgMTdINW0wIDB2MmMwIDEuMS45IDIgMiAyaDEwYTIgMiAwIDAgMCAyLTJ2LTJtMC0zVjZhMiAyIDAgMSAwLTQgMHY0TTUgMTRsMi01aDEyYzAgMCAxLjMgMS40MyAxLjUgM2EuNSA1IDAgMCAxLS41IDJoLTNtLTUgMGgtNyIvPjxjaXJjbGUgY3g9IjguNSIgY3k9IjE3LjUiIHI9IjIuNSIvPjxjaXJjbGUgY3g9IjE1LjUiIGN5PSIxNy41IiByPSIyLjUiLz48L3N2Zz4=",
+  // Same white racing car 3
+  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgY2xhc3M9Imx1Y2lkZSBsdWNpZGUtY2FyIj48cGF0aCBkPSJNMTkgMTdINW0wIDB2MmMwIDEuMS45IDIgMiAyaDEwYTIgMiAwIDAgMCAyLTJ2LTJtMC0zVjZhMiAyIDAgMSAwLTQgMHY0TTUgMTRsMi01aDEyYzAgMCAxLjMgMS40MyAxLjUgM2EuNSA1IDAgMCAxLS41IDJoLTNtLTUgMGgtNyIvPjxjaXJjbGUgY3g9IjguNSIgY3k9IjE3LjUiIHI9IjIuNSIvPjxjaXJjbGUgY3g9IjE1LjUiIGN5PSIxNy41IiByPSIyLjUiLz48L3N2Zz4=",
+  // Same white racing car 4
+  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgY2xhc3M9Imx1Y2lkZSBsdWNpZGUtY2FyIj48cGF0aCBkPSJNMTkgMTdINW0wIDB2MmMwIDEuMS45IDIgMiAyaDEwYTIgMiAwIDAgMCAyLTJ2LTJtMC0zVjZhMiAyIDAgMSAwLTQgMHY0TTUgMTRsMi01aDEyYzAgMCAxLjMgMS40MyAxLjUgM2EuNSA1IDAgMCAxLS41IDJoLTNtLTUgMGgtNyIvPjxjaXJjbGUgY3g9IjguNSIgY3k9IjE3LjUiIHI9IjIuNSIvPjxjaXJjbGUgY3g9IjE1LjUiIGN5PSIxNy41IiByPSIyLjUiLz48L3N2Zz4="
 ];
 
 export default function RaceGame() {
@@ -390,10 +394,10 @@ export default function RaceGame() {
                       {/* Left car (facing right - toward center) */}
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
-                             // Left car starts 10% left of center line (40%)
-                             // As leftPosition increases, car moves right (forward)
-                             left: `${40 + leftPosition}%`, 
-                             transition: 'left 0.3s ease-out',
+                             // Left car with nose touching center line
+                             // As leftPosition increases, car moves left (gets pushed back)
+                             right: `calc(50% + ${leftPosition}%)`, 
+                             transition: 'right 0.3s ease-out',
                              zIndex: 10
                            }}>
                         {leftExploded ? (
@@ -401,7 +405,7 @@ export default function RaceGame() {
                             <img 
                               src={carImages[selectedCar]} 
                               alt="Left car" 
-                              className="h-12 w-auto opacity-50"
+                              className="h-14 w-auto opacity-50"
                               style={{ transform: 'scaleX(1)' }} /* Left car facing right */
                             />
                             <div className="absolute inset-0 flex items-center justify-center">
@@ -412,7 +416,7 @@ export default function RaceGame() {
                           <img 
                             src={carImages[selectedCar]} 
                             alt="Left car" 
-                            className="h-12 w-auto"
+                            className="h-14 w-auto"
                             style={{ transform: 'scaleX(1)' }} /* Left car facing right */
                           />
                         )}
@@ -421,9 +425,9 @@ export default function RaceGame() {
                       {/* Right car (facing left - toward center) */}
                       <div className="absolute top-1/2 transform -translate-y-1/2" 
                            style={{ 
-                             // Right car starts 10% right of center line (60%)
-                             // As rightPosition increases, right car gets pushed away from center
-                             left: `${60 + rightPosition}%`,
+                             // Right car with nose touching center line
+                             // As rightPosition increases, right car gets pushed right (away from center)
+                             left: `calc(50% + ${rightPosition}%)`,
                              transition: 'left 0.3s ease-out',
                              zIndex: 9
                            }}>
@@ -432,7 +436,7 @@ export default function RaceGame() {
                             <img 
                               src={carImages[(selectedCar + 2) % carImages.length]} 
                               alt="Right car" 
-                              className="h-12 w-auto opacity-50"
+                              className="h-14 w-auto opacity-50"
                               style={{ transform: 'scaleX(-1)' }}
                             />
                             <div className="absolute inset-0 flex items-center justify-center">
@@ -443,7 +447,7 @@ export default function RaceGame() {
                           <img 
                             src={carImages[(selectedCar + 2) % carImages.length]} 
                             alt="Right car" 
-                            className="h-12 w-auto"
+                            className="h-14 w-auto"
                             style={{ transform: 'scaleX(-1)' }}
                           />
                         )}
