@@ -4,7 +4,6 @@ import Footer from "@/components/Footer";
 import StatCards from "@/components/dashboard/StatCards";
 import PollCreator from "@/components/poll/PollCreator";
 import ActivePolls from "@/components/poll/ActivePolls";
-import RaceGame from "@/components/game/RaceGame";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, InfoIcon } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -113,11 +112,7 @@ export default function HomePage() {
             </div>
           </div>
           
-          {!isGuest && (
-            <div className="mb-8">
-              <RaceGame races={races} pollId={1} />
-            </div>
-          )}
+          {/* Votes and Wars Race section removed */}
         </div>
       </main>
       
