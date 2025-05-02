@@ -4,12 +4,12 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { FlagIcon, User, LogOut, Menu, X } from "lucide-react";
+import { FlagIcon, User, LogOut, Menu, X, UserIcon } from "lucide-react";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [location] = useLocation();
-  const { user, logoutMutation } = useAuth();
+  const { user, isGuest, logoutMutation } = useAuth();
   
   const handleLogout = () => {
     logoutMutation.mutate();
@@ -26,8 +26,11 @@ export default function Header() {
   ];
   
   const getInitials = (name: string) => {
-    return name.charAt(0).toUpperCase();
+    return name ? name.charAt(0).toUpperCase() : 'G'; // Default to 'G' for guest
   };
+  
+  // Determine if we should show user profile menu
+  const showUserProfile = user || isGuest;
   
   return (
     <header className="bg-black border-b border-primary/50">
@@ -61,15 +64,20 @@ export default function Header() {
               </Link>
             ))}
             
-            {/* User Profile */}
-            {user ? (
+            {/* User Profile or Guest */}
+            {showUserProfile ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                     <Avatar className="h-10 w-10 border-2 border-primary">
-                      <AvatarImage src={user.profileImageUrl || ""} alt={user.displayName || user.username} />
+                      {user && (
+                        <AvatarImage 
+                          src={user.profileImageUrl || ""} 
+                          alt={user.displayName || user.username} 
+                        />
+                      )}
                       <AvatarFallback className="bg-primary/20 text-primary">
-                        {getInitials(user.displayName || user.username)}
+                        {isGuest ? 'G' : getInitials(user?.displayName || user?.username || '')}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
@@ -77,22 +85,43 @@ export default function Header() {
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuLabel>
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user.displayName || user.username}</p>
-                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                      {isGuest ? (
+                        <>
+                          <p className="text-sm font-medium leading-none">Guest User</p>
+                          <p className="text-xs leading-none text-muted-foreground">Limited access mode</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-sm font-medium leading-none">{user?.displayName || user?.username}</p>
+                          <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                        </>
+                      )}
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/profile" className="cursor-pointer">
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
-                  </DropdownMenuItem>
+                  
+                  {isGuest ? (
+                    <DropdownMenuItem asChild>
+                      <Link href="/auth" className="cursor-pointer">
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Sign In / Register</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  ) : (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href="/profile" className="cursor-pointer">
+                          <User className="mr-2 h-4 w-4" />
+                          <span>Profile</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Log out</span>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
@@ -122,25 +151,46 @@ export default function Header() {
                 </Link>
               ))}
               
-              {user ? (
+              {showUserProfile ? (
                 <>
                   <div className="pt-2 flex items-center">
                     <Avatar className="h-8 w-8 border-2 border-primary mr-2">
-                      <AvatarImage src={user.profileImageUrl || ""} alt={user.displayName || user.username} />
+                      {user && (
+                        <AvatarImage 
+                          src={user.profileImageUrl || ""} 
+                          alt={user.displayName || user.username} 
+                        />
+                      )}
                       <AvatarFallback className="bg-primary/20 text-primary">
-                        {getInitials(user.displayName || user.username)}
+                        {isGuest ? 'G' : getInitials(user?.displayName || user?.username || '')}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-foreground">{user.displayName || user.username}</span>
+                    <span className="text-foreground">
+                      {isGuest ? 'Guest User' : (user?.displayName || user?.username)}
+                    </span>
                   </div>
-                  <Button 
-                    variant="outline" 
-                    className="border-primary text-primary" 
-                    onClick={handleLogout}
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Log out
-                  </Button>
+                  
+                  {isGuest ? (
+                    <Button 
+                      variant="outline" 
+                      className="border-primary text-primary"
+                      asChild
+                    >
+                      <Link href="/auth" onClick={() => setIsMenuOpen(false)}>
+                        <UserIcon className="mr-2 h-4 w-4" />
+                        Sign In / Register
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button 
+                      variant="outline" 
+                      className="border-primary text-primary" 
+                      onClick={handleLogout}
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Log out
+                    </Button>
+                  )}
                 </>
               ) : (
                 <Button asChild className="btn-gold">
