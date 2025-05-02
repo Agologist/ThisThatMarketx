@@ -136,15 +136,13 @@ export default function RaceGame() {
         
         // Move both cars accordingly
         const moveAmount = MOVE_STEP;
-        const currentLeftPos = leftPosition;
-        const currentRightPos = rightPosition;
         
         // Left car moves forward
-        const newLeftPos = currentLeftPos + moveAmount;
+        const newLeftPos = leftPosition + moveAmount;
         setLeftPosition(newLeftPos);
         
-        // Right car gets pushed back
-        const newRightPos = currentRightPos + moveAmount;
+        // Right car position tracks left car position
+        const newRightPos = newLeftPos;
         
         // Check if right car falls off
         if (newRightPos >= 30) {
@@ -589,17 +587,22 @@ export default function RaceGame() {
                             setTimeout(() => {
                               const moveAmount = MOVE_STEP;
                               
-                              // We need to use the current positions to calculate the new positions
-                              // Get current positions first
-                              const currentLeftPos = leftPosition;
-                              const currentRightPos = rightPosition;
+                              // In the corrected push mechanics:
+                              // 1. We only modify the left position directly with user input
+                              // 2. Right car position is calculated based on platform size and left car position
                               
                               // Left car moves forward (away from center)
-                              const newLeftPos = currentLeftPos + moveAmount;
+                              const newLeftPos = leftPosition + moveAmount;
                               setLeftPosition(newLeftPos);
                               
-                              // Right car is pushed by the left car
-                              const newRightPos = currentRightPos + moveAmount;
+                              // Right car is pushed to maintain the same total position sum
+                              // If platform is 60 units wide, and both cars start at 0:
+                              // - When left car moves to position 5, right car moves to position 5
+                              // - This maintains both cars within platform constraints
+                              
+                              // Total platform space constraint (60 units wide)
+                              // Position is conserved: if left goes +5, right must go +5
+                              const newRightPos = newLeftPos; // Right car moves same as left car
                               
                               // Check if right car falls off the platform
                               if (newRightPos >= 30) {
