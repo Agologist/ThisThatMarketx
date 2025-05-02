@@ -28,10 +28,12 @@ export interface IStorage {
   getUserPolls(userId: number): Promise<Poll[]>;
   createPoll(poll: InsertPoll): Promise<Poll>;
   incrementPollVote(pollId: number, option: string): Promise<void>;
+  decrementPollVote(pollId: number, option: string): Promise<void>;
   
   // Vote methods
   createVote(vote: InsertVote): Promise<Vote>;
   getUserVoteForPoll(userId: number, pollId: number): Promise<Vote | undefined>;
+  deleteVote(id: number): Promise<void>;
   
   // Race methods
   createRaceRecord(record: InsertRaceRecord): Promise<RaceRecord>;
@@ -188,6 +190,20 @@ export class MemStorage implements IStorage {
     this.polls.set(pollId, poll);
   }
   
+  async decrementPollVote(pollId: number, option: string): Promise<void> {
+    const poll = this.polls.get(pollId);
+    if (!poll) return;
+    
+    if (option === "A" && poll.optionAVotes > 0) {
+      poll.optionAVotes -= 1;
+    } else if (option === "B" && poll.optionBVotes > 0) {
+      poll.optionBVotes -= 1;
+    }
+    
+    this.polls.set(pollId, poll);
+    console.log(`Decremented vote for poll ${pollId}, option ${option}. New counts: A=${poll.optionAVotes}, B=${poll.optionBVotes}`);
+  }
+  
   // Vote methods
   async createVote(insertVote: InsertVote): Promise<Vote> {
     const id = this.currentId.votes++;
@@ -223,6 +239,16 @@ export class MemStorage implements IStorage {
     console.log(`Found vote for user ${userId} on poll ${pollId}: ${userVote ? 'Yes' : 'No'}`);
     
     return userVote;
+  }
+  
+  async deleteVote(id: number): Promise<void> {
+    console.log(`Deleting vote with id ${id}`);
+    if (this.votes.has(id)) {
+      this.votes.delete(id);
+      console.log(`Vote ${id} deleted successfully`);
+    } else {
+      console.log(`Vote ${id} not found for deletion`);
+    }
   }
   
   // Race methods
@@ -441,6 +467,23 @@ export class DatabaseStorage implements IStorage {
     }
   }
   
+  async decrementPollVote(pollId: number, option: string): Promise<void> {
+    const [poll] = await db.select().from(polls).where(eq(polls.id, pollId));
+    if (!poll) return;
+    
+    if (option === "A" && (poll.optionAVotes || 0) > 0) {
+      await db.update(polls)
+        .set({ optionAVotes: (poll.optionAVotes || 0) - 1 })
+        .where(eq(polls.id, pollId));
+      console.log(`DB: Decremented vote for poll ${pollId}, option A. New count: ${(poll.optionAVotes || 0) - 1}`);
+    } else if (option === "B" && (poll.optionBVotes || 0) > 0) {
+      await db.update(polls)
+        .set({ optionBVotes: (poll.optionBVotes || 0) - 1 })
+        .where(eq(polls.id, pollId));
+      console.log(`DB: Decremented vote for poll ${pollId}, option B. New count: ${(poll.optionBVotes || 0) - 1}`);
+    }
+  }
+  
   // Vote methods
   async createVote(insertVote: InsertVote): Promise<Vote> {
     const [vote] = await db.insert(votes).values({
@@ -478,6 +521,16 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error("DB: Error checking for vote:", error);
       return undefined;
+    }
+  }
+  
+  async deleteVote(id: number): Promise<void> {
+    console.log(`DB: Deleting vote with id ${id}`);
+    try {
+      const result = await db.delete(votes).where(eq(votes.id, id)).returning();
+      console.log(`DB: Vote deletion result:`, result);
+    } catch (error) {
+      console.error(`DB: Error deleting vote ${id}:`, error);
     }
   }
   
