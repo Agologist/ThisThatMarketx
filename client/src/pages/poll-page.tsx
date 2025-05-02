@@ -111,6 +111,8 @@ export default function PollPage() {
     setIsVoting(true);
     
     try {
+      console.log("Submitting vote:", { pollId: id, option: selectedOption });
+      
       // Send the vote request regardless of whether user has already voted
       // The server will return an error if the user has already voted
       const response = await apiRequest("POST", `/api/polls/${id}/vote`, { option: selectedOption });
@@ -121,14 +123,17 @@ export default function PollPage() {
       }
       
       const result = await response.json();
+      console.log("Vote success response:", result);
       
       // Immediately update the local poll data for instant feedback
       if (result.poll) {
+        console.log("Updating poll data with:", result.poll);
         queryClient.setQueryData([`/api/polls/${id}`], result.poll);
       }
       
       // Also update the vote status
       if (result.vote) {
+        console.log("Updating vote status with:", result.vote);
         queryClient.setQueryData([`/api/polls/${id}/vote`], {
           hasVoted: true,
           poll: result.poll,
@@ -138,12 +143,23 @@ export default function PollPage() {
         });
       }
       
-      // Additionally, manually refetch the data to ensure it's updated
-      await Promise.all([
-        refetchVoteData(),
-        queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}`] }),
-        queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}/vote`] })
-      ]);
+      // Let's force the query client to actually refresh with the new data
+      // First, invalidate ALL queries related to this poll (including the vote)
+      queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}/vote`] });
+      
+      // Manually refetch the data to ensure it's updated properly
+      setTimeout(async () => {
+        try {
+          const [voteResult, pollResult] = await Promise.all([
+            refetchVoteData(),
+            queryClient.fetchQuery({ queryKey: [`/api/polls/${id}`] })
+          ]);
+          console.log("After vote - refetched data:", { voteResult, pollResult });
+        } catch (fetchError) {
+          console.error("Error refetching data after vote:", fetchError);
+        }
+      }, 500);
       
       toast({
         title: "Vote recorded!",
