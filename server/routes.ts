@@ -49,7 +49,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           password: `firebase_${firebaseData.uid}`, // Not used for login, just a placeholder
           firebaseUid: firebaseData.uid,
           photoURL: firebaseData.photoURL || null,
-          provider: "firebase"
+          provider: firebaseData.provider
         });
         
         // Log the new user in
