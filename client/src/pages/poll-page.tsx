@@ -57,22 +57,36 @@ export default function PollPage() {
   const isPollActive = hours > 0 || minutes > 0;
   
   const handleVote = async () => {
-    if (!selectedOption || !isPollActive || hasVoted) return;
+    if (!selectedOption || !isPollActive) return;
     
     setIsVoting(true);
     
     try {
-      await apiRequest("POST", `/api/polls/${id}/vote`, { option: selectedOption });
+      // Send the vote request regardless of whether user has already voted
+      // The server will handle deleting the old vote if it exists
+      const response = await apiRequest("POST", `/api/polls/${id}/vote`, { option: selectedOption });
+      const result = await response.json();
       
-      // Invalidate poll data to refresh
+      // Immediately update the local poll data for instant feedback
+      if (result.poll) {
+        queryClient.setQueryData([`/api/polls/${id}`], result.poll);
+      }
+      
+      // Also update the vote status
+      if (result.vote) {
+        queryClient.setQueryData([`/api/polls/${id}/vote`], result.vote);
+      }
+      
+      // Additionally, invalidate the queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}`] });
       queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}/vote`] });
       
       toast({
-        title: "Vote recorded!",
-        description: `You voted for Option ${selectedOption}`,
+        title: hasVoted ? "Vote changed!" : "Vote recorded!",
+        description: `You voted for ${selectedOption === "A" ? poll.optionAText : poll.optionBText}`,
       });
     } catch (error) {
+      console.error("Voting error:", error);
       toast({
         title: "Vote failed",
         description: "There was an error recording your vote",
