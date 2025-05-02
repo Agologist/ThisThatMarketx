@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -37,6 +37,8 @@ export default function PollCreator() {
   const [isSearchingA, setIsSearchingA] = useState(false);
   const [isSearchingB, setIsSearchingB] = useState(false);
   const [showCustomDuration, setShowCustomDuration] = useState(false);
+  const [typingTimeoutA, setTypingTimeoutA] = useState<NodeJS.Timeout | null>(null);
+  const [typingTimeoutB, setTypingTimeoutB] = useState<NodeJS.Timeout | null>(null);
   
   const durations = [
     { value: "1h", label: "1 hour" },
@@ -135,6 +137,14 @@ export default function PollCreator() {
     },
   });
   
+  // Cleanup timeouts when the component unmounts
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutA) clearTimeout(typingTimeoutA);
+      if (typingTimeoutB) clearTimeout(typingTimeoutB);
+    };
+  }, [typingTimeoutA, typingTimeoutB]);
+
   const onSubmit = (values: PollFormValues) => {
     if (!user) {
       toast({
@@ -273,6 +283,23 @@ export default function PollCreator() {
                               placeholder="Challenger 1 title"
                               className="bg-black border-0"
                               {...field}
+                              onChange={(e) => {
+                                field.onChange(e);
+                                // Clear previous timeout if it exists
+                                if (typingTimeoutA) {
+                                  clearTimeout(typingTimeoutA);
+                                }
+                                
+                                // Only search for images if the text is at least 3 characters
+                                if (e.target.value.length >= 3) {
+                                  // Set a new timeout to search for images after typing stops
+                                  const timeout = setTimeout(() => {
+                                    searchImageForOption("A");
+                                  }, 800); // Wait 800ms after typing stops
+                                  
+                                  setTypingTimeoutA(timeout);
+                                }
+                              }}
                             />
                           </FormControl>
                         </div>
@@ -335,6 +362,23 @@ export default function PollCreator() {
                               placeholder="Challenger 2 title"
                               className="bg-black border-0"
                               {...field}
+                              onChange={(e) => {
+                                field.onChange(e);
+                                // Clear previous timeout if it exists
+                                if (typingTimeoutB) {
+                                  clearTimeout(typingTimeoutB);
+                                }
+                                
+                                // Only search for images if the text is at least 3 characters
+                                if (e.target.value.length >= 3) {
+                                  // Set a new timeout to search for images after typing stops
+                                  const timeout = setTimeout(() => {
+                                    searchImageForOption("B");
+                                  }, 800); // Wait 800ms after typing stops
+                                  
+                                  setTypingTimeoutB(timeout);
+                                }
+                              }}
                             />
                           </FormControl>
                         </div>
