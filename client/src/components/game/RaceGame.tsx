@@ -261,37 +261,7 @@ export default function RaceGame({ races, pollId }: RaceGameProps) {
           </div>
         </div>
         
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-black rounded p-3 flex items-center">
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3">
-              <Trophy className="text-primary text-sm" />
-            </div>
-            <div>
-              <h5 className="text-sm font-medium">Best Time</h5>
-              <p className="text-xs text-muted-foreground">{getBestTime()}</p>
-            </div>
-          </div>
-          
-          <div className="bg-black rounded p-3 flex items-center">
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3">
-              <Flag className="text-primary text-sm" />
-            </div>
-            <div>
-              <h5 className="text-sm font-medium">Races</h5>
-              <p className="text-xs text-muted-foreground">{getTotalRaces()} total</p>
-            </div>
-          </div>
-          
-          <div className="bg-black rounded p-3 flex items-center">
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3">
-              <Timer className="text-primary text-sm" />
-            </div>
-            <div>
-              <h5 className="text-sm font-medium">Rank</h5>
-              <p className="text-xs text-muted-foreground">{getRank()}</p>
-            </div>
-          </div>
-        </div>
+        {/* Game stats section removed */}
       </CardContent>
     </Card>
   );
