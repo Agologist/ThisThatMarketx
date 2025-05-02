@@ -51,6 +51,20 @@ export default function Header() {
   const voteCount = (user?.id && !isGuest) ? userRaces.length : 0; // Consider using a proper votes count query when available
   const warCount = userRaces.filter((race: any) => race.won).length;
   const achievementCount = userAchievements.length;
+  
+  // Calculate ranks based on count
+  const getRank = (count: number): string => {
+    if (count < 100) return "Egg";
+    if (count < 1000) return "Jack";
+    if (count < 10000) return "Queen";
+    if (count < 100000) return "King";
+    if (count < 1000000) return "Ace";
+    return "Jester";
+  };
+  
+  const challengeRank = getRank(challengeCount);
+  const voteRank = getRank(voteCount);
+  const warRank = getRank(warCount);
 
   const handleLogout = async () => {
     try {
@@ -173,6 +187,7 @@ export default function Header() {
                           <div className="text-xs">
                             <p className="text-muted-foreground">Challenges</p>
                             <p className="font-bold">{challengeCount}</p>
+                            <p className="text-xs text-primary">Rank: {challengeRank}</p>
                           </div>
                         </div>
                         <div className="flex items-center">
@@ -180,6 +195,7 @@ export default function Header() {
                           <div className="text-xs">
                             <p className="text-muted-foreground">Votes</p>
                             <p className="font-bold">{voteCount}</p>
+                            <p className="text-xs text-primary">Rank: {voteRank}</p>
                           </div>
                         </div>
                         <div className="flex items-center">
@@ -187,6 +203,7 @@ export default function Header() {
                           <div className="text-xs">
                             <p className="text-muted-foreground">Wars</p>
                             <p className="font-bold">{warCount}</p>
+                            <p className="text-xs text-primary">Rank: {warRank}</p>
                           </div>
                         </div>
                         <div className="flex items-center">
@@ -258,6 +275,7 @@ export default function Header() {
                     <div>
                       <p className="text-sm font-medium">Challenges</p>
                       <p className="text-xl font-bold text-primary">{challengeCount}</p>
+                      <p className="text-xs text-primary">Rank: {challengeRank}</p>
                     </div>
                   </div>
                   
@@ -266,6 +284,7 @@ export default function Header() {
                     <div>
                       <p className="text-sm font-medium">Votes</p>
                       <p className="text-xl font-bold text-primary">{voteCount}</p>
+                      <p className="text-xs text-primary">Rank: {voteRank}</p>
                     </div>
                   </div>
                   
@@ -274,6 +293,7 @@ export default function Header() {
                     <div>
                       <p className="text-sm font-medium">Wars</p>
                       <p className="text-xl font-bold text-primary">{warCount}</p>
+                      <p className="text-xs text-primary">Rank: {warRank}</p>
                     </div>
                   </div>
                   
