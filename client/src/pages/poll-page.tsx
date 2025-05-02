@@ -40,25 +40,37 @@ export default function PollPage() {
   
   // Calculate remaining time
   const getRemainingTime = () => {
-    if (!poll?.endTime) return { hours: 0, minutes: 0, seconds: 0 };
+    if (!poll?.endTime) {
+      console.log("DEBUG: No endTime found in poll:", poll);
+      return { hours: 0, minutes: 0, seconds: 0 };
+    }
     
     const now = new Date();
     const end = new Date(poll.endTime);
     const diff = end.getTime() - now.getTime();
     
-    console.log("Time check:", {
+    // Force log to the console to make sure we can see it
+    console.warn("⏰ TIME CHECK:", {
       now: now.toISOString(),
+      nowTime: now.getTime(),
       end: end.toISOString(),
-      diff,
-      endTimeRaw: poll.endTime
+      endTime: end.getTime(),
+      diff: diff,
+      diffInMinutes: diff / (1000 * 60),
+      endTimeRaw: poll.endTime,
+      pollId: poll.id
     });
     
-    if (diff <= 0) return { hours: 0, minutes: 0, seconds: 0 };
+    if (diff <= 0) {
+      console.warn("⏰ POLL ENDED: Time difference is negative or zero:", diff);
+      return { hours: 0, minutes: 0, seconds: 0 };
+    }
     
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((diff % (1000 * 60)) / 1000);
     
+    console.warn("⏰ REMAINING TIME:", { hours, minutes, seconds });
     return { hours, minutes, seconds };
   };
   

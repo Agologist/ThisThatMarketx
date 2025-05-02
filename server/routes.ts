@@ -106,9 +106,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Poll not found" });
       }
       
+      // Log poll time info for debugging
+      const now = new Date();
+      const endTime = new Date(poll.endTime);
+      const diffMs = endTime.getTime() - now.getTime();
+      const diffMinutes = diffMs / (1000 * 60);
+      
+      console.log("Poll time info:", {
+        pollId: poll.id,
+        question: poll.question,
+        now: now.toISOString(),
+        nowTime: now.getTime(),
+        endTime: endTime.toISOString(),
+        endTimeMs: endTime.getTime(),
+        diffMs: diffMs,
+        diffMinutes: diffMinutes,
+        isActive: diffMs > 0,
+        created: poll.createdAt.toISOString()
+      });
+      
       res.json(poll);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch poll" });
+    }
+  });
+  
+  // Debug route for checking poll time
+  app.get("/api/polls/:id/debug", async (req, res) => {
+    try {
+      const pollId = parseInt(req.params.id);
+      const poll = await storage.getPoll(pollId);
+      
+      if (!poll) {
+        return res.status(404).json({ message: "Poll not found" });
+      }
+      
+      // Calculate time info
+      const now = new Date();
+      const serverTime = now.toISOString();
+      const endTime = new Date(poll.endTime);
+      const diffMs = endTime.getTime() - now.getTime();
+      const diffMinutes = diffMs / (1000 * 60);
+      
+      // Return debug info
+      res.json({
+        serverTime,
+        pollInfo: {
+          id: poll.id,
+          question: poll.question,
+          created: poll.createdAt.toISOString(),
+          endTime: poll.endTime,
+          parsedEndTime: endTime.toISOString(),
+          timeDiffMs: diffMs,
+          timeDiffMinutes: diffMinutes,
+          isActive: diffMs > 0
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get poll debug info" });
     }
   });
 
