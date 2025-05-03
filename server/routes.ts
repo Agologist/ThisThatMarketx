@@ -90,9 +90,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Poll routes
   app.get("/api/polls", async (req, res) => {
     try {
+      const filter = req.query.filter as string;
+      
+      if (filter === 'active-wars' && req.isAuthenticated()) {
+        // Get active war polls that the user has voted in
+        const allPolls = await storage.getPolls();
+        const userVotes = [];
+        
+        // For each active war poll, check if user has voted
+        for (const poll of allPolls) {
+          if (poll.isWar && new Date(poll.endTime) > new Date()) {
+            const vote = await storage.getUserVoteForPoll(req.user.id, poll.id);
+            if (vote) {
+              userVotes.push({
+                ...poll,
+                userVote: vote
+              });
+            }
+          }
+        }
+        
+        return res.json(userVotes);
+      }
+      
+      // Default behavior - return all polls
       const polls = await storage.getPolls();
       res.json(polls);
     } catch (error) {
+      console.error('Error fetching polls:', error);
       res.status(500).json({ message: "Failed to fetch polls" });
     }
   });

@@ -207,13 +207,38 @@ export default function Header() {
                             <p className="text-xs text-primary">Rank: {warRank}</p>
                           </div>
                         </div>
-                        <div className="flex items-center">
-                          <Award className="text-primary h-4 w-4 mr-1.5" />
-                          <div className="text-xs">
-                            <p className="text-muted-foreground">War Passes</p>
-                            <p className="font-bold">{warPassesCount}</p>
-                          </div>
-                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <div className="flex items-center cursor-pointer">
+                              <Award className="text-primary h-4 w-4 mr-1.5" />
+                              <div className="text-xs">
+                                <p className="text-muted-foreground">War Passes</p>
+                                <p className="font-bold">{warPassesCount}</p>
+                              </div>
+                            </div>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuLabel>Available War Passes</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            {activeWarPolls.length > 0 ? (
+                              activeWarPolls.map((poll: any) => (
+                                <DropdownMenuItem key={poll.id} asChild>
+                                  <Link 
+                                    href={`/polls/${poll.id}`} 
+                                    className="cursor-pointer flex items-center"
+                                  >
+                                    <Trophy className="h-4 w-4 mr-2 text-primary" />
+                                    <span className="truncate">{poll.question}</span>
+                                  </Link>
+                                </DropdownMenuItem>
+                              ))
+                            ) : (
+                              <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                                No active War passes available
+                              </div>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                       <DropdownMenuSeparator />
                     </>
@@ -298,12 +323,31 @@ export default function Header() {
                     </div>
                   </div>
                   
-                  <div className="flex items-center p-2 bg-primary/10 rounded-md">
-                    <Award className="text-primary h-5 w-5 mr-2" />
-                    <div>
-                      <p className="text-sm font-medium">Achievements</p>
-                      <p className="text-xl font-bold text-primary">{achievementCount}</p>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center p-2 bg-primary/10 rounded-md">
+                      <Award className="text-primary h-5 w-5 mr-2" />
+                      <div>
+                        <p className="text-sm font-medium">War Passes</p>
+                        <p className="text-xl font-bold text-primary">{warPassesCount}</p>
+                      </div>
                     </div>
+                    
+                    {/* War Passes List */}
+                    {activeWarPolls.length > 0 && (
+                      <div className="ml-2 pl-7 flex flex-col gap-1">
+                        {activeWarPolls.map((poll: any) => (
+                          <Link 
+                            key={poll.id}
+                            href={`/polls/${poll.id}`}
+                            className="text-sm text-primary flex items-center py-1"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            <Trophy className="h-4 w-4 mr-1.5 inline" />
+                            <span className="truncate">{poll.question}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
