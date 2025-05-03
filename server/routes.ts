@@ -610,6 +610,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch races" });
     }
   });
+  
+  // Route for getting all votes that the user has cast
+  app.get("/api/user/votes", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      // Get all votes for the user
+      const votes = await storage.getUserVotes(req.user.id);
+      const polls = await storage.getPolls();
+      
+      // Combine poll data with votes to create a comprehensive list
+      const votedPolls = votes.map(vote => {
+        const poll = polls.find(p => p.id === vote.pollId);
+        if (poll) {
+          return {
+            id: vote.id,
+            userId: vote.userId,
+            pollId: vote.pollId,
+            option: vote.option,
+            votedAt: vote.votedAt,
+            pollQuestion: poll.question,
+            pollOptionAText: poll.optionAText,
+            pollOptionBText: poll.optionBText,
+            pollEndTime: poll.endTime,
+            isActive: new Date(poll.endTime) > new Date(),
+            createdAt: poll.createdAt || new Date(0)
+          };
+        }
+        return vote;
+      });
+      
+      res.json(votedPolls);
+    } catch (error) {
+      console.error('Error fetching user votes:', error);
+      res.status(500).json({ message: "Failed to fetch user votes" });
+    }
+  });
+  
+  // Route for getting active war passes for the user
+  app.get("/api/user/warpasses", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      // Get active war polls that the user has voted in
+      const allPolls = await storage.getPolls();
+      const userVotes = [];
+      const now = new Date();
+      
+      // For each active war poll, check if user has voted
+      for (const poll of allPolls) {
+        // Only include polls that are:
+        // 1. War polls
+        // 2. Still active (end time is in the future)
+        if (poll.isWar && new Date(poll.endTime) > now) {
+          const vote = await storage.getUserVoteForPoll(req.user.id, poll.id);
+          if (vote) {
+            userVotes.push({
+              ...poll,
+              userVote: vote
+            });
+          }
+        }
+      }
+      
+      res.json(userVotes);
+    } catch (error) {
+      console.error('Error fetching war passes:', error);
+      res.status(500).json({ message: "Failed to fetch war passes" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
