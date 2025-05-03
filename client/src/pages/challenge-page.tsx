@@ -110,19 +110,9 @@ export default function ChallengePage() {
     }
   }, [poll?.isWar, isChallengeActive, hasVoted]);
   
-  // Scroll to game section when it becomes visible
-  useEffect(() => {
-    // If we're showing the war game after challenge has ended, scroll to it
-    if (showWarGame) {
-      // Give a brief delay for the component to render
-      setTimeout(() => {
-        const gameElement = document.getElementById('war-game-section');
-        if (gameElement) {
-          gameElement.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 300);
-    }
-  }, [showWarGame]);
+  // We're not scrolling automatically to the war game section anymore
+  // Users can still scroll manually if they want to see the race game
+  // This prevents automatic replaying of games in completed challenges
   
   // Add a timer update effect
   useEffect(() => {
