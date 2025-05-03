@@ -18,14 +18,14 @@ export default function ChallengesPage() {
   const { user, isGuest, exitGuestMode } = useAuth();
   const [activeTab, setActiveTab] = useState<"all" | "my" | "trending">("all");
   
-  // Force refresh when component mounts to get the latest polls
+  // Force refresh when component mounts to get the latest challenges
   useEffect(() => {
-    // Invalidate and refetch all polls data when the component mounts
+    // Invalidate and refetch all challenges data when the component mounts
     queryClient.invalidateQueries({ queryKey: ["/api/polls"] });
     queryClient.invalidateQueries({ queryKey: ["/api/user/polls"] });
   }, []);
   
-  // Fetch all polls
+  // Fetch all challenges
   const { data: polls = [], isLoading: pollsLoading } = useQuery<Poll[]>({
     queryKey: ["/api/polls"],
     enabled: true,
@@ -34,7 +34,7 @@ export default function ChallengesPage() {
     staleTime: 0
   });
   
-  // Fetch user polls (only if authenticated)
+  // Fetch user challenges (only if authenticated)
   const { data: userPolls = [], isLoading: userPollsLoading } = useQuery<Poll[]>({
     queryKey: ["/api/user/polls"],
     enabled: !isGuest && !!user,

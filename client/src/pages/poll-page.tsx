@@ -13,7 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { Poll } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
-export default function PollPage() {
+export default function ChallengePage() {
   const { id } = useParams<{ id: string }>();
   const [, navigate] = useLocation();
   const { user } = useAuth();
@@ -102,7 +102,7 @@ export default function PollPage() {
       setTimeState(newTime);
       
       if (newTime.hours <= 0 && newTime.minutes <= 0 && newTime.seconds <= 0) {
-        // Poll has ended, refresh the poll data
+        // Challenge has ended, refresh the challenge data
         queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}`] });
         clearInterval(intervalId);
       }
@@ -196,10 +196,10 @@ export default function PollPage() {
     }
   };
   
-  const sharePoll = () => {
+  const shareChallenge = () => {
     if (navigator.share) {
       navigator.share({
-        title: poll?.question || "Check out this poll",
+        title: poll?.question || "Check out this challenge",
         text: `Vote on "${poll?.question}"`,
         url: window.location.href,
       }).catch((error) => console.log('Error sharing', error));
@@ -208,7 +208,7 @@ export default function PollPage() {
       navigator.clipboard.writeText(window.location.href);
       toast({
         title: "Link copied!",
-        description: "Poll link copied to clipboard",
+        description: "Challenge link copied to clipboard",
       });
     }
   };
@@ -234,11 +234,11 @@ export default function PollPage() {
             <CardContent className="pt-6">
               <div className="flex mb-4 gap-2">
                 <XIcon className="h-8 w-8 text-destructive" />
-                <h1 className="text-2xl font-bold">Poll Not Found</h1>
+                <h1 className="text-2xl font-bold">Challenge Not Found</h1>
               </div>
               
               <p className="mt-4 text-sm text-muted-foreground">
-                The poll you're looking for doesn't exist or has been removed.
+                The challenge you're looking for doesn't exist or has been removed.
               </p>
               
               <Button 
@@ -305,7 +305,7 @@ export default function PollPage() {
                         </span>
                       </span>
                     ) : (
-                      <span className="text-sm text-destructive">This poll has ended</span>
+                      <span className="text-sm text-destructive">This challenge has ended</span>
                     )}
                   </CardDescription>
                 </div>
@@ -313,7 +313,7 @@ export default function PollPage() {
                 <Button 
                   variant="ghost" 
                   size="icon"
-                  onClick={sharePoll}
+                  onClick={shareChallenge}
                 >
                   <Share2 className="h-5 w-5" />
                 </Button>
@@ -467,7 +467,7 @@ export default function PollPage() {
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={sharePoll}
+                onClick={shareChallenge}
               >
                 <Share2 className="mr-1 h-4 w-4" />
                 Share
