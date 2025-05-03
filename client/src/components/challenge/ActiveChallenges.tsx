@@ -122,6 +122,7 @@ export default function ActiveChallenges({ polls }: ActiveChallengesProps) {
                 <th className="pb-3 font-semibold text-gray-400">Votes</th>
                 <th className="pb-3 font-semibold text-gray-400">Time Left</th>
                 <th className="pb-3 font-semibold text-gray-400">Status</th>
+                <th className="pb-3 font-semibold text-gray-400">War</th>
                 <th className="pb-3 font-semibold text-gray-400 text-right">Actions</th>
               </tr>
             </thead>
@@ -190,6 +191,16 @@ export default function ActiveChallenges({ polls }: ActiveChallengesProps) {
                         `}
                       >
                         {status === "Ending Soon" ? "Ending Soon" : status}
+                      </Badge>
+                    </td>
+                    <td className="py-4">
+                      <Badge
+                        className={`
+                          border-none px-3 py-1 rounded-full text-xs font-medium
+                          ${poll.isWar === true ? "bg-[#FFD700]/20 text-[#FFD700]" : "bg-gray-500/20 text-gray-400"}
+                        `}
+                      >
+                        {poll.isWar === true ? "Enabled" : "Disabled"}
                       </Badge>
                     </td>
                     <td className="py-4 text-right">
