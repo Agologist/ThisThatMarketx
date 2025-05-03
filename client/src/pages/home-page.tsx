@@ -1,8 +1,8 @@
 import { useAuth } from "@/hooks/use-auth";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import PollCreator from "@/components/poll/PollCreator";
-import ActivePolls from "@/components/poll/ActivePolls";
+import ChallengeCreator from "@/components/challenge/ChallengeCreator";
+import HomePageChallenges from "@/components/challenge/HomePageChallenges";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, InfoIcon } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -105,9 +105,9 @@ export default function HomePage() {
                       challengeCreatorElement.scrollIntoView({ behavior: "smooth" });
                     }
                   }}
-                  className="btn-gold py-2 px-6 rounded-md flex items-center"
+                  className="bg-[#FFD700] hover:bg-[#E6C200] text-black font-medium py-2 px-4 rounded-md flex items-center"
                 >
-                  <i className="mr-2">+</i>
+                  <span className="mr-2 font-bold">+</span>
                   Create Challenge
                 </button>
               </div>
@@ -117,9 +117,9 @@ export default function HomePage() {
           {/* Stats cards section removed */}
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            {!isGuest && <div id="challenge-creator"><PollCreator /></div>}
+            {!isGuest && <div id="challenge-creator"><ChallengeCreator /></div>}
             <div className={isGuest ? "lg:col-span-2" : ""}>
-              <ActivePolls polls={polls} />
+              <HomePageChallenges polls={polls} />
             </div>
           </div>
           
