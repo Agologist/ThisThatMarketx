@@ -24,7 +24,6 @@ export default function ChallengePage() {
   const [isVoting, setIsVoting] = useState(false);
   const [forceRefresh, setForceRefresh] = useState(0);
   const [showWarGame, setShowWarGame] = useState(false);
-  const [warCountdown, setWarCountdown] = useState(60); // 60 second countdown after challenge ends
   
   const { data: poll, isLoading, refetch: refetchPoll } = useQuery<Poll>({
     queryKey: [`/api/polls/${id}`, forceRefresh],
@@ -111,34 +110,19 @@ export default function ChallengePage() {
     }
   }, [poll?.isWar, isChallengeActive, hasVoted]);
   
-  // War countdown timer effect
+  // Scroll to game section when it becomes visible
   useEffect(() => {
-    // Start the war countdown only when the challenge has ended and user has voted
-    if (poll?.isWar && !isChallengeActive && hasVoted) {
-      console.log("🏁 Starting War countdown:", warCountdown);
-      
-      const warIntervalId = setInterval(() => {
-        setWarCountdown(prev => {
-          const newCount = prev - 1;
-          console.log("🏁 War countdown:", newCount);
-          
-          // When countdown reaches zero, prepare for war!
-          if (newCount <= 0) {
-            clearInterval(warIntervalId);
-            // We already set showWarGame to true in the previous effect
-            // Now we need to scroll to the game section
-            const gameElement = document.getElementById('war-game-section');
-            if (gameElement) {
-              gameElement.scrollIntoView({ behavior: 'smooth' });
-            }
-          }
-          return newCount;
-        });
-      }, 1000);
-      
-      return () => clearInterval(warIntervalId);
+    // If we're showing the war game after challenge has ended, scroll to it
+    if (showWarGame) {
+      // Give a brief delay for the component to render
+      setTimeout(() => {
+        const gameElement = document.getElementById('war-game-section');
+        if (gameElement) {
+          gameElement.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 300);
     }
-  }, [poll?.isWar, isChallengeActive, hasVoted]);
+  }, [showWarGame]);
   
   // Add a timer update effect
   useEffect(() => {
@@ -390,7 +374,7 @@ export default function ChallengePage() {
                       
                       {!isChallengeActive && hasVoted && (
                         <div className="text-xs mt-1 font-bold font-racing">
-                          War in: {warCountdown}s
+                          War Ready
                         </div>
                       )}
                     </div>
