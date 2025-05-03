@@ -589,6 +589,7 @@ export default function ChallengePage() {
                 pollId={parseInt(id)}
                 optionAText={poll.optionAText}
                 optionBText={poll.optionBText}
+                option={userVoteOption}
               />
             </Card>
           )}

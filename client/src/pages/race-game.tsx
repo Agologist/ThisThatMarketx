@@ -40,22 +40,24 @@ interface RaceGameProps {
   pollId?: number;
   optionAText?: string;
   optionBText?: string;
+  option?: string | null;
 }
 
-export default function RaceGame({ races, pollId: propPollId, optionAText, optionBText }: RaceGameProps = {}) {
+export default function RaceGame({ races, pollId: propPollId, optionAText, optionBText, option: propOption }: RaceGameProps = {}) {
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
   
   const [searchParams] = useLocation();
   const urlPollId = Number(new URLSearchParams(searchParams).get("pollId") || "0");
-  const option = new URLSearchParams(searchParams).get("option") || "";
+  const urlOption = new URLSearchParams(searchParams).get("option") || "";
   
-  // Use prop pollId if provided, otherwise fallback to URL param
+  // Process options and poll ID from props or URL params
   const pollId = propPollId || urlPollId;
+  const userOption = propOption || urlOption;
   
   // Allow standalone mode when accessed directly from the footer
-  const isStandaloneMode = pollId === 0 && !option;
+  const isStandaloneMode = pollId === 0 && !userOption;
   
   // Game state
   const [gameState, setGameState] = useState<"ready" | "countdown" | "racing" | "finished">("ready");
@@ -75,7 +77,7 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
   // For standalone mode, allow user to select car
   const [userCarSelection, setUserCarSelection] = useState<"left" | "right" | "">("");
   // Determine which car the user voted for (left = A, right = B)
-  const userCar = isStandaloneMode ? userCarSelection : (option === "A" ? "left" : "right");
+  const userCar = isStandaloneMode ? userCarSelection : (userOption === "A" ? "left" : "right");
   const [gameResult, setGameResult] = useState<{ won: boolean; time: number } | null>(null);
   const [leftExploded, setLeftExploded] = useState(false);
   const [rightExploded, setRightExploded] = useState(false);
