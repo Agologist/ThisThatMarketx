@@ -49,7 +49,7 @@ export default function AuthPage() {
           // Determine provider - extract root name without '.com'
           const providerId = result.user.providerData[0]?.providerId || '';
           const provider = providerId.includes('twitter') 
-            ? 'twitter' 
+            ? 'x' 
             : providerId.includes('google')
               ? 'google'
               : 'unknown';

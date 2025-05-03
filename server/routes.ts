@@ -73,7 +73,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         const displayName = firebaseData.displayName || username;
         
-        // If no email is provided (Twitter may not provide it), generate a placeholder
+        // If no email is provided (X may not provide it), generate a placeholder
         const email = firebaseData.email || `${username}@placeholder.com`;
         
         const newUser = await storage.createUser({
