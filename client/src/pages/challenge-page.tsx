@@ -616,11 +616,11 @@ export default function ChallengePage() {
                               {/* Center line */}
                               <div className="absolute left-1/2 top-0 bottom-0 w-0.5 h-full bg-yellow-400 transform -translate-x-1/2"></div>
                               
-                              {/* Car positions */}
-                              {(parsedRace.gameResult?.won && userVoteOption === "A") || 
-                               (!parsedRace.gameResult?.won && userVoteOption === "B") ? (
+                              {/* Car positions based on actual poll results */}
+                              {poll.optionAVotes > poll.optionBVotes ? (
+                                // Option A won the poll - show A car victorious and B car exploded
                                 <>
-                                  {/* User's car (left side/option A) won */}
+                                  {/* Option A car won and pushed to the right */}
                                   <div className="absolute left-[75%] top-1/2 -translate-y-1/2 transform -scale-x-100">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
                                       <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
@@ -629,7 +629,7 @@ export default function ChallengePage() {
                                     </svg>
                                   </div>
                                   
-                                  {/* Opponent's car (right side/option B) lost with explosion */}
+                                  {/* Option B car lost with explosion at the edge */}
                                   <div className="absolute right-2 top-1/2 -translate-y-1/2">
                                     <div className="w-10 h-10 flex items-center justify-center">
                                       <div className="absolute w-10 h-10 rounded-full bg-red-500/30 animate-ping-slow"></div>
@@ -641,9 +641,10 @@ export default function ChallengePage() {
                                     </div>
                                   </div>
                                 </>
-                              ) : (
+                              ) : poll.optionBVotes > poll.optionAVotes ? (
+                                // Option B won the poll - show B car victorious and A car exploded
                                 <>
-                                  {/* User's car (left/option A) lost with explosion */}
+                                  {/* Option A car lost with explosion at the edge */}
                                   <div className="absolute left-2 top-1/2 -translate-y-1/2">
                                     <div className="w-10 h-10 flex items-center justify-center">
                                       <div className="absolute w-10 h-10 rounded-full bg-red-500/30 animate-ping-slow"></div>
@@ -655,9 +656,27 @@ export default function ChallengePage() {
                                     </div>
                                   </div>
                                   
-                                  {/* Opponent's car (right side/option B) won */}
+                                  {/* Option B car won */}
                                   <div className="absolute right-[75%] top-1/2 -translate-y-1/2">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
+                                      <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
+                                      <circle cx="8.5" cy="17.5" r="2.5"/>
+                                      <circle cx="15.5" cy="17.5" r="2.5"/>
+                                    </svg>
+                                  </div>
+                                </>
+                              ) : (
+                                // Tie - show both cars at center line (extremely rare)
+                                <>
+                                  <div className="absolute left-[48%] top-1/2 -translate-y-1/2 transform -scale-x-100">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
+                                      <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
+                                      <circle cx="8.5" cy="17.5" r="2.5"/>
+                                      <circle cx="15.5" cy="17.5" r="2.5"/>
+                                    </svg>
+                                  </div>
+                                  <div className="absolute right-[48%] top-1/2 -translate-y-1/2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
                                       <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
                                       <circle cx="8.5" cy="17.5" r="2.5"/>
                                       <circle cx="15.5" cy="17.5" r="2.5"/>
@@ -667,13 +686,25 @@ export default function ChallengePage() {
                               )}
                             </div>
                             
-                            {/* Race outcome text */}
+                            {/* Race outcome text - based on poll outcome and user's vote */}
                             <p className="text-lg font-bold mb-1">
-                              {((parsedRace.gameResult?.won && userVoteOption === "A") || 
-                                (!parsedRace.gameResult?.won && userVoteOption === "B")) ? (
-                                <span className="text-green-500">Your car won!</span>
+                              {poll.optionAVotes > poll.optionBVotes ? (
+                                // Option A won the poll
+                                userVoteOption === "A" ? (
+                                  <span className="text-green-500">Your car won!</span>
+                                ) : (
+                                  <span className="text-red-500">Your car lost!</span>
+                                )
+                              ) : poll.optionBVotes > poll.optionAVotes ? (
+                                // Option B won the poll
+                                userVoteOption === "B" ? (
+                                  <span className="text-green-500">Your car won!</span>
+                                ) : (
+                                  <span className="text-red-500">Your car lost!</span>
+                                )
                               ) : (
-                                <span className="text-red-500">Your car lost!</span>
+                                // Tie - extremely rare, but possible
+                                <span className="text-yellow-500">Race ended in a tie!</span>
                               )}
                             </p>
                             <p className="text-sm text-muted-foreground">
