@@ -23,10 +23,10 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
-// Configure Twitter provider with API credentials
+// Configure X (formerly Twitter) provider with API credentials
 const twitterProvider = new TwitterAuthProvider();
 
-// Add Twitter credentials from environment variables if they exist
+// Add X credentials from environment variables if they exist
 if (import.meta.env.VITE_TWITTER_API_KEY && import.meta.env.VITE_TWITTER_API_SECRET) {
   twitterProvider.setCustomParameters({
     'api_key': import.meta.env.VITE_TWITTER_API_KEY,
@@ -40,9 +40,9 @@ export const signInWithGoogle = async (): Promise<UserCredential> => {
 };
 
 /**
- * Twitter authentication strategy that improves user experience:
+ * X (formerly Twitter) authentication strategy that improves user experience:
  * 1. First tries to check for any existing auth state (users already logged in)
- * 2. If already logged in with Twitter, returns the auth data immediately
+ * 2. If already logged in with X, returns the auth data immediately
  * 3. If not logged in, tries popup authentication which is more user-friendly
  * 4. If popup fails or is blocked, falls back to redirect authentication
  */
@@ -50,16 +50,16 @@ export const signInWithTwitter = async (): Promise<UserCredential> => {
   // Create a fresh provider each time to avoid caching issues
   const twitterProvider = new TwitterAuthProvider();
   
-  // First check if we already have a user logged in with Twitter
+  // First check if we already have a user logged in with X (Twitter)
   const currentUser = auth.currentUser;
   if (currentUser) {
-    // Check if this user is logged in with Twitter
+    // Check if this user is logged in with X (Twitter)
     const twitterProvider = currentUser.providerData.find(
       provider => provider.providerId === 'twitter.com'
     );
     
     if (twitterProvider) {
-      console.log("User already authenticated with Twitter");
+      console.log("User already authenticated with X (Twitter)");
       
       // Return a promise that resolves with the current user credential
       // We need to format this to match UserCredential structure
@@ -71,7 +71,7 @@ export const signInWithTwitter = async (): Promise<UserCredential> => {
     }
   }
   
-  // Configure Twitter provider with parameters for better experience
+  // Configure X (Twitter) provider with parameters for better experience
   twitterProvider.setCustomParameters({
     // Don't force login prompt
     'force_login': 'false',
