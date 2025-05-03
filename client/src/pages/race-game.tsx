@@ -9,7 +9,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ChevronLeft, Trophy, Flag } from "lucide-react";
-import { useLocation, useNavigate } from "wouter";
+import { useLocation } from "wouter";
 import type { RaceRecord } from "../../../shared/schema";
 
 // Game constants
@@ -40,7 +40,7 @@ interface RaceGameProps {
 
 export default function RaceGame({ races, pollId: propPollId, optionAText, optionBText, option: propOption }: RaceGameProps = {}) {
   const { user } = useAuth();
-  const [, navigate] = useLocation();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   
   const [searchParams] = useLocation();
@@ -77,9 +77,24 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
   const [leftExploded, setLeftExploded] = useState(false);
   const [rightExploded, setRightExploded] = useState(false);
   
-  // Refs for timers
+  // Check if this is an expired challenge with a saved vote
+  const [isExpiredChallenge, setIsExpiredChallenge] = useState(false);
+  
+  // Additional check for retrieving poll data to determine if it's expired
+  const { data: pollData } = useQuery({
+    queryKey: ["/api/polls", pollId],
+    queryFn: async () => {
+      if (pollId <= 0) return null;
+      const res = await apiRequest("GET", `/api/polls/${pollId}`);
+      return await res.json();
+    },
+    enabled: !!pollId && pollId > 0,
+  });
+  
+  // Refs for timers and preventing auto-start loops
   const raceTimerRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
+  const hasAutoStartedRef = useRef(false);
   
   const { data: userRaces, isLoading: racesLoading } = useQuery<RaceRecord[]>({
     queryKey: ["/api/user/races"],
@@ -327,6 +342,20 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
     }, 100); // Short delay for visual effect
   };
   
+  // Check if challenge is expired
+  useEffect(() => {
+    if (pollId > 0 && pollData) {
+      // Calculate if the challenge is expired
+      const now = new Date();
+      const endTime = new Date(pollData.endTime);
+      const isExpired = now > endTime;
+      
+      console.log("Challenge expiration check:", { pollId, now, endTime, isExpired });
+      
+      setIsExpiredChallenge(isExpired);
+    }
+  }, [pollId, pollData]);
+  
   // Auto-start the game when loaded from a challenge
   useEffect(() => {
     // Only auto-start when not in standalone mode and in "ready" state
@@ -339,6 +368,22 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
       return () => clearTimeout(autoStartTimer);
     }
   }, [isStandaloneMode, gameState, userOption]);
+  
+  // Handle War mode challenges that have expired
+  useEffect(() => {
+    // Only for expired War challenges in ready state that haven't been auto-started yet
+    if (isExpiredChallenge && pollData?.isWar && gameState === "ready" && !hasAutoStartedRef.current) {
+      console.log(`⚠️ WAR CHALLENGE ${pollId} EXPIRED - Starting race game once`);
+      
+      // Mark as started to prevent repeated triggering
+      hasAutoStartedRef.current = true;
+      
+      // Auto-start the game with countdown after a short delay
+      setTimeout(() => {
+        startCountdown();
+      }, 500);
+    }
+  }, [isExpiredChallenge, pollData, gameState, pollId, startCountdown]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -410,7 +455,7 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
         <div className="container mx-auto">
           <Button 
             variant="outline" 
-            onClick={() => navigate("/")}
+            onClick={() => setLocation("/")}
             className="mb-6"
           >
             <ChevronLeft className="mr-2 h-4 w-4" />
