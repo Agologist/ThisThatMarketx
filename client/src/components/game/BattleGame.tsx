@@ -117,17 +117,17 @@ export default function BattleGame({ races, pollId, optionAText, optionBText, op
     <Card className="bg-card border-primary/30">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <CardTitle className="text-xl font-montserrat font-bold">Votes and Wars Race</CardTitle>
+          <CardTitle className="text-xl font-montserrat font-bold">Votes and Wars Battle</CardTitle>
           <Button
             asChild
             size="sm"
             className="bg-primary/20 text-primary text-xs font-medium py-1 px-3 rounded-full hover:bg-primary/30 transition-colors"
           >
-            <a href="/race">Play Full Game</a>
+            <a href="/battle">Play Full Game</a>
           </Button>
         </div>
         <CardDescription>
-          Race between poll options - vote to advance your choice!
+          Battle between poll options - vote to advance your choice!
         </CardDescription>
       </CardHeader>
       
@@ -148,11 +148,11 @@ export default function BattleGame({ races, pollId, optionAText, optionBText, op
             </div>
           </div>
           
-          {/* Race track - single line with cars facing each other */}
+          {/* Battle track - single line with cars facing each other */}
           <div className="game-track h-24 rounded-lg flex items-center relative overflow-hidden bg-gradient-to-r from-neutral-800 to-neutral-900">
             <div className="absolute inset-0 bg-black bg-opacity-40"></div>
             
-            {/* Race track middle line */}
+            {/* Battle track middle line */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-full h-px bg-white opacity-30"></div>
             </div>
@@ -216,7 +216,7 @@ export default function BattleGame({ races, pollId, optionAText, optionBText, op
                 size="icon"
                 variant="outline"
                 className="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center"
-                onClick={() => navigate("/race")}
+                onClick={() => navigate("/battle")}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -224,7 +224,7 @@ export default function BattleGame({ races, pollId, optionAText, optionBText, op
                 </svg>
               </Button>
               <div>
-                <h4 className="text-sm font-medium">Poll Racing Game</h4>
+                <h4 className="text-sm font-medium">Poll Battle Game</h4>
                 <p className="text-xs text-muted-foreground">Vote to advance your choice!</p>
               </div>
             </div>
