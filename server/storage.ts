@@ -274,7 +274,20 @@ export class MemStorage implements IStorage {
   async createRaceRecord(insertRecord: InsertRaceRecord): Promise<RaceRecord> {
     const id = this.currentId.raceRecords++;
     const now = new Date();
-    const record: RaceRecord = { ...insertRecord, id, racedAt: now };
+    
+    // Ensure all fields are provided with proper defaults
+    const record: RaceRecord = { 
+      id, 
+      userId: insertRecord.userId,
+      time: insertRecord.time,
+      won: insertRecord.won ?? false,
+      racedAt: now,
+      pollId: insertRecord.pollId ?? null,
+      option: insertRecord.option ?? null
+    };
+    
+    console.log("Creating race record:", record);
+    
     this.raceRecords.set(id, record);
     return record;
   }
@@ -590,10 +603,23 @@ export class DatabaseStorage implements IStorage {
   
   // Race methods
   async createRaceRecord(insertRecord: InsertRaceRecord): Promise<RaceRecord> {
-    const [record] = await db.insert(raceRecords).values({
-      ...insertRecord,
+    console.log("Creating race record in database:", insertRecord);
+    
+    // Ensure all required fields are provided with proper defaults
+    const recordToInsert = {
+      userId: insertRecord.userId,
+      time: insertRecord.time,
+      won: insertRecord.won ?? false,
+      pollId: insertRecord.pollId || null,
+      option: insertRecord.option || null,
       racedAt: new Date()
-    }).returning();
+    };
+    
+    const [record] = await db.insert(raceRecords)
+      .values(recordToInsert)
+      .returning();
+      
+    console.log("Race record created in database:", record);
     return record;
   }
   

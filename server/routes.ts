@@ -389,16 +389,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
+      console.log("Battle data received:", req.body);
       const { time, won, pollId, option } = req.body;
       const userId = req.user!.id;
+      
+      // Make sure to validate that time is a number before proceeding
+      if (typeof time !== 'number') {
+        return res.status(400).json({ message: "Invalid time value" });
+      }
       
       const record = await storage.createRaceRecord({
         userId,
         time,
-        won,
+        won: !!won, // Ensure it's a boolean
         pollId: pollId || null,
         option: option || null
       });
+      
+      console.log("Battle record created:", record);
       
       await checkAndUpdateRaceAchievements(userId);
       

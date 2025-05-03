@@ -129,10 +129,20 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
   
   const saveBattleMutation = useMutation({
     mutationFn: async (battleData: { time: number; won: boolean }) => {
-      const res = await apiRequest("POST", "/api/battles", battleData);
+      // Include pollId and option in the API call
+      const fullBattleData = {
+        ...battleData,
+        pollId: pollId > 0 ? pollId : null,
+        option: userOption || null
+      };
+      
+      console.log("Saving battle data:", fullBattleData);
+      
+      const res = await apiRequest("POST", "/api/battles", fullBattleData);
       return await res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Battle saved successfully:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/user/battles"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user/achievements"] });
       
@@ -141,7 +151,8 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
         description: `You finished in ${(gameResult?.time || 0) / 1000} seconds`,
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Failed to save battle results:", error);
       toast({
         title: "Error",
         description: "Failed to save battle results",
