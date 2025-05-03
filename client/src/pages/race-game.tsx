@@ -35,14 +35,24 @@ const carImages = [
   "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgY2xhc3M9Imx1Y2lkZSBsdWNpZGUtY2FyIj48cGF0aCBkPSJNMTkgMTdINW0wIDB2MmMwIDEuMS45IDIgMiAyaDEwYTIgMiAwIDAgMCAyLTJ2LTJtMC0zVjZhMiAyIDAgMSAwLTQgMHY0TTUgMTRsMi01aDEyYzAgMCAxLjMgMS40MyAxLjUgM2EuNSA1IDAgMCAxLS41IDJoLTNtLTUgMGgtNyIvPjxjaXJjbGUgY3g9IjguNSIgY3k9IjE3LjUiIHI9IjIuNSIvPjxjaXJjbGUgY3g9IjE1LjUiIGN5PSIxNy41IiByPSIyLjUiLz48L3N2Zz4="
 ];
 
-export default function RaceGame() {
+interface RaceGameProps {
+  races?: RaceRecord[];
+  pollId?: number;
+  optionAText?: string;
+  optionBText?: string;
+}
+
+export default function RaceGame({ races, pollId: propPollId, optionAText, optionBText }: RaceGameProps = {}) {
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
   
   const [searchParams] = useLocation();
-  const pollId = Number(new URLSearchParams(searchParams).get("pollId") || "0");
+  const urlPollId = Number(new URLSearchParams(searchParams).get("pollId") || "0");
   const option = new URLSearchParams(searchParams).get("option") || "";
+  
+  // Use prop pollId if provided, otherwise fallback to URL param
+  const pollId = propPollId || urlPollId;
   
   // Allow standalone mode when accessed directly from the footer
   const isStandaloneMode = pollId === 0 && !option;
