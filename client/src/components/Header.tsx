@@ -9,6 +9,8 @@ import { FlagIcon, User, LogOut, Menu, X, UserIcon, Trophy, Award, FileText } fr
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [votesDropdownOpen, setVotesDropdownOpen] = useState(false);
+  const [warPassesDropdownOpen, setWarPassesDropdownOpen] = useState(false);
   const [location, navigate] = useLocation();
   const { user, isGuest, logoutMutation, exitGuestMode } = useAuth();
   
@@ -191,14 +193,39 @@ export default function Header() {
                             <p className="text-xs text-primary">Rank: {challengeRank}</p>
                           </div>
                         </div>
-                        <div className="flex items-center">
-                          <FileText className="text-primary h-4 w-4 mr-1.5 rotate-90" />
-                          <div className="text-xs">
-                            <p className="text-muted-foreground">Votes</p>
-                            <p className="font-bold">{voteCount}</p>
-                            <p className="text-xs text-primary">Rank: {voteRank}</p>
-                          </div>
-                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <div className="flex items-center cursor-pointer">
+                              <FileText className="text-primary h-4 w-4 mr-1.5 rotate-90" />
+                              <div className="text-xs">
+                                <p className="text-muted-foreground">Votes</p>
+                                <p className="font-bold">{voteCount}</p>
+                                <p className="text-xs text-primary">Rank: {voteRank}</p>
+                              </div>
+                            </div>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuLabel>Challenges You Voted In</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            {userRaces.length > 0 ? (
+                              userRaces.map((race: any) => (
+                                <DropdownMenuItem key={race.pollId} asChild>
+                                  <Link 
+                                    href={`/polls/${race.pollId}`} 
+                                    className="cursor-pointer flex items-center"
+                                  >
+                                    <FileText className="h-4 w-4 mr-2 text-primary rotate-90" />
+                                    <span className="truncate">{race.pollQuestion || `Challenge #${race.pollId}`}</span>
+                                  </Link>
+                                </DropdownMenuItem>
+                              ))
+                            ) : (
+                              <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                                You haven't voted in any challenges yet
+                              </div>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                         <div className="flex items-center">
                           <Trophy className="text-primary h-4 w-4 mr-1.5" />
                           <div className="text-xs">
@@ -305,13 +332,45 @@ export default function Header() {
                     </div>
                   </div>
                   
-                  <div className="flex items-center p-2 bg-primary/10 rounded-md">
-                    <FileText className="text-primary h-5 w-5 mr-2 rotate-90" />
-                    <div>
-                      <p className="text-sm font-medium">Votes</p>
-                      <p className="text-xl font-bold text-primary">{voteCount}</p>
-                      <p className="text-xs text-primary">Rank: {voteRank}</p>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center p-2 bg-primary/10 rounded-md">
+                      <FileText className="text-primary h-5 w-5 mr-2 rotate-90" />
+                      <div>
+                        <p className="text-sm font-medium">Votes</p>
+                        <p className="text-xl font-bold text-primary">{voteCount}</p>
+                        <p className="text-xs text-primary">Rank: {voteRank}</p>
+                      </div>
+                      <button 
+                        className="ml-auto text-primary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setVotesDropdownOpen(!votesDropdownOpen);
+                        }}
+                      >
+                        {votesDropdownOpen ? (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-up"><path d="m18 15-6-6-6 6"/></svg>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>
+                        )}
+                      </button>
                     </div>
+                    
+                    {/* Votes Dropdown */}
+                    {votesDropdownOpen && userRaces.length > 0 && (
+                      <div className="ml-2 pl-7 flex flex-col gap-1">
+                        {userRaces.map((race: any) => (
+                          <Link 
+                            key={race.pollId}
+                            href={`/polls/${race.pollId}`}
+                            className="text-sm text-primary flex items-center py-1"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            <FileText className="h-4 w-4 mr-1.5 inline rotate-90" />
+                            <span className="truncate">{race.pollQuestion || `Challenge #${race.pollId}`}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   
                   <div className="flex items-center p-2 bg-primary/10 rounded-md">
@@ -330,10 +389,23 @@ export default function Header() {
                         <p className="text-sm font-medium">War Passes</p>
                         <p className="text-xl font-bold text-primary">{warPassesCount}</p>
                       </div>
+                      <button 
+                        className="ml-auto text-primary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setWarPassesDropdownOpen(!warPassesDropdownOpen);
+                        }}
+                      >
+                        {warPassesDropdownOpen ? (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-up"><path d="m18 15-6-6-6 6"/></svg>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>
+                        )}
+                      </button>
                     </div>
                     
                     {/* War Passes List */}
-                    {activeWarPolls.length > 0 && (
+                    {warPassesDropdownOpen && activeWarPolls.length > 0 && (
                       <div className="ml-2 pl-7 flex flex-col gap-1">
                         {activeWarPolls.map((poll: any) => (
                           <Link 

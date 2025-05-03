@@ -411,9 +411,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
+      // Get all races for the user
       const races = await storage.getUserRaces(req.user.id);
-      res.json(races);
+      
+      // Get all user votes to connect poll info to races
+      const polls = await storage.getPolls();
+      const userVotes = [];
+      
+      // For each poll the user has voted in, get the vote and combine with poll data
+      for (const race of races) {
+        const poll = polls.find(p => p.id === race.pollId);
+        if (poll) {
+          userVotes.push({
+            ...race,
+            pollQuestion: poll.question,
+            pollOptionA: poll.optionA,
+            pollOptionB: poll.optionB,
+            pollEndTime: poll.endTime,
+            isActive: new Date(poll.endTime) > new Date()
+          });
+        } else {
+          // Include race even if poll is not found
+          userVotes.push(race);
+        }
+      }
+      
+      res.json(userVotes);
     } catch (error) {
+      console.error('Error fetching user races:', error);
       res.status(500).json({ message: "Failed to fetch user races" });
     }
   });
