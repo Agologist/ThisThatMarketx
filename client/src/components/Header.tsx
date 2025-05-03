@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { useLocation, Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useReplitAuth, logoutFromReplit } from "@/hooks/use-replit-auth";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { FlagIcon, User, LogOut, Menu, X, UserIcon, Trophy, Award, FileText } from "lucide-react";
+import { FlagIcon, User, LogOut, Menu, X, UserIcon, Trophy, Award, FileText, Terminal } from "lucide-react";
 import UserStatCards from "@/components/dashboard/UserStatCards";
 
 export default function Header() {
@@ -14,6 +15,9 @@ export default function Header() {
   const [warPassesDropdownOpen, setWarPassesDropdownOpen] = useState(false);
   const [location, navigate] = useLocation();
   const { user, isGuest, logoutMutation, exitGuestMode } = useAuth();
+  
+  // Check if we have a Replit authenticated user
+  const { user: replitUser, isAuthenticated: isReplitAuth } = useReplitAuth();
   
   // Fetch user stats
   const { data: userPolls = [] } = useQuery({
@@ -84,6 +88,13 @@ export default function Header() {
 
   const handleLogout = async () => {
     try {
+      // Check if we're logged in with Replit Auth
+      if (isReplitAuth) {
+        // Use Replit Auth logout
+        logoutFromReplit();
+        return; // We're done, the redirect will happen automatically
+      }
+      
       // Import Firebase signOut dynamically to avoid circular dependencies
       const { signOut } = await import('@/lib/firebase');
       
