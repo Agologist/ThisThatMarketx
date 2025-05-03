@@ -40,6 +40,7 @@ export const polls = pgTable("polls", {
   createdAt: timestamp("created_at").defaultNow(),
   endTime: timestamp("end_time").notNull(),
   isPublic: boolean("is_public").default(true),
+  isWar: boolean("is_war").default(false),
 });
 
 export const insertPollSchema = createInsertSchema(polls)
@@ -52,6 +53,7 @@ export const insertPollSchema = createInsertSchema(polls)
     optionBImage: true,
     endTime: true,
     isPublic: true,
+    isWar: true,
   })
   .extend({
     // Allow endTime to be a string (ISO format) or Date object
