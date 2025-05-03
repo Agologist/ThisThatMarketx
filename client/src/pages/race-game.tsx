@@ -381,8 +381,8 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
   
   // Auto-start the game when loaded from a challenge
   useEffect(() => {
-    // Only auto-start when not in standalone mode and in "ready" state
-    if (!isStandaloneMode && gameState === "ready" && userOption) {
+    // Only auto-start when not in standalone mode, in "ready" state, and game hasn't been completed
+    if (!isStandaloneMode && gameState === "ready" && userOption && !hasCompletedRace) {
       // Small delay to ensure component is fully rendered
       const autoStartTimer = setTimeout(() => {
         startCountdown();
@@ -390,7 +390,7 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
       
       return () => clearTimeout(autoStartTimer);
     }
-  }, [isStandaloneMode, gameState, userOption]);
+  }, [isStandaloneMode, gameState, userOption, hasCompletedRace]);
   
   // Handle War mode challenges that have expired
   useEffect(() => {
