@@ -1,28 +1,24 @@
 import * as client from "openid-client";
 import { Strategy, type VerifyFunction } from "openid-client/passport";
-
 import passport from "passport";
-import session from "express-session";
-import type { Express, RequestHandler } from "express";
-import memoize from "memoizee";
-import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
 if (!process.env.REPLIT_DOMAINS) {
-  console.warn("Environment variable REPLIT_DOMAINS not provided, Replit Auth functionality may be limited");
+  console.warn("Environment variable REPLIT_DOMAINS not provided. Replit Auth will not be available.");
 }
 
-const getOidcConfig = memoize(
-  async () => {
+const getOidcConfig = async () => {
+  try {
     return await client.discovery(
       new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
       process.env.REPL_ID!
     );
-  },
-  { maxAge: 3600 * 1000 }
-);
+  } catch (error) {
+    console.error("Failed to discover OIDC configuration:", error);
+    throw error;
+  }
+};
 
-// Helper function to update user session with tokens
 function updateUserSession(
   user: any,
   tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers
@@ -33,100 +29,119 @@ function updateUserSession(
   user.expires_at = user.claims?.exp;
 }
 
-// Helper function to upsert a user from Replit auth claims
 async function upsertUser(claims: any) {
-  try {
-    // Check if user exists by ID
-    const existingUser = await storage.getUserByReplitId(claims["sub"]);
-    
-    if (existingUser) {
-      // User exists, update their info
-      return existingUser;
-    } else {
-      // Create new user
-      const username = claims["username"] || `replit_user_${Math.floor(Math.random() * 10000)}`;
-      const email = claims["email"] || `${username}@replit.com`;
-      
-      // Create new user in our system
-      const newUser = await storage.createUser({
-        username,
-        email,
-        password: `replit_${claims["sub"]}`, // Not used for login, just a placeholder
-        displayName: claims["username"] || username,
-        provider: "replit",
-        profileImageUrl: claims["profile_image_url"] || null,
-        replitId: claims["sub"]
-      });
-      
-      return newUser;
-    }
-  } catch (error) {
-    console.error("Error in upsertUser:", error);
-    throw error;
+  const replitId = claims["sub"];
+  
+  // Check if user already exists
+  const existingUser = await storage.getUserByReplitId(replitId);
+  
+  if (existingUser) {
+    console.log(`User with Replit ID ${replitId} already exists`);
+    return existingUser;
   }
+  
+  // Create a new user
+  const username = claims["username"] || `replit_user_${Math.floor(Math.random() * 10000)}`;
+  const email = claims["email"] || `${username}@replit.user`;
+  
+  const newUser = await storage.createUser({
+    username,
+    email,
+    displayName: claims["first_name"] ? `${claims["first_name"]} ${claims["last_name"] || ""}`.trim() : username,
+    password: `replit_${replitId}`, // Not used for login, just a placeholder
+    provider: "replit",
+    profileImageUrl: claims["profile_image_url"] || null,
+    replitId
+  });
+  
+  console.log(`Created new user for Replit ID ${replitId}`);
+  return newUser;
 }
 
 export async function setupReplitAuth(app: Express) {
-  // Configure OIDC strategy
-  const config = await getOidcConfig();
-
-  const verify: VerifyFunction = async (
-    tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
-    verified: passport.AuthenticateCallback
-  ) => {
-    try {
-      const replit_session = {};
-      updateUserSession(replit_session, tokens);
-      
-      // Get claims from tokens
-      const claims = tokens.claims();
-      
-      // Check if user exists in our system or create a new one
-      const user = await upsertUser(claims);
-      
-      verified(null, user);
-    } catch (error) {
-      verified(error as Error);
-    }
-  };
-
-  // Register strategies for each domain
-  if (process.env.REPLIT_DOMAINS) {
+  if (!process.env.REPLIT_DOMAINS || !process.env.REPL_ID) {
+    console.warn("Skipping Replit Auth setup due to missing environment variables");
+    return;
+  }
+  
+  try {
+    const config = await getOidcConfig();
+    
+    const verify: VerifyFunction = async (
+      tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
+      verified: passport.AuthenticateCallback
+    ) => {
+      try {
+        const user = {};
+        updateUserSession(user, tokens);
+        const dbUser = await upsertUser(tokens.claims());
+        verified(null, dbUser);
+      } catch (error) {
+        console.error("Error in Replit Auth verification:", error);
+        verified(error as Error);
+      }
+    };
+    
+    // Create a strategy for each domain
     for (const domain of process.env.REPLIT_DOMAINS.split(",")) {
       const strategy = new Strategy(
         {
           name: `replitauth:${domain}`,
           config,
           scope: "openid email profile offline_access",
-          callbackURL: `https://${domain}/api/auth/replit/callback`,
+          callbackURL: `https://${domain}/api/auth/callback`,
         },
         verify,
       );
       passport.use(strategy);
     }
+    
+    // Routes for Replit Auth
+    app.get("/api/auth/replit", (req, res, next) => {
+      const domain = req.hostname;
+      passport.authenticate(`replitauth:${domain}`, {
+        prompt: "login consent",
+        scope: ["openid", "email", "profile", "offline_access"],
+      })(req, res, next);
+    });
+    
+    app.get("/api/auth/callback", (req, res, next) => {
+      const domain = req.hostname;
+      passport.authenticate(`replitauth:${domain}`, {
+        successReturnToOrRedirect: "/",
+        failureRedirect: "/auth",
+      })(req, res, next);
+    });
+    
+    console.log("Replit Auth setup completed successfully");
+  } catch (error) {
+    console.error("Failed to set up Replit Auth:", error);
   }
-
-  // Set up routes
-  app.get("/api/auth/replit", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      prompt: "login consent",
-      scope: ["openid", "email", "profile", "offline_access"],
-    })(req, res, next);
-  });
-
-  app.get("/api/auth/replit/callback", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      successRedirect: "/",
-      failureRedirect: "/auth",
-    })(req, res, next);
-  });
 }
 
-// Middleware to check if user is authenticated
-export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  if (!req.isAuthenticated() || !req.user) {
+export const isAuthenticated = async (req: any, res: any, next: any) => {
+  const user = req.user as any;
+
+  if (!req.isAuthenticated() || !user.expires_at) {
     return res.status(401).json({ message: "Unauthorized" });
   }
-  
-  return next();
+
+  const now = Math.floor(Date.now() / 1000);
+  if (now <= user.expires_at) {
+    return next();
+  }
+
+  const refreshToken = user.refresh_token;
+  if (!refreshToken) {
+    return res.redirect("/api/auth/replit");
+  }
+
+  try {
+    const config = await getOidcConfig();
+    const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
+    updateUserSession(user, tokenResponse);
+    return next();
+  } catch (error) {
+    return res.redirect("/api/auth/replit");
+  }
 };

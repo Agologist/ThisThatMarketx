@@ -388,7 +388,7 @@ export default function AuthPage() {
             </div>
             <div className="flex items-start gap-3">
               <CheckIcon className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
-              <p>Race against time in our interactive 2D racing game</p>
+              <p>Battle cars in our interactive 2D war game</p>
             </div>
             <div className="flex items-start gap-3">
               <CheckIcon className="h-6 w-6 text-primary mt-1 flex-shrink-0" />

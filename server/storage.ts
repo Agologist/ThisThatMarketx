@@ -20,6 +20,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByFirebaseUid(firebaseUid: string): Promise<User | undefined>;
+  getUserByReplitId(replitId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   
   // Poll methods
@@ -108,6 +109,12 @@ export class MemStorage implements IStorage {
   async getUserByFirebaseUid(firebaseUid: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(
       (user) => user.firebaseUid === firebaseUid
+    );
+  }
+  
+  async getUserByReplitId(replitId: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.replitId === replitId
     );
   }
 
@@ -422,6 +429,11 @@ export class DatabaseStorage implements IStorage {
   
   async getUserByFirebaseUid(firebaseUid: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.firebaseUid, firebaseUid));
+    return user;
+  }
+  
+  async getUserByReplitId(replitId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.replitId, replitId));
     return user;
   }
 
