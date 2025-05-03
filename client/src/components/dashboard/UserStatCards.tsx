@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { 
-  FileText, 
+  FolderPlus, 
   Trophy, 
   Award, 
   CheckSquare
@@ -44,13 +44,8 @@ export default function UserStatCards() {
   });
 
   // Get user's won battles
-  const { data: userWonBattles = [] } = useQuery({
+  const { data: userWonBattles = [] } = useQuery<RaceRecord[]>({
     queryKey: ["/api/user/battles/won"],
-    queryFn: async () => {
-      if (!user) return [];
-      // Filter races that have pollId (only battles from challenges), and user won
-      return userRaces.filter((race: any) => race.pollId && race.won);
-    },
     enabled: !!user && !isGuest
   });
   
@@ -80,7 +75,7 @@ export default function UserStatCards() {
       title: "Challenges",
       value: challengeCount,
       rank: challengeRank,
-      icon: <FileText className="text-primary" />,
+      icon: <FolderPlus className="text-primary" />,
       dropdown: (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -100,7 +95,7 @@ export default function UserStatCards() {
                       href={`/polls/${poll.id}`} 
                       className="cursor-pointer flex items-center"
                     >
-                      <FileText className="h-4 w-4 mr-2 text-primary" />
+                      <FolderPlus className="h-4 w-4 mr-2 text-primary" />
                       <span className="truncate">{poll.question} <span className="text-xs text-muted-foreground">({createdDate})</span></span>
                     </Link>
                   </DropdownMenuItem>

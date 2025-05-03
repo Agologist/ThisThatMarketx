@@ -684,6 +684,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch war passes" });
     }
   });
+  
+  // Route for getting battles the user has won
+  app.get("/api/user/battles/won", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      // Get all race records for the user
+      const userRaces = await storage.getUserRaces(req.user.id);
+      
+      // Filter to include only battles that:
+      // 1. Have a pollId (came from a challenge)
+      // 2. User won
+      const wonBattles = userRaces.filter(race => race.pollId && race.won);
+      
+      res.json(wonBattles);
+    } catch (error) {
+      console.error('Error fetching won battles:', error);
+      res.status(500).json({ message: "Failed to fetch won battles" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
