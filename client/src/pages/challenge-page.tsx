@@ -460,7 +460,7 @@ export default function ChallengePage() {
                     War Unavailable
                   </h3>
                   <p className="text-muted-foreground mb-6">
-                    This War challenge expired without any votes. No racing contest is available.
+                    This War challenge expired without any votes. No battle contest is available.
                   </p>
                   
                   {/* Static race track with idle cars */}
@@ -505,7 +505,7 @@ export default function ChallengePage() {
                   </h3>
                   <p className="text-muted-foreground mb-6">
                     You didn't vote in this War challenge before it expired. 
-                    Voting is required to participate in the racing contest.
+                    Voting is required to participate in the battle contest.
                   </p>
                   
                   {/* Static race track with idle cars */}
