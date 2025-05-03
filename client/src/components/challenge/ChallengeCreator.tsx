@@ -748,7 +748,7 @@ export default function ChallengeCreator() {
                       Enable War Mode
                     </FormLabel>
                     <FormDescription>
-                      After challenge ends, a 1-minute racing game will start where cars move based on votes
+                      After challenge ends, a car game will start where cars battle based on votes
                     </FormDescription>
                   </div>
                   <FormControl>

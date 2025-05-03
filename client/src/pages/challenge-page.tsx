@@ -563,13 +563,13 @@ export default function ChallengePage() {
                           <div className="text-center p-8">
                             <div className="mb-4 text-primary text-6xl">🏁</div>
                             <h3 className="text-2xl font-bold mb-2">
-                              Race Already Completed
+                              Battle Already Completed
                             </h3>
                             <p className="text-muted-foreground mb-6">
-                              You've already completed this challenge race.
+                              You've already completed this battle.
                             </p>
                             
-                            {/* Race track results visualization */}
+                            {/* Battle track results visualization */}
                             <div className="bg-black/80 p-4 rounded-lg mb-6 max-w-md mx-auto">
                               <div className="flex justify-between mb-2 text-sm font-medium">
                                 <div className="flex items-center">
