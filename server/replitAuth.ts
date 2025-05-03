@@ -1,6 +1,7 @@
 import * as client from "openid-client";
 import { Strategy, type VerifyFunction } from "openid-client/passport";
 import passport from "passport";
+import type { Express, Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
 
 if (!process.env.REPLIT_DOMAINS) {
@@ -97,7 +98,7 @@ export async function setupReplitAuth(app: Express) {
     }
     
     // Routes for Replit Auth
-    app.get("/api/auth/replit", (req, res, next) => {
+    app.get("/api/auth/replit", (req: Request, res: Response, next: NextFunction) => {
       const domain = req.hostname;
       passport.authenticate(`replitauth:${domain}`, {
         prompt: "login consent",
@@ -105,7 +106,7 @@ export async function setupReplitAuth(app: Express) {
       })(req, res, next);
     });
     
-    app.get("/api/auth/callback", (req, res, next) => {
+    app.get("/api/auth/callback", (req: Request, res: Response, next: NextFunction) => {
       const domain = req.hostname;
       passport.authenticate(`replitauth:${domain}`, {
         successReturnToOrRedirect: "/",
@@ -119,7 +120,7 @@ export async function setupReplitAuth(app: Express) {
   }
 }
 
-export const isAuthenticated = async (req: any, res: any, next: any) => {
+export const isAuthenticated = async (req: Request, res: Response, next: NextFunction) => {
   const user = req.user as any;
 
   if (!req.isAuthenticated() || !user.expires_at) {

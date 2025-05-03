@@ -309,7 +309,7 @@ export default function AuthPage() {
                 <FlagIcon className="w-8 h-8" />
               </div>
               <h2 className="font-racing text-primary text-3xl">Votes and Wars</h2>
-              <p className="text-muted-foreground mt-2">Your creative poll and race platform</p>
+              <p className="text-muted-foreground mt-2">Your creative poll and battle platform</p>
             </div>
             
             <div className="space-y-4 mb-6">
