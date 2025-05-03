@@ -87,7 +87,12 @@ export default function ChallengesPage() {
             {!isGuest && (
               <div>
                 <button 
-                  onClick={() => window.location.href = "/challenges/new"} 
+                  onClick={() => {
+                    const createSection = document.getElementById('create-challenge-section');
+                    if (createSection) {
+                      createSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }} 
                   className="btn-gold py-2 px-6 rounded-md flex items-center"
                 >
                   <i className="mr-2">+</i>
@@ -146,7 +151,7 @@ export default function ChallengesPage() {
                   </Tabs>
                   
                   {!isGuest && (
-                    <div className="mt-8">
+                    <div id="create-challenge-section" className="mt-8">
                       <h3 className="font-medium mb-4">Create New Challenge</h3>
                       <PollCreator />
                     </div>
