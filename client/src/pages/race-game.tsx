@@ -408,10 +408,11 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
         } catch (e) {
           console.error("Failed to parse saved race game state", e);
         }
-      } else if (isExpiredChallenge) {
+      } else if (isExpiredChallenge && !pollData?.isWar) {
+        // Only auto-complete non-War challenges that have expired
         // CRITICAL FIX: If this is the first time loading an expired challenge,
         // create a completed race record in localStorage to prevent replay
-        console.log(`⚠️ CREATING AUTOMATIC COMPLETION RECORD for expired challenge ${pollId}`);
+        console.log(`⚠️ CREATING AUTOMATIC COMPLETION RECORD for expired non-War challenge ${pollId}`);
         const gameStateToSave = {
           gameState: "finished",
           gameResult: { 
@@ -434,9 +435,18 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
             won: gameStateToSave.gameResult.won 
           });
         }
+      } else if (isExpiredChallenge && pollData?.isWar) {
+        // For War challenges that just expired, 
+        // we want to start the race automatically after a countdown
+        console.log(`⚠️ WAR CHALLENGE ${pollId} EXPIRED - Starting race game automatically`);
+        
+        // Auto-start the game with countdown after a short delay
+        setTimeout(() => {
+          startCountdown();
+        }, 500);
       }
     }
-  }, [isStandaloneMode, pollId, isExpiredChallenge, user, saveRaceMutation]);
+  }, [isStandaloneMode, pollId, isExpiredChallenge, user, saveRaceMutation, pollData]);
   
   // Cleanup on unmount
   useEffect(() => {
