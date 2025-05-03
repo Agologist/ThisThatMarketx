@@ -52,8 +52,8 @@ export default function UserStatCards() {
   // Calculate stats
   const challengeCount = userPolls.length;
   const voteCount = (user?.id && !isGuest) ? userVotes.length : 0;
-  // Only count challenge-related (with pollId) battles won by the user
-  const warCount = userWonBattles.filter((battle: any) => battle.pollId).length;
+  // Count all battles won by the user
+  const warCount = userWonBattles.length;
   const warPassesCount = activeWarPolls.length;
   
   // Calculate ranks based on count
@@ -126,13 +126,12 @@ export default function UserStatCards() {
           <DropdownMenuContent align="end" className="w-72">
             <DropdownMenuLabel>Wars You've Won</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {userWonBattles.filter((battle: any) => battle.pollId).length > 0 ? (
-              userWonBattles
-                .filter((battle: any) => battle.pollId) // Only show challenge-related battles
-                .map((race: any) => {
-                  const battleTime = race.racedAt ? new Date(race.racedAt).toLocaleDateString() : '';
-                  return (
-                    <DropdownMenuItem key={race.id}>
+            {userWonBattles.length > 0 ? (
+              userWonBattles.map((race: any) => {
+                const battleTime = race.racedAt ? new Date(race.racedAt).toLocaleDateString() : '';
+                return (
+                  <DropdownMenuItem key={race.id}>
+                    {race.pollId ? (
                       <Link 
                         href={`/polls/${race.pollId}`} 
                         className="cursor-pointer flex items-center w-full"
@@ -145,12 +144,23 @@ export default function UserStatCards() {
                           </span>
                         </span>
                       </Link>
-                    </DropdownMenuItem>
-                  );
-                })
+                    ) : (
+                      <div className="flex items-center">
+                        <Trophy className="h-4 w-4 mr-2 text-primary" />
+                        <span className="truncate">
+                          Battle Won (Standalone)
+                          <span className="text-xs text-muted-foreground ml-1">
+                            ({battleTime}) - {race.time / 1000}s
+                          </span>
+                        </span>
+                      </div>
+                    )}
+                  </DropdownMenuItem>
+                );
+              })
             ) : (
               <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                You haven't won any challenge-related battles yet
+                You haven't won any battles yet
               </div>
             )}
           </DropdownMenuContent>
