@@ -695,10 +695,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get all race records for the user
       const userRaces = await storage.getUserRaces(req.user.id);
       
+      console.log("All user races:", JSON.stringify(userRaces, null, 2));
+      
       // Filter to include only battles that:
       // 1. Have a pollId (came from a challenge)
       // 2. User won
       const wonBattles = userRaces.filter(race => race.pollId && race.won);
+      
+      console.log("Filtered won battles:", JSON.stringify(wonBattles, null, 2));
       
       res.json(wonBattles);
     } catch (error) {
