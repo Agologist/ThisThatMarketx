@@ -797,30 +797,63 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
                           </div>
                         )}
                         
-                        {/* Only show Start Race button for standalone games or for challenge games that haven't been completed yet */}
-                        {(isStandaloneMode || !localStorage.getItem(`raceGame_poll_${pollId}`)) && (
-                          <>
-                            <Button 
-                              className="btn-gold w-full"
-                              size="lg"
-                              onClick={startCountdown}
-                              disabled={isStandaloneMode && !userCarSelection}
-                            >
-                              Start Race
-                            </Button>
-                            
-                            {isStandaloneMode && !userCarSelection ? (
-                              <p className="text-sm text-muted-foreground mt-2">Select a car to start racing</p>
-                            ) : (
+                        {/* Check if this is a standalone game or if there's no saved game for this poll ID */}
+                        {(() => {
+                          // For standalone mode, always show the button
+                          if (isStandaloneMode) {
+                            return (
+                              <>
+                                <Button 
+                                  className="btn-gold w-full"
+                                  size="lg"
+                                  onClick={startCountdown}
+                                  disabled={!userCarSelection}
+                                >
+                                  Start Race
+                                </Button>
+                                
+                                {!userCarSelection ? (
+                                  <p className="text-sm text-muted-foreground mt-2">Select a car to start racing</p>
+                                ) : (
+                                  <p className="text-sm text-muted-foreground mt-2">Click Start to enable voting</p>
+                                )}
+                              </>
+                            );
+                          }
+                          
+                          // For challenge mode, check if there's a saved game
+                          const savedGame = pollId > 0 ? localStorage.getItem(`raceGame_poll_${pollId}`) : null;
+                          
+                          if (savedGame) {
+                            // If there's a saved game, parse it to check if it's completed
+                            try {
+                              const parsedState = JSON.parse(savedGame);
+                              
+                              // If game is finished, show the message instead of the button
+                              if (parsedState.gameState === "finished") {
+                                return (
+                                  <p className="text-sm text-muted-foreground mt-2">This challenge race has already been completed</p>
+                                );
+                              }
+                            } catch (e) {
+                              console.error("Failed to parse saved game state", e);
+                            }
+                          }
+                          
+                          // If no saved game or parsing failed, show the button
+                          return (
+                            <>
+                              <Button 
+                                className="btn-gold w-full"
+                                size="lg"
+                                onClick={startCountdown}
+                              >
+                                Start Race
+                              </Button>
                               <p className="text-sm text-muted-foreground mt-2">Click Start to enable voting</p>
-                            )}
-                          </>
-                        )}
-                        
-                        {/* Show message for completed challenge games */}
-                        {!isStandaloneMode && localStorage.getItem(`raceGame_poll_${pollId}`) && (
-                          <p className="text-sm text-muted-foreground mt-2">This challenge race has already been completed</p>
-                        )}
+                            </>
+                          );
+                        })()}
                       </div>
                     )}
                     
