@@ -35,11 +35,12 @@ export default function Header() {
     enabled: !!user && !isGuest
   });
   
-  const { data: userAchievements = [] } = useQuery({
-    queryKey: ["/api/user/achievements"],
+  const { data: activeWarPolls = [] } = useQuery({
+    queryKey: ["/api/polls/active-wars"],
     queryFn: async () => {
       if (!user) return [];
-      const res = await fetch("/api/user/achievements", { credentials: "include" });
+      // Get all polls with isWar=true that are active and the user has voted on
+      const res = await fetch("/api/polls?filter=active-wars", { credentials: "include" });
       if (!res.ok) return [];
       return await res.json();
     },
@@ -50,7 +51,7 @@ export default function Header() {
   const challengeCount = userPolls.length;
   const voteCount = (user?.id && !isGuest) ? userRaces.length : 0; // Consider using a proper votes count query when available
   const warCount = userRaces.filter((race: any) => race.won).length;
-  const achievementCount = userAchievements.length;
+  const warPassesCount = activeWarPolls.length;
   
   // Calculate ranks based on count
   const getRank = (count: number): string => {
@@ -209,8 +210,8 @@ export default function Header() {
                         <div className="flex items-center">
                           <Award className="text-primary h-4 w-4 mr-1.5" />
                           <div className="text-xs">
-                            <p className="text-muted-foreground">Achievements</p>
-                            <p className="font-bold">{achievementCount}</p>
+                            <p className="text-muted-foreground">War Passes</p>
+                            <p className="font-bold">{warPassesCount}</p>
                           </div>
                         </div>
                       </div>
