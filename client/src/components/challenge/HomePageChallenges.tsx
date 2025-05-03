@@ -24,7 +24,7 @@ export default function HomePageChallenges({ polls }: HomePageChallengesProps) {
     return () => clearInterval(interval);
   }, []);
   
-  const ITEMS_PER_PAGE = 2;
+  const ITEMS_PER_PAGE = 5;
   const totalChallenges = polls.length;
   const totalPages = Math.ceil(totalChallenges / ITEMS_PER_PAGE);
   
