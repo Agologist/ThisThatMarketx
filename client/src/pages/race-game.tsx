@@ -20,7 +20,7 @@ import type {
 // Game constants
 const PUSH_POWER = 3; // How much pushing power each vote provides
 const MAX_POSITION = 30; // Maximum possible position value
-const PLATFORM_EDGE = 30; // Position at 20% from center where the platform edge is (visible white line)
+const PLATFORM_EDGE = 30; // Position at which a car falls off the ramp (equivalent to 10 steps from center)
 const CENTER_POSITION = 0; // Starting position at center
 
 // Using white racecar SVG images for better reliability
@@ -40,6 +40,10 @@ export default function RaceGame() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   
+  const [searchParams] = useLocation();
+  const pollId = Number(new URLSearchParams(searchParams).get("pollId") || "0");
+  const option = new URLSearchParams(searchParams).get("option") || "A";
+  
   // Game state
   const [gameState, setGameState] = useState<"ready" | "countdown" | "racing" | "finished">("ready");
   const [countdownValue, setCountdownValue] = useState(3);
@@ -53,8 +57,10 @@ export default function RaceGame() {
   const [leftVotes, setLeftVotes] = useState(0);
   const [rightVotes, setRightVotes] = useState(0);
   
-  // Car selection, game result and state
+  // Car selection and options
   const [selectedCar, setSelectedCar] = useState(0);
+  // Determine which car the user voted for (left = A, right = B)
+  const userCar = option === "A" ? "left" : "right";
   const [gameResult, setGameResult] = useState<{ won: boolean; time: number } | null>(null);
   const [leftExploded, setLeftExploded] = useState(false);
   const [rightExploded, setRightExploded] = useState(false);
@@ -137,21 +143,40 @@ export default function RaceGame() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (gameState !== "racing") return;
       
-      // Left arrow or 'A' key votes for the left car (test mode)
-      if (e.code === "ArrowLeft" || e.code === "KeyA") {
-        e.preventDefault();
-        handleLeftVote();
+      // Only allow keyboard control for the car the user voted for
+      if (userCar === "left") {
+        // Left arrow or 'A' key votes for the left car
+        if (e.code === "ArrowLeft" || e.code === "KeyA") {
+          e.preventDefault();
+          handleLeftVote();
+        }
+      } else if (userCar === "right") {
+        // Right arrow or 'D' key votes for the right car
+        if (e.code === "ArrowRight" || e.code === "KeyD") {
+          e.preventDefault();
+          handleRightVote();
+        }
       }
     };
     
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [gameState]);
+  }, [gameState, userCar]);
   
   // Handle a vote for the left car
   const handleLeftVote = () => {
     // Only process if the game is still racing
     if (gameState !== "racing" || leftExploded || rightExploded) return;
+    
+    // User can only play the car they voted for
+    if (userCar !== "left") {
+      toast({
+        title: "Wrong Car",
+        description: "You can only control the car you voted for!",
+        variant: "destructive",
+      });
+      return;
+    }
     
     // Increment left votes
     setLeftVotes(prev => prev + 1);
@@ -213,6 +238,77 @@ export default function RaceGame() {
         // Delay end of race to show explosion animation
         setTimeout(() => {
           finishRace(false, elapsed); // Left car loses because it fell off
+        }, 800);
+        return;
+      }
+      
+      // If neither car falls off, update both positions
+      setLeftPosition(newLeftPos);
+      setRightPosition(newRightPos);
+    }, 100); // Short delay for visual effect
+  };
+  
+  // Handle a vote for the right car
+  const handleRightVote = () => {
+    // Only process if the game is still racing
+    if (gameState !== "racing" || leftExploded || rightExploded) return;
+    
+    // User can only play the car they voted for
+    if (userCar !== "right") {
+      toast({
+        title: "Wrong Car",
+        description: "You can only control the car you voted for!",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Increment right votes
+    setRightVotes(prev => prev + 1);
+    
+    // For visual effect, add a small delay to simulate impact
+    setTimeout(() => {
+      // Current position of both cars in the match
+      const currentLeftPos = leftPosition;
+      const currentRightPos = rightPosition;
+      
+      // Right car pushes with PUSH_POWER units of force
+      const pushAmount = PUSH_POWER;
+      
+      // Calculate new positions after this push
+      // When right car pushes, both cars move left (decreasing positions)
+      const newLeftPos = currentLeftPos - pushAmount;
+      const newRightPos = currentRightPos - pushAmount;
+      
+      // Check if left car would move too far and fall off the left edge
+      // At leftPosition = -30, the left car should be at the edge
+      if (newLeftPos <= -PLATFORM_EDGE) {
+        // Left car falls off - show explosion
+        setLeftExploded(true);
+        setLeftPosition(-PLATFORM_EDGE); // Position at edge
+        
+        // Calculate race time
+        const elapsed = Date.now() - (startTimeRef.current || 0);
+        
+        // Delay end of race to show explosion animation
+        setTimeout(() => {
+          finishRace(true, elapsed); // Right car wins because left car fell off
+        }, 800);
+        return;
+      }
+      
+      // Check if right car would move too far backward and fall off
+      if (newRightPos <= -PLATFORM_EDGE) {
+        // Right car falls off - show explosion
+        setRightExploded(true);
+        setRightPosition(-PLATFORM_EDGE); // Position at edge
+        
+        // Calculate race time
+        const elapsed = Date.now() - (startTimeRef.current || 0);
+        
+        // Delay end of race to show explosion animation
+        setTimeout(() => {
+          finishRace(false, elapsed); // Right car loses because it fell off
         }, 800);
         return;
       }
@@ -376,26 +472,35 @@ export default function RaceGame() {
                     
                     <div className="relative h-32 rounded-lg overflow-hidden bg-gradient-to-r from-neutral-800 to-neutral-900 flex items-center">
                       {/* Main platform in the middle */}
-                      <div className="absolute left-1/2 top-0 bottom-0 transform -translate-x-1/2 w-[60%] h-full border-x-4 border-white/30 bg-black/40"></div>
-                      
-                      {/* Ramps on each side with diagonal stripes */}
-                      <div className="absolute left-0 top-0 bottom-0 w-[20%] bg-gradient-to-r from-red-900/50 to-red-700/30 overflow-hidden">
-                        {/* Diagonal stripes for ramp effect */}
+                      <div className="absolute left-1/2 top-0 bottom-0 transform -translate-x-1/2 w-[60%] h-full border-x-4 border-white/70 bg-black/40">
+                        {/* Platform pattern */}
                         <div className="absolute inset-0" style={{ 
-                          backgroundImage: 'repeating-linear-gradient(145deg, transparent, transparent 8px, rgba(255, 0, 0, 0.2) 8px, rgba(255, 0, 0, 0.2) 16px)',
-                          backgroundSize: '32px 32px'
+                          backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 20px, rgba(255, 255, 255, 0.05) 20px, rgba(255, 255, 255, 0.05) 40px)',
                         }}></div>
-                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-red-500/70"></div>
-                        <div className="absolute top-0 left-0 right-0 h-1 bg-red-800/40"></div>
                       </div>
-                      <div className="absolute right-0 top-0 bottom-0 w-[20%] bg-gradient-to-l from-red-900/50 to-red-700/30 overflow-hidden">
-                        {/* Diagonal stripes for ramp effect, mirrored */}
+                      
+                      {/* Off-ramp areas (danger zones) on each side with diagonal stripes */}
+                      <div className="absolute left-0 top-0 bottom-0 w-[20%] bg-gradient-to-r from-red-900/80 to-red-700/60 overflow-hidden">
+                        {/* Diagonal stripes for off-ramp effect - more pronounced */}
                         <div className="absolute inset-0" style={{ 
-                          backgroundImage: 'repeating-linear-gradient(215deg, transparent, transparent 8px, rgba(255, 0, 0, 0.2) 8px, rgba(255, 0, 0, 0.2) 16px)',
-                          backgroundSize: '32px 32px'
+                          backgroundImage: 'repeating-linear-gradient(145deg, transparent, transparent 6px, rgba(255, 0, 0, 0.4) 6px, rgba(255, 0, 0, 0.4) 12px)',
+                          backgroundSize: '24px 24px'
                         }}></div>
-                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-red-500/70"></div>
-                        <div className="absolute top-0 left-0 right-0 h-1 bg-red-800/40"></div>
+                        {/* Edge marking clearly showing the boundary */}
+                        <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-red-500"></div>
+                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-red-500/90"></div>
+                        <div className="absolute top-0 left-0 right-0 h-1 bg-red-800/70"></div>
+                      </div>
+                      <div className="absolute right-0 top-0 bottom-0 w-[20%] bg-gradient-to-l from-red-900/80 to-red-700/60 overflow-hidden">
+                        {/* Diagonal stripes for off-ramp effect, mirrored - more pronounced */}
+                        <div className="absolute inset-0" style={{ 
+                          backgroundImage: 'repeating-linear-gradient(215deg, transparent, transparent 6px, rgba(255, 0, 0, 0.4) 6px, rgba(255, 0, 0, 0.4) 12px)',
+                          backgroundSize: '24px 24px'
+                        }}></div>
+                        {/* Edge marking clearly showing the boundary */}
+                        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-red-500"></div>
+                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-red-500/90"></div>
+                        <div className="absolute top-0 left-0 right-0 h-1 bg-red-800/70"></div>
                       </div>
                       
                       {/* Center divider line */}
