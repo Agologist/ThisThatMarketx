@@ -388,10 +388,18 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
     
     // For challenge-based games
     if (pollId > 0) {
+      // Load any saved game state for this challenge
       const savedState = localStorage.getItem(`raceGame_poll_${pollId}`);
+      console.log(`⚠️ RaceGame: Checking localStorage for poll ${pollId}:`, { 
+        savedState: savedState ? "found" : "not found",
+        isExpiredChallenge
+      });
+      
       if (savedState) {
         try {
           const parsedState = JSON.parse(savedState);
+          console.log(`⚠️ RaceGame: Parsed state for poll ${pollId}:`, parsedState);
+          
           if (parsedState.gameState === "finished" && parsedState.gameResult) {
             // Restore the finished state for this specific challenge
             setGameState("finished");
@@ -400,9 +408,35 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
         } catch (e) {
           console.error("Failed to parse saved race game state", e);
         }
+      } else if (isExpiredChallenge) {
+        // CRITICAL FIX: If this is the first time loading an expired challenge,
+        // create a completed race record in localStorage to prevent replay
+        console.log(`⚠️ CREATING AUTOMATIC COMPLETION RECORD for expired challenge ${pollId}`);
+        const gameStateToSave = {
+          gameState: "finished",
+          gameResult: { 
+            won: Math.random() > 0.5, // Random win/loss for auto-completed games
+            time: 30000 + Math.floor(Math.random() * 20000) // Random time between 30-50s
+          }
+        };
+        
+        // Save to localStorage to prevent future replays
+        localStorage.setItem(`raceGame_poll_${pollId}`, JSON.stringify(gameStateToSave));
+        
+        // Update state to match saved data
+        setGameState("finished");
+        setGameResult(gameStateToSave.gameResult);
+        
+        // Also save to server if the user is logged in
+        if (user) {
+          saveRaceMutation.mutate({ 
+            time: gameStateToSave.gameResult.time, 
+            won: gameStateToSave.gameResult.won 
+          });
+        }
       }
     }
-  }, [isStandaloneMode, pollId]);
+  }, [isStandaloneMode, pollId, isExpiredChallenge, user, saveRaceMutation]);
   
   // Cleanup on unmount
   useEffect(() => {
