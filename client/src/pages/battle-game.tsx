@@ -119,7 +119,7 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
   });
   
   // Refs for timers and preventing auto-start loops
-  const raceTimerRef = useRef<number | null>(null);
+  const battleTimerRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
   const hasAutoStartedRef = useRef(false);
   
@@ -181,10 +181,10 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
     
     startTimeRef.current = Date.now();
     
-    // Start race timer
-    raceTimerRef.current = window.setInterval(() => {
+    // Start battle timer
+    battleTimerRef.current = window.setInterval(() => {
       const elapsed = Date.now() - (startTimeRef.current || 0);
-      setRaceTime(elapsed);
+      setBattleTime(elapsed);
     }, 100);
   };
   
@@ -416,16 +416,16 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (raceTimerRef.current) {
-        clearInterval(raceTimerRef.current);
+      if (battleTimerRef.current) {
+        clearInterval(battleTimerRef.current);
       }
     };
   }, []);
   
   // Finish the battle
   const finishBattle = (playerWon: boolean, time: number) => {
-    if (raceTimerRef.current) {
-      clearInterval(raceTimerRef.current);
+    if (battleTimerRef.current) {
+      clearInterval(battleTimerRef.current);
     }
     
     setGameState("finished");
@@ -451,8 +451,8 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
   const resetGame = () => {
     setGameState("ready");
     setGameResult(null);
-    setLeftPosition(0); // Match initial position from startRace
-    setRightPosition(0); // Match initial position from startRace
+    setLeftPosition(0); // Match initial position from startBattle
+    setRightPosition(0); // Match initial position from startBattle
     setLeftVotes(0);
     setRightVotes(0);
     setLeftExploded(false);
@@ -730,7 +730,7 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
                         <div>
                           <h4 className="text-sm font-medium">
                             {gameState === "battling" 
-                              ? `Time: ${(raceTime / 1000).toFixed(2)}s`
+                              ? `Time: ${(battleTime / 1000).toFixed(2)}s`
                               : gameState === "finished"
                                 ? `Finished in ${(gameResult?.time || 0) / 1000}s`
                                 : "Poll Battle Game"}
