@@ -140,7 +140,7 @@ export default function ActiveChallenges({ polls }: ActiveChallengesProps) {
                   >
                     <td className="py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#000] flex-shrink-0 flex items-center justify-center rounded">
+                        <div className="w-10 h-10 bg-[#000] flex-shrink-0 flex items-center justify-center rounded-full overflow-hidden border-2 border-primary/50">
                           <span className="text-[#FFD700] font-bold">📄</span>
                         </div>
                         <div>

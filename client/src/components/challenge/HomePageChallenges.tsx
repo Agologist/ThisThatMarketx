@@ -136,7 +136,7 @@ export default function HomePageChallenges({ polls }: HomePageChallengesProps) {
           >
             {/* Challenge */}
             <div className="flex items-center gap-3 flex-grow">
-              <div className="w-10 h-10 bg-black flex items-center justify-center rounded">
+              <div className="w-10 h-10 bg-black flex items-center justify-center rounded-full overflow-hidden border-2 border-primary/50">
                 <span className="text-[#FFD700] text-xl">📋</span>
               </div>
               <div>
