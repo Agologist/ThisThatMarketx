@@ -82,7 +82,7 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
   }, [pollId]);
   
   // Game state
-  const [gameState, setGameState] = useState<"ready" | "countdown" | "racing" | "finished">("ready");
+  const [gameState, setGameState] = useState<"ready" | "countdown" | "battling" | "finished">("ready");
   const [countdownValue, setCountdownValue] = useState(3);
   const [raceTime, setRaceTime] = useState(0);
   
@@ -169,7 +169,7 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
   
   // Start the race
   const startRace = () => {
-    setGameState("racing");
+    setGameState("battling");
     // Initial position - cars start nose-to-nose near the center line
     setLeftPosition(0); // Initial offset is added to base position (40%)
     setRightPosition(0); // Initial offset is added to base position (60%)
@@ -191,7 +191,7 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
   // Handle key presses for cars
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (gameState !== "racing") return;
+      if (gameState !== "battling") return;
       
       // Only allow keyboard control for the car the user voted for
       if (userCar === "left") {
