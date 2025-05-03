@@ -11,7 +11,9 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="flex items-center mb-4 md:mb-0">
             <FlagIcon className="text-primary h-5 w-5 mr-2" />
-            <h2 className="font-racing text-primary text-xl">Votes and Wars</h2>
+            <Link href="/">
+              <h2 className="font-racing text-primary text-xl hover:text-primary/80 cursor-pointer transition-colors">Votes and Wars</h2>
+            </Link>
           </div>
           
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-4 md:mb-0">
