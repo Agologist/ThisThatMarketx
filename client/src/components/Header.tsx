@@ -208,17 +208,20 @@ export default function Header() {
                             <DropdownMenuLabel>Challenges You Voted In</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             {userRaces.length > 0 ? (
-                              userRaces.map((race: any) => (
-                                <DropdownMenuItem key={race.pollId} asChild>
-                                  <Link 
-                                    href={`/polls/${race.pollId}`} 
-                                    className="cursor-pointer flex items-center"
-                                  >
-                                    <FileText className="h-4 w-4 mr-2 text-primary rotate-90" />
-                                    <span className="truncate">{race.pollQuestion || `Challenge #${race.pollId}`}</span>
-                                  </Link>
-                                </DropdownMenuItem>
-                              ))
+                              userRaces.map((race: any) => {
+                                const createdDate = race.createdAt ? new Date(race.createdAt).toLocaleDateString() : '';
+                                return (
+                                  <DropdownMenuItem key={race.pollId} asChild>
+                                    <Link 
+                                      href={`/polls/${race.pollId}`} 
+                                      className="cursor-pointer flex items-center"
+                                    >
+                                      <FileText className="h-4 w-4 mr-2 text-primary rotate-90" />
+                                      <span className="truncate">{race.pollQuestion || `Challenge #${race.pollId}`} <span className="text-xs text-muted-foreground">({createdDate})</span></span>
+                                    </Link>
+                                  </DropdownMenuItem>
+                                );
+                              })
                             ) : (
                               <div className="px-2 py-1.5 text-xs text-muted-foreground">
                                 You haven't voted in any challenges yet
@@ -358,17 +361,20 @@ export default function Header() {
                     {/* Votes Dropdown */}
                     {votesDropdownOpen && userRaces.length > 0 && (
                       <div className="ml-2 pl-7 flex flex-col gap-1">
-                        {userRaces.map((race: any) => (
-                          <Link 
-                            key={race.pollId}
-                            href={`/polls/${race.pollId}`}
-                            className="text-sm text-primary flex items-center py-1"
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            <FileText className="h-4 w-4 mr-1.5 inline rotate-90" />
-                            <span className="truncate">{race.pollQuestion || `Challenge #${race.pollId}`}</span>
-                          </Link>
-                        ))}
+                        {userRaces.map((race: any) => {
+                          const createdDate = race.createdAt ? new Date(race.createdAt).toLocaleDateString() : '';
+                          return (
+                            <Link 
+                              key={race.pollId}
+                              href={`/polls/${race.pollId}`}
+                              className="text-sm text-primary flex items-center py-1"
+                              onClick={() => setIsMenuOpen(false)}
+                            >
+                              <FileText className="h-4 w-4 mr-1.5 inline rotate-90" />
+                              <span className="truncate">{race.pollQuestion || `Challenge #${race.pollId}`} <span className="text-xs text-muted-foreground">({createdDate})</span></span>
+                            </Link>
+                          );
+                        })}
                       </div>
                     )}
                   </div>

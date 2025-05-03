@@ -96,10 +96,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Get active war polls that the user has voted in
         const allPolls = await storage.getPolls();
         const userVotes = [];
+        const now = new Date();
         
         // For each active war poll, check if user has voted
         for (const poll of allPolls) {
-          if (poll.isWar && new Date(poll.endTime) > new Date()) {
+          // Only include polls that are:
+          // 1. War polls
+          // 2. Still active (end time is in the future)
+          if (poll.isWar && new Date(poll.endTime) > now) {
             const vote = await storage.getUserVoteForPoll(req.user.id, poll.id);
             if (vote) {
               userVotes.push({
@@ -110,6 +114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
         
+        console.log(`Found ${userVotes.length} active war polls for user ${req.user.id}`);
         return res.json(userVotes);
       }
       
@@ -411,32 +416,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      // Get all races for the user
-      const races = await storage.getUserRaces(req.user.id);
-      
-      // Get all user votes to connect poll info to races
+      // Get all votes for the user
+      const votes = await storage.getUserVotes(req.user.id);
       const polls = await storage.getPolls();
-      const userVotes = [];
       
-      // For each poll the user has voted in, get the vote and combine with poll data
-      for (const race of races) {
-        const poll = polls.find(p => p.id === race.pollId);
+      // Combine poll data with votes to create a comprehensive list
+      const votedPolls = votes.map(vote => {
+        const poll = polls.find(p => p.id === vote.pollId);
         if (poll) {
-          userVotes.push({
-            ...race,
+          return {
+            id: vote.id,
+            userId: vote.userId,
+            pollId: vote.pollId,
+            option: vote.option,
+            votedAt: vote.votedAt,
             pollQuestion: poll.question,
-            pollOptionA: poll.optionA,
-            pollOptionB: poll.optionB,
+            pollOptionAText: poll.optionAText,
+            pollOptionBText: poll.optionBText,
             pollEndTime: poll.endTime,
-            isActive: new Date(poll.endTime) > new Date()
-          });
-        } else {
-          // Include race even if poll is not found
-          userVotes.push(race);
+            isActive: new Date(poll.endTime) > new Date(),
+            createdAt: poll.createdAt || new Date(0)
+          };
         }
-      }
+        return vote;
+      });
       
-      res.json(userVotes);
+      res.json(votedPolls);
     } catch (error) {
       console.error('Error fetching user races:', error);
       res.status(500).json({ message: "Failed to fetch user races" });

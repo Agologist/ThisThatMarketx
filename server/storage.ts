@@ -33,6 +33,7 @@ export interface IStorage {
   // Vote methods
   createVote(vote: InsertVote): Promise<Vote>;
   getUserVoteForPoll(userId: number, pollId: number): Promise<Vote | undefined>;
+  getUserVotes(userId: number): Promise<Vote[]>;
   deleteVote(id: number): Promise<void>;
   
   // Race methods
@@ -251,6 +252,12 @@ export class MemStorage implements IStorage {
     console.log(`Found vote for user ${userId} on poll ${pollId}: ${userVote ? 'Yes' : 'No'}`);
     
     return userVote;
+  }
+  
+  async getUserVotes(userId: number): Promise<Vote[]> {
+    return Array.from(this.votes.values())
+      .filter(vote => vote.userId === userId)
+      .sort((a, b) => new Date(b.votedAt).getTime() - new Date(a.votedAt).getTime());
   }
   
   async deleteVote(id: number): Promise<void> {
@@ -556,6 +563,18 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error("DB: Error checking for vote:", error);
       return undefined;
+    }
+  }
+  
+  async getUserVotes(userId: number): Promise<Vote[]> {
+    try {
+      const userVotes = await db.select().from(votes)
+        .where(eq(votes.userId, userId))
+        .orderBy(desc(votes.votedAt));
+      return userVotes;
+    } catch (error) {
+      console.error("DB: Error getting user votes:", error);
+      return [];
     }
   }
   
