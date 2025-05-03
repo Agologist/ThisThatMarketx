@@ -84,7 +84,7 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
   // Game state
   const [gameState, setGameState] = useState<"ready" | "countdown" | "battling" | "finished">("ready");
   const [countdownValue, setCountdownValue] = useState(3);
-  const [raceTime, setRaceTime] = useState(0);
+  const [battleTime, setBattleTime] = useState(0);
   
   // Car positions: from 0 (center) to MAX_POSITION (edge)
   const [leftPosition, setLeftPosition] = useState(0);
@@ -159,7 +159,7 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
       setCountdownValue(prev => {
         if (prev <= 1) {
           clearInterval(countdownInterval);
-          startRace();
+          startBattle();
           return 0;
         }
         return prev - 1;
@@ -167,8 +167,8 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
     }, 1000);
   };
   
-  // Start the race
-  const startRace = () => {
+  // Start the battle
+  const startBattle = () => {
     setGameState("battling");
     // Initial position - cars start nose-to-nose near the center line
     setLeftPosition(0); // Initial offset is added to base position (40%)
@@ -177,7 +177,7 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
     setRightVotes(0);
     setLeftExploded(false);
     setRightExploded(false);
-    setRaceTime(0);
+    setBattleTime(0);
     
     startTimeRef.current = Date.now();
     
@@ -884,7 +884,7 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
                       </div>
                     )}
                     
-                    {gameState === "racing" && (
+                    {gameState === "battling" && (
                       <div className="w-full max-w-md flex flex-col items-center">
                         <div className="flex justify-center space-x-8 mb-4">
                           {/* Left car vote button - only shown if user voted for the left car */}
