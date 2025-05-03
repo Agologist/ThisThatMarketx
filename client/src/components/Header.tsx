@@ -26,11 +26,11 @@ export default function Header() {
     enabled: !!user && !isGuest
   });
   
-  const { data: userRaces = [] } = useQuery({
-    queryKey: ["/api/user/races"],
+  const { data: userVotes = [] } = useQuery({
+    queryKey: ["/api/user/votes"],
     queryFn: async () => {
       if (!user) return [];
-      const res = await fetch("/api/user/races", { credentials: "include" });
+      const res = await fetch("/api/user/votes", { credentials: "include" });
       if (!res.ok) return [];
       return await res.json();
     },
@@ -38,32 +38,33 @@ export default function Header() {
   });
   
   const { data: activeWarPolls = [] } = useQuery({
-    queryKey: ["/api/polls/active-wars"],
+    queryKey: ["/api/user/warpasses"],
     queryFn: async () => {
       if (!user) return [];
-      // Get all polls with isWar=true that are active and the user has voted on
-      const res = await fetch("/api/polls?filter=active-wars", { credentials: "include" });
+      const res = await fetch("/api/user/warpasses", { credentials: "include" });
       if (!res.ok) return [];
       return await res.json();
     },
     enabled: !!user && !isGuest
   });
   
-  // Fetch user's won battles
+  // Fetch user's won battles directly from API
   const { data: userWonBattles = [] } = useQuery({
     queryKey: ["/api/user/battles/won"],
     queryFn: async () => {
       if (!user) return [];
-      // Filter races that have pollId (only battles from challenges), and user won
-      return userRaces.filter((race: any) => race.pollId && race.won);
+      const res = await fetch("/api/user/battles/won", { credentials: "include" });
+      if (!res.ok) return [];
+      return await res.json();
     },
     enabled: !!user && !isGuest
   });
   
   // Calculate stats
   const challengeCount = userPolls.length;
-  const voteCount = (user?.id && !isGuest) ? userRaces.length : 0; // Consider using a proper votes count query when available
-  const warCount = userWonBattles.length; // Only count wars from challenge-related battles
+  const voteCount = (user?.id && !isGuest) ? userVotes.length : 0;
+  // Only count wars from challenge-related battles
+  const warCount = userWonBattles.filter((battle: any) => battle.pollId).length;
   const warPassesCount = activeWarPolls.length;
   
   // Calculate ranks based on count
@@ -246,17 +247,18 @@ export default function Header() {
                           <DropdownMenuContent align="end" className="w-48">
                             <DropdownMenuLabel>Challenges You Voted In</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            {userRaces.length > 0 ? (
-                              userRaces.map((race: any) => {
-                                const createdDate = race.createdAt ? new Date(race.createdAt).toLocaleDateString() : '';
+                            {userVotes.length > 0 ? (
+                              userVotes.map((vote: any) => {
+                                const poll = userPolls.find((p: any) => p.id === vote.pollId) || { question: `Challenge #${vote.pollId}` };
+                                const voteTime = vote.votedAt ? new Date(vote.votedAt).toLocaleDateString() : '';
                                 return (
-                                  <DropdownMenuItem key={race.pollId} asChild>
+                                  <DropdownMenuItem key={vote.id} asChild>
                                     <Link 
-                                      href={`/polls/${race.pollId}`} 
+                                      href={`/polls/${vote.pollId}`} 
                                       className="cursor-pointer flex items-center"
                                     >
                                       <FileText className="h-4 w-4 mr-2 text-primary rotate-90" />
-                                      <span className="truncate">{race.pollQuestion || `Challenge #${race.pollId}`} <span className="text-xs text-muted-foreground">({createdDate})</span></span>
+                                      <span className="truncate">{poll.question} <span className="text-xs text-muted-foreground">({voteTime})</span></span>
                                     </Link>
                                   </DropdownMenuItem>
                                 );
@@ -431,19 +433,20 @@ export default function Header() {
                     </div>
                     
                     {/* Votes Dropdown */}
-                    {votesDropdownOpen && userRaces.length > 0 && (
+                    {votesDropdownOpen && userVotes.length > 0 && (
                       <div className="ml-2 pl-7 flex flex-col gap-1">
-                        {userRaces.map((race: any) => {
-                          const createdDate = race.createdAt ? new Date(race.createdAt).toLocaleDateString() : '';
+                        {userVotes.map((vote: any) => {
+                          const poll = userPolls.find(p => p.id === vote.pollId) || { question: `Challenge #${vote.pollId}` };
+                          const voteTime = vote.votedAt ? new Date(vote.votedAt).toLocaleDateString() : '';
                           return (
                             <Link 
-                              key={race.pollId}
-                              href={`/polls/${race.pollId}`}
+                              key={vote.id}
+                              href={`/polls/${vote.pollId}`}
                               className="text-sm text-primary flex items-center py-1"
                               onClick={() => setIsMenuOpen(false)}
                             >
                               <FileText className="h-4 w-4 mr-1.5 inline rotate-90" />
-                              <span className="truncate">{race.pollQuestion || `Challenge #${race.pollId}`} <span className="text-xs text-muted-foreground">({createdDate})</span></span>
+                              <span className="truncate">{poll.question} <span className="text-xs text-muted-foreground">({voteTime})</span></span>
                             </Link>
                           );
                         })}
