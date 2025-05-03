@@ -436,6 +436,7 @@ export class DatabaseStorage implements IStorage {
         optionAImage: insertPoll.optionAImage || null,
         optionBImage: insertPoll.optionBImage || null,
         isPublic: insertPoll.isPublic ?? true,
+        isWar: insertPoll.isWar ?? false,
       };
       
       // Parse the endTime string to a Date object if it's not already
