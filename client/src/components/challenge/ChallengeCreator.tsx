@@ -5,15 +5,16 @@ import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ImageIcon, HelpCircle, Upload, Camera } from "lucide-react";
+import { Loader2, ImageIcon, HelpCircle, Upload, Camera, Sword } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { searchImages, getFallbackImage, compressImageDataUrl } from "@/utils/imageSearch";
 import { useLocation } from "wouter";
+import { Switch } from "@/components/ui/switch";
 
 const challengeFormSchema = z.object({
   question: z.string().min(5, "Challenge title must be at least 5 characters"),
@@ -24,6 +25,7 @@ const challengeFormSchema = z.object({
   // For custom duration - support both string and number input types
   customHours: z.coerce.number().min(0).max(72).optional(),
   customMinutes: z.coerce.number().min(0).max(59).optional(),
+  isWar: z.boolean().default(false),
 });
 
 type ChallengeFormValues = z.infer<typeof challengeFormSchema>;
@@ -68,6 +70,7 @@ export default function ChallengeCreator() {
       audience: "public",
       customHours: 1,
       customMinutes: 0,
+      isWar: false,
     },
   });
   
@@ -152,6 +155,7 @@ export default function ChallengeCreator() {
         optionBImage: compressedOptionBImage || null,
         endTime: endTime.toISOString(),
         isPublic: values.audience === "public" ? true : false,
+        isWar: values.isWar,
       };
       
       console.log("Submitting challenge data:", challengeData);
