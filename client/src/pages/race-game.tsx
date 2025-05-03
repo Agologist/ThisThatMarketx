@@ -66,9 +66,13 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
           const parsedRace = JSON.parse(savedRace);
           // If this game has been finished already, show the finished state
           if (parsedRace.gameState === "finished") {
+            console.log(`Found completed race for poll ${pollId} - preventing restart`);
             setHasCompletedRace(true);
             setGameState("finished");
             setGameResult(parsedRace.gameResult);
+            
+            // Make absolutely sure we don't auto-start
+            hasAutoStartedRef.current = true;
           }
         }
       } catch (e) {

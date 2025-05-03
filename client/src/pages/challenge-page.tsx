@@ -132,6 +132,31 @@ export default function ChallengePage() {
     return () => clearInterval(intervalId);
   }, [isChallengeActive, id]);
   
+  // Automatically create a localStorage entry for expired War challenges if one doesn't exist
+  useEffect(() => {
+    // Only for expired War challenges that the user has voted on
+    if (!isChallengeActive && poll?.isWar && hasVoted) {
+      // Check if there's an existing race completion record
+      const savedRace = localStorage.getItem(`raceGame_poll_${id}`);
+      
+      // If no saved race data exists, create a completed race entry to prevent auto-starting
+      if (!savedRace) {
+        console.log(`Creating default race completion for war challenge ${id}`);
+        // Determine the winner based on poll results
+        const userWon = (userVoteOption === "A" && (poll.optionAVotes || 0) > (poll.optionBVotes || 0)) ||
+                      (userVoteOption === "B" && (poll.optionBVotes || 0) > (poll.optionAVotes || 0));
+        
+        localStorage.setItem(`raceGame_poll_${id}`, JSON.stringify({
+          gameState: "finished",
+          gameResult: { 
+            won: userWon, 
+            time: 30000 // Default time of 30 seconds
+          }
+        }));
+      }
+    }
+  }, [isChallengeActive, poll, hasVoted, id, userVoteOption]);
+  
   const handleVote = async () => {
     if (!selectedOption || !isChallengeActive) return;
     
