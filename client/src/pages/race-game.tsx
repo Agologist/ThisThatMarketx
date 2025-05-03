@@ -1,21 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ChevronLeft, Trophy, Flag, Timer, Award, Zap } from "lucide-react";
-import { useLocation } from "wouter";
-import Achievements from "@/components/game/Achievements";
-import type { 
-  RaceRecord, 
-  Achievement, 
-  UserAchievement 
-} from "../../../shared/schema";
+import { Loader2, ChevronLeft, Trophy, Flag } from "lucide-react";
+import { useLocation, useNavigate } from "wouter";
+import type { RaceRecord } from "../../../shared/schema";
 
 // Game constants
 const PUSH_POWER = 3; // How much pushing power each vote provides
@@ -88,10 +83,6 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
   
   const { data: userRaces, isLoading: racesLoading } = useQuery<RaceRecord[]>({
     queryKey: ["/api/user/races"],
-  });
-  
-  const { data: userAchievements, isLoading: achievementsLoading } = useQuery<(UserAchievement & Achievement)[]>({
-    queryKey: ["/api/user/achievements"],
   });
   
   const saveRaceMutation = useMutation({
@@ -399,7 +390,7 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
     return `${Math.round((wins / userRaces.length) * 100)}%`;
   };
   
-  if (racesLoading || achievementsLoading) {
+  if (racesLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
@@ -850,43 +841,7 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
                     )}
                   </div>
                 </CardContent>
-                
-                <CardFooter className="border-t pt-4 flex flex-wrap gap-4">
-                  <div className="bg-muted rounded p-3 flex items-center">
-                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3 text-primary">
-                      <Trophy className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <h5 className="text-sm font-medium">Best Time</h5>
-                      <p className="text-xs text-muted-foreground">{getBestTime()}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-muted rounded p-3 flex items-center">
-                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3 text-primary">
-                      <Flag className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <h5 className="text-sm font-medium">Races</h5>
-                      <p className="text-xs text-muted-foreground">{userRaces?.length || 0} total</p>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-muted rounded p-3 flex items-center">
-                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3 text-primary">
-                      <Award className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <h5 className="text-sm font-medium">Win Rate</h5>
-                      <p className="text-xs text-muted-foreground">{getWinRate()}</p>
-                    </div>
-                  </div>
-                </CardFooter>
               </Card>
-            </div>
-            
-            <div>
-              <Achievements achievements={userAchievements || []} />
             </div>
           </div>
         </div>
