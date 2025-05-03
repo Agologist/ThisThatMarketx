@@ -1,21 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ChevronLeft, Trophy, Flag, Timer, Award, Zap, X as XIcon } from "lucide-react";
-import { useLocation } from "wouter";
-import Achievements from "@/components/game/Achievements";
-import type { 
-  RaceRecord, 
-  Achievement, 
-  UserAchievement 
-} from "../../../shared/schema";
+import { Loader2, ChevronLeft, Trophy, Flag } from "lucide-react";
+import { useLocation, useNavigate } from "wouter";
+import type { RaceRecord } from "../../../shared/schema";
 
 // Game constants
 const PUSH_POWER = 3; // How much pushing power each vote provides
@@ -59,20 +54,6 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
   // Allow standalone mode when accessed directly from the footer
   const isStandaloneMode = pollId === 0 && !userOption;
   
-  // Check if this is an expired challenge with a saved vote
-  const [isExpiredChallenge, setIsExpiredChallenge] = useState(false);
-  
-  // Additional check for retrieving poll data to determine if it's expired
-  const { data: pollData } = useQuery({
-    queryKey: ["/api/polls", pollId],
-    queryFn: async () => {
-      if (pollId <= 0) return null;
-      const res = await apiRequest("GET", `/api/polls/${pollId}`);
-      return await res.json();
-    },
-    enabled: !!pollId && pollId > 0,
-  });
-  
   // Game state
   const [gameState, setGameState] = useState<"ready" | "countdown" | "racing" | "finished">("ready");
   const [countdownValue, setCountdownValue] = useState(3);
@@ -102,10 +83,6 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
   
   const { data: userRaces, isLoading: racesLoading } = useQuery<RaceRecord[]>({
     queryKey: ["/api/user/races"],
-  });
-  
-  const { data: userAchievements, isLoading: achievementsLoading } = useQuery<(UserAchievement & Achievement)[]>({
-    queryKey: ["/api/user/achievements"],
   });
   
   const saveRaceMutation = useMutation({
@@ -350,104 +327,19 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
     }, 100); // Short delay for visual effect
   };
   
-  // Check if challenge is expired
+  // Auto-start the game when loaded from a challenge
   useEffect(() => {
-    if (pollId > 0 && pollData) {
-      // Calculate if the challenge is expired
-      const now = new Date();
-      const endTime = new Date(pollData.endTime);
-      const isExpired = now > endTime;
+    // Only auto-start when not in standalone mode and in "ready" state
+    if (!isStandaloneMode && gameState === "ready" && userOption) {
+      // Small delay to ensure component is fully rendered
+      const autoStartTimer = setTimeout(() => {
+        startCountdown();
+      }, 300);
       
-      console.log("Challenge expiration check:", { pollId, now, endTime, isExpired });
-      
-      setIsExpiredChallenge(isExpired);
+      return () => clearTimeout(autoStartTimer);
     }
-  }, [pollId, pollData]);
-  
-  // Check for saved game state on component mount
-  useEffect(() => {
-    // For standalone games
-    if (isStandaloneMode) {
-      const savedState = localStorage.getItem('raceGame_standalone');
-      if (savedState) {
-        try {
-          const parsedState = JSON.parse(savedState);
-          if (parsedState.gameState === "finished" && parsedState.gameResult) {
-            // Restore the finished state
-            setGameState("finished");
-            setGameResult(parsedState.gameResult);
-            if (parsedState.userCarSelection) {
-              setUserCarSelection(parsedState.userCarSelection);
-            }
-          }
-        } catch (e) {
-          console.error("Failed to parse saved race game state", e);
-        }
-      }
-    }
-    
-    // For challenge-based games
-    if (pollId > 0) {
-      // Load any saved game state for this challenge
-      const savedState = localStorage.getItem(`raceGame_poll_${pollId}`);
-      console.log(`⚠️ RaceGame: Checking localStorage for poll ${pollId}:`, { 
-        savedState: savedState ? "found" : "not found",
-        isExpiredChallenge
-      });
-      
-      if (savedState) {
-        try {
-          const parsedState = JSON.parse(savedState);
-          console.log(`⚠️ RaceGame: Parsed state for poll ${pollId}:`, parsedState);
-          
-          if (parsedState.gameState === "finished" && parsedState.gameResult) {
-            // Restore the finished state for this specific challenge
-            setGameState("finished");
-            setGameResult(parsedState.gameResult);
-          }
-        } catch (e) {
-          console.error("Failed to parse saved race game state", e);
-        }
-      } else if (isExpiredChallenge && !pollData?.isWar) {
-        // Only auto-complete non-War challenges that have expired
-        // CRITICAL FIX: If this is the first time loading an expired challenge,
-        // create a completed race record in localStorage to prevent replay
-        console.log(`⚠️ CREATING AUTOMATIC COMPLETION RECORD for expired non-War challenge ${pollId}`);
-        const gameStateToSave = {
-          gameState: "finished",
-          gameResult: { 
-            won: Math.random() > 0.5, // Random win/loss for auto-completed games
-            time: 30000 + Math.floor(Math.random() * 20000) // Random time between 30-50s
-          }
-        };
-        
-        // Save to localStorage to prevent future replays
-        localStorage.setItem(`raceGame_poll_${pollId}`, JSON.stringify(gameStateToSave));
-        
-        // Update state to match saved data
-        setGameState("finished");
-        setGameResult(gameStateToSave.gameResult);
-        
-        // Also save to server if the user is logged in
-        if (user) {
-          saveRaceMutation.mutate({ 
-            time: gameStateToSave.gameResult.time, 
-            won: gameStateToSave.gameResult.won 
-          });
-        }
-      } else if (isExpiredChallenge && pollData?.isWar) {
-        // For War challenges that just expired, 
-        // we want to start the race automatically after a countdown
-        console.log(`⚠️ WAR CHALLENGE ${pollId} EXPIRED - Starting race game automatically`);
-        
-        // Auto-start the game with countdown after a short delay
-        setTimeout(() => {
-          startCountdown();
-        }, 500);
-      }
-    }
-  }, [isStandaloneMode, pollId, isExpiredChallenge, user, saveRaceMutation, pollData]);
-  
+  }, [isStandaloneMode, gameState, userOption]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -468,23 +360,6 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
     
     // Save race results
     saveRaceMutation.mutate({ time, won: playerWon });
-    
-    // Save game state to localStorage for persistence across page refreshes
-    const gameStateToSave = {
-      gameState: "finished",
-      gameResult: { won: playerWon, time },
-      userCarSelection
-    };
-    
-    // For standalone games
-    if (isStandaloneMode) {
-      localStorage.setItem('raceGame_standalone', JSON.stringify(gameStateToSave));
-    }
-    
-    // For challenge-based games
-    if (pollId > 0) {
-      localStorage.setItem(`raceGame_poll_${pollId}`, JSON.stringify(gameStateToSave));
-    }
   };
   
   // Reset the game
@@ -497,16 +372,6 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
     setRightVotes(0);
     setLeftExploded(false);
     setRightExploded(false);
-    
-    // Clear localStorage data for this game
-    if (isStandaloneMode) {
-      localStorage.removeItem('raceGame_standalone');
-    }
-    
-    // For challenge-based games
-    if (pollId > 0) {
-      localStorage.removeItem(`raceGame_poll_${pollId}`);
-    }
   };
   
   // Calculate best time
@@ -525,7 +390,7 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
     return `${Math.round((wins / userRaces.length) * 100)}%`;
   };
   
-  if (racesLoading || achievementsLoading) {
+  if (racesLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
@@ -869,102 +734,23 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
                           </div>
                         )}
                         
-                        {/* Check if this is a standalone game or if there's no saved game for this poll ID */}
-                        {(() => {
-                          // For standalone mode, always show the button
-                          if (isStandaloneMode) {
-                            return (
-                              <>
-                                <Button 
-                                  className="btn-gold w-full"
-                                  size="lg"
-                                  onClick={startCountdown}
-                                  disabled={!userCarSelection}
-                                >
-                                  Start Race
-                                </Button>
-                                
-                                {!userCarSelection ? (
-                                  <p className="text-sm text-muted-foreground mt-2">Select a car to start racing</p>
-                                ) : (
-                                  <p className="text-sm text-muted-foreground mt-2">Click Start to enable voting</p>
-                                )}
-                              </>
-                            );
-                          }
-                          
-                          // For challenge mode, first check if it's an expired challenge
-                          if (isExpiredChallenge) {
-                            console.log("This is an expired challenge - checking for saved game");
+                        {/* Only show car selection instruction in standalone mode */}
+                        {isStandaloneMode && (
+                          <>
+                            <Button 
+                              className="btn-gold w-full"
+                              size="lg"
+                              onClick={startCountdown}
+                              disabled={!userCarSelection}
+                            >
+                              Start Race
+                            </Button>
                             
-                            // Check if there's a saved game for this challenge
-                            const savedGame = localStorage.getItem(`raceGame_poll_${pollId}`);
-                            
-                            // If there's a saved game that's finished, show the completion message
-                            if (savedGame) {
-                              try {
-                                const parsedState = JSON.parse(savedGame);
-                                if (parsedState.gameState === "finished") {
-                                  return (
-                                    <p className="text-sm text-muted-foreground mt-2">This challenge race has already been completed</p>
-                                  );
-                                }
-                              } catch (e) {
-                                console.error("Failed to parse saved race game state", e);
-                              }
-                            }
-                            
-                            // The challenge is expired but hasn't been played yet - use a special variable
-                            // to track this state
-                            if (gameState === "ready") {
-                              return (
-                                <>
-                                  <Button 
-                                    className="btn-gold w-full"
-                                    size="lg"
-                                    onClick={startCountdown}
-                                  >
-                                    Start Race
-                                  </Button>
-                                  <p className="text-sm text-muted-foreground mt-2">Click Start to begin this expired challenge race</p>
-                                </>
-                              );
-                            }
-                          } else {
-                            // For active challenges, check if there's a saved game
-                            const savedGame = pollId > 0 ? localStorage.getItem(`raceGame_poll_${pollId}`) : null;
-                            
-                            if (savedGame) {
-                              // If there's a saved game, parse it to check if it's completed
-                              try {
-                                const parsedState = JSON.parse(savedGame);
-                                
-                                // If game is finished, show the message instead of the button
-                                if (parsedState.gameState === "finished") {
-                                  return (
-                                    <p className="text-sm text-muted-foreground mt-2">This challenge race has already been completed</p>
-                                  );
-                                }
-                              } catch (e) {
-                                console.error("Failed to parse saved game state", e);
-                              }
-                            }
-                          }
-                          
-                          // If none of the conditions match, show the standard button
-                          return (
-                            <>
-                              <Button 
-                                className="btn-gold w-full"
-                                size="lg"
-                                onClick={startCountdown}
-                              >
-                                Start Race
-                              </Button>
-                              <p className="text-sm text-muted-foreground mt-2">Click Start to enable voting</p>
-                            </>
-                          );
-                        })()}
+                            {!userCarSelection && (
+                              <p className="text-sm text-muted-foreground mt-2">Select a car to start racing</p>
+                            )}
+                          </>
+                        )}
                       </div>
                     )}
                     
@@ -984,16 +770,23 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
                     
                     {gameState === "finished" && (
                       <div className="w-full max-w-md flex flex-col items-center">
-                        <button 
-                          className="w-16 h-16 rounded-full bg-primary mb-4 flex items-center justify-center text-black hover:bg-primary/80 transition-colors"
-                          disabled={true}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 opacity-50">
-                            <path d="M7.493 18.75c-.425 0-.82-.236-.975-.632A7.48 7.48 0 0 1 6 15.375c0-1.75.599-3.358 1.602-4.634.151-.192.373-.309.6-.397.473-.183.89-.514 1.212-.924a9.042 9.042 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V2.75A.75.75 0 0 1 15 2a2.25 2.25 0 0 1 2.25 2.25c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H14.23c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23h-.777ZM2.331 10.977a11.969 11.969 0 0 0-.831 4.398 12 12 0 0 0 .52 3.507c.26.85 1.084 1.368 1.973 1.368H4.9c.445 0 .72-.498.523-.898a8.963 8.963 0 0 1-.924-3.977c0-1.708.476-3.305 1.302-4.666.245-.403-.028-.959-.5-.959H4.25c-.832 0-1.612.453-1.918 1.227Z" />
-                          </svg>
-                        </button>
+                        <div className="flex flex-col items-center mb-4">
+                          <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-black mb-2">
+                            {gameResult?.won ? (
+                              <Trophy className="w-8 h-8" />
+                            ) : (
+                              <Flag className="w-8 h-8" />
+                            )}
+                          </div>
+                          <div className="text-center">
+                            <h3 className="text-xl font-bold mb-1">{gameResult?.won ? "Victory!" : "Game Over"}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              You finished in {((gameResult?.time || 0) / 1000).toFixed(2)} seconds
+                            </p>
+                          </div>
+                        </div>
                         
-                        {/* Only show Race Again button for standalone games */}
+                        {/* Show Race Again button only in standalone mode */}
                         {isStandaloneMode && (
                           <Button 
                             className="btn-gold w-full"
@@ -1002,91 +795,6 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
                           >
                             Race Again
                           </Button>
-                        )}
-                        
-                        {/* Show a detailed completion message for challenge games */}
-                        {!isStandaloneMode && (
-                          <div className="text-center bg-muted/60 p-4 rounded-lg mt-4 max-w-md">
-                            <h3 className="text-lg font-medium mb-2">Race Results</h3>
-                            
-                            <div className="flex justify-between gap-3 mb-5">
-                              <div className="flex-1 rounded bg-muted p-3 text-center">
-                                <span className="text-xs text-muted-foreground block mb-1">Result</span>
-                                <div className="flex items-center justify-center gap-2">
-                                  {gameResult?.won ? (
-                                    <>
-                                      <Trophy className="h-4 w-4 text-green-500" />
-                                      <span className="font-medium">Victory</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <XIcon className="h-4 w-4 text-red-500" />
-                                      <span className="font-medium">Defeat</span>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                              
-                              <div className="flex-1 rounded bg-muted p-3 text-center">
-                                <span className="text-xs text-muted-foreground block mb-1">Time</span>
-                                <div className="flex items-center justify-center gap-2">
-                                  <Timer className="h-4 w-4 text-primary" />
-                                  <span className="font-medium">{(gameResult?.time || 0)/1000}s</span>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            {/* Visual race track result */}
-                            <div className="bg-black p-2 rounded-md">
-                              <div className="relative h-10 flex items-center justify-center">
-                                {/* Center line */}
-                                <div className="absolute left-1/2 top-0 bottom-0 w-0.5 h-full bg-yellow-400"></div>
-                                
-                                {/* Car positions */}
-                                {gameResult?.won ? (
-                                  <>
-                                    {/* User won, show their car on right side */}
-                                    <div className="absolute left-[65%] top-1/2 -translate-y-1/2">
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
-                                        <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7" />
-                                        <circle cx="8.5" cy="17.5" r="2.5" />
-                                        <circle cx="15.5" cy="17.5" r="2.5" />
-                                      </svg>
-                                    </div>
-                                    
-                                    {/* Explosion on the right side */}
-                                    <div className="absolute right-0 top-1/2 -translate-y-1/2">
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-flame">
-                                        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
-                                      </svg>
-                                    </div>
-                                  </>
-                                ) : (
-                                  <>
-                                    {/* User lost, show explosion on left side */}
-                                    <div className="absolute left-0 top-1/2 -translate-y-1/2">
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-flame">
-                                        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
-                                      </svg>
-                                    </div>
-                                    
-                                    {/* Opponent car on the right side */}
-                                    <div className="absolute right-[65%] top-1/2 -translate-y-1/2">
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
-                                        <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7" />
-                                        <circle cx="8.5" cy="17.5" r="2.5" />
-                                        <circle cx="15.5" cy="17.5" r="2.5" />
-                                      </svg>
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                            
-                            <div className="mt-3 text-xs text-muted-foreground">
-                              This challenge race has been completed and cannot be replayed.
-                            </div>
-                          </div>
                         )}
                       </div>
                     )}
@@ -1133,43 +841,7 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
                     )}
                   </div>
                 </CardContent>
-                
-                <CardFooter className="border-t pt-4 flex flex-wrap gap-4">
-                  <div className="bg-muted rounded p-3 flex items-center">
-                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3 text-primary">
-                      <Trophy className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <h5 className="text-sm font-medium">Best Time</h5>
-                      <p className="text-xs text-muted-foreground">{getBestTime()}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-muted rounded p-3 flex items-center">
-                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3 text-primary">
-                      <Flag className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <h5 className="text-sm font-medium">Races</h5>
-                      <p className="text-xs text-muted-foreground">{userRaces?.length || 0} total</p>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-muted rounded p-3 flex items-center">
-                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3 text-primary">
-                      <Award className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <h5 className="text-sm font-medium">Win Rate</h5>
-                      <p className="text-xs text-muted-foreground">{getWinRate()}</p>
-                    </div>
-                  </div>
-                </CardFooter>
               </Card>
-            </div>
-            
-            <div>
-              <Achievements achievements={userAchievements || []} />
             </div>
           </div>
         </div>
