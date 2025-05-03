@@ -100,7 +100,7 @@ export default function Header() {
   
   const navLinks = [
     { href: "/", label: "Dashboard", active: location === "/" },
-    { href: "/polls", label: "Challenges", active: location.startsWith("/polls") },
+    { href: "/challenges", label: "Challenges", active: location.startsWith("/challenges") || location.startsWith("/polls") },
   ];
   
   const getInitials = (name: string) => {
