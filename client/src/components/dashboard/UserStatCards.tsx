@@ -57,13 +57,13 @@ export default function UserStatCards() {
   const warPassesCount = activeWarPolls.length;
   
   // Calculate ranks based on count and remaining to next rank
-  const getRankInfo = (count: number): { rank: string, remaining: number } => {
-    if (count < 100) return { rank: "Egg", remaining: 100 - count };
-    if (count < 1000) return { rank: "Jack", remaining: 1000 - count };
-    if (count < 10000) return { rank: "Queen", remaining: 10000 - count };
-    if (count < 100000) return { rank: "King", remaining: 100000 - count };
-    if (count < 1000000) return { rank: "Ace", remaining: 1000000 - count };
-    return { rank: "Jester", remaining: 0 };
+  const getRankInfo = (count: number): { rank: string, remaining: number, nextRank: string } => {
+    if (count < 100) return { rank: "Egg", remaining: 100 - count, nextRank: "Jack" };
+    if (count < 1000) return { rank: "Jack", remaining: 1000 - count, nextRank: "Queen" };
+    if (count < 10000) return { rank: "Queen", remaining: 10000 - count, nextRank: "King" };
+    if (count < 100000) return { rank: "King", remaining: 100000 - count, nextRank: "Ace" };
+    if (count < 1000000) return { rank: "Ace", remaining: 1000000 - count, nextRank: "Jester" };
+    return { rank: "Jester", remaining: 0, nextRank: "" };
   };
   
   const challengeRankInfo = getRankInfo(challengeCount);
@@ -77,6 +77,7 @@ export default function UserStatCards() {
       value: challengeCount,
       rank: challengeRankInfo.rank,
       remaining: challengeRankInfo.remaining,
+      nextRank: challengeRankInfo.nextRank,
       icon: <FolderPlus className="text-primary" />,
       dropdown: (
         <DropdownMenu>
@@ -117,6 +118,7 @@ export default function UserStatCards() {
       value: warCount,
       rank: warRankInfo.rank,
       remaining: warRankInfo.remaining,
+      nextRank: warRankInfo.nextRank,
       icon: <Trophy className="text-primary" />,
       dropdown: (
         <DropdownMenu>
@@ -174,6 +176,7 @@ export default function UserStatCards() {
       value: voteCount,
       rank: voteRankInfo.rank,
       remaining: voteRankInfo.remaining,
+      nextRank: voteRankInfo.nextRank,
       icon: <CheckSquare className="text-primary" />,
       dropdown: (
         <DropdownMenu>
@@ -215,6 +218,7 @@ export default function UserStatCards() {
       value: warPassesCount,
       rank: warPassRankInfo.rank,
       remaining: warPassRankInfo.remaining,
+      nextRank: warPassRankInfo.nextRank,
       icon: <Award className="text-primary" />,
       dropdown: (
         <DropdownMenu>
@@ -264,7 +268,7 @@ export default function UserStatCards() {
                 <h3 className="text-3xl font-montserrat font-bold mt-1">
                   {stat.value.toLocaleString()}
                 </h3>
-                <p className="text-xs text-primary mt-1">Rank: {stat.rank} {stat.remaining > 0 ? `(${stat.remaining} to next)` : ""}</p>
+                <p className="text-xs text-primary mt-1">Rank: {stat.rank} {stat.remaining > 0 ? `(${stat.remaining} to ${stat.nextRank})` : ""}</p>
               </div>
               <div className="bg-primary/20 rounded-full w-10 h-10 flex items-center justify-center">
                 {stat.icon}
