@@ -426,18 +426,20 @@ export default function RaceGame() {
                   {/* Car selection grid (visible in ready state) */}
                   {gameState === "ready" && (
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                      {carImages.map((car, index) => (
+                      {Array.from({ length: 4 }).map((_, index) => (
                         <div 
                           key={index}
                           className={`border rounded-md p-4 cursor-pointer transition-all ${selectedCar === index ? "ring-2 ring-primary border-primary" : "hover:border-primary"}`}
                           onClick={() => setSelectedCar(index)}
                         >
                           <div className="aspect-square flex items-center justify-center">
-                            <img 
-                              src={car} 
-                              alt={`Race car ${index + 1}`}
-                              className="w-20 h-20 object-contain"
-                            />
+                            <div className="w-20 h-20 flex items-center justify-center">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
+                                <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
+                                <circle cx="8.5" cy="17.5" r="2.5"/>
+                                <circle cx="15.5" cy="17.5" r="2.5"/>
+                              </svg>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -534,12 +536,13 @@ export default function RaceGame() {
                             </div>
                           </div>
                         ) : (
-                          <img 
-                            src={carImages[selectedCar]} 
-                            alt="Left car" 
-                            className="h-14 w-auto"
-                            style={{ transform: 'scaleX(1)' }} /* Left car facing right */
-                          />
+                          <div className="h-14 w-14 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
+                              <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
+                              <circle cx="8.5" cy="17.5" r="2.5"/>
+                              <circle cx="15.5" cy="17.5" r="2.5"/>
+                            </svg>
+                          </div>
                         )}
                       </div>
                       
@@ -565,12 +568,13 @@ export default function RaceGame() {
                             </div>
                           </div>
                         ) : (
-                          <img 
-                            src={carImages[(selectedCar + 2) % carImages.length]} 
-                            alt="Right car" 
-                            className="h-14 w-auto"
-                            style={{ transform: 'scaleX(-1)' }}
-                          />
+                          <div className="h-14 w-14 flex items-center justify-center" style={{ transform: 'scaleX(-1)' }}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
+                              <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
+                              <circle cx="8.5" cy="17.5" r="2.5"/>
+                              <circle cx="15.5" cy="17.5" r="2.5"/>
+                            </svg>
+                          </div>
                         )}
                       </div>
 
@@ -675,7 +679,13 @@ export default function RaceGame() {
                               >
                                 <div className="flex flex-col items-center">
                                   <div className="mb-2 bg-background p-3 rounded-full">
-                                    <div className="w-12 h-12" dangerouslySetInnerHTML={{ __html: carImages[0] }} />
+                                    <div className="w-12 h-12 flex items-center justify-center">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
+                                        <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
+                                        <circle cx="8.5" cy="17.5" r="2.5"/>
+                                        <circle cx="15.5" cy="17.5" r="2.5"/>
+                                      </svg>
+                                    </div>
                                   </div>
                                   <span className="font-medium">Left Car</span>
                                   <span className="text-xs text-muted-foreground">Use 'A' key</span>
@@ -688,7 +698,13 @@ export default function RaceGame() {
                               >
                                 <div className="flex flex-col items-center">
                                   <div className="mb-2 bg-background p-3 rounded-full">
-                                    <div className="w-12 h-12" dangerouslySetInnerHTML={{ __html: carImages[1] }} />
+                                    <div className="w-12 h-12 flex items-center justify-center">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
+                                        <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
+                                        <circle cx="8.5" cy="17.5" r="2.5"/>
+                                        <circle cx="15.5" cy="17.5" r="2.5"/>
+                                      </svg>
+                                    </div>
                                   </div>
                                   <span className="font-medium">Right Car</span>
                                   <span className="text-xs text-muted-foreground">Use 'D' key</span>
@@ -788,10 +804,7 @@ export default function RaceGame() {
                             </div>
                           )}
                         </div>
-                        
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Click the thumbs-up button to push your car forward and your opponent backward!
-                        </p>
+
                       </div>
                     )}
                   </div>
