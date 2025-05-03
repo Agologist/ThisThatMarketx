@@ -88,7 +88,7 @@ export default function ActivePolls({ polls }: ActivePollsProps) {
   return (
     <Card className="bg-card border-primary/30">
       <CardHeader className="flex justify-between items-center pb-4">
-        <CardTitle className="text-xl font-montserrat font-bold">Active Polls</CardTitle>
+        <CardTitle className="text-xl font-montserrat font-bold">Active Challenges</CardTitle>
         <div className="flex items-center">
           <Button variant="ghost" size="icon">
             <FilterIcon className="h-5 w-5" />
@@ -104,7 +104,7 @@ export default function ActivePolls({ polls }: ActivePollsProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-muted-foreground text-sm font-medium">Poll</TableHead>
+                <TableHead className="text-muted-foreground text-sm font-medium">Challenge</TableHead>
                 <TableHead className="text-muted-foreground text-sm font-medium">Created</TableHead>
                 <TableHead className="text-muted-foreground text-sm font-medium">Votes</TableHead>
                 <TableHead className="text-muted-foreground text-sm font-medium">Time Left</TableHead>
@@ -225,7 +225,7 @@ export default function ActivePolls({ polls }: ActivePollsProps) {
         
         <div className="flex justify-between items-center mt-6">
           <div className="text-sm text-muted-foreground">
-            Showing {getPaginatedPolls().length} of {totalPolls} polls
+            Showing {getPaginatedPolls().length} of {totalPolls} challenges
           </div>
           <div className="flex items-center space-x-2">
             <Button 

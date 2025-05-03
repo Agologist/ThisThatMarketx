@@ -9,14 +9,26 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Poll, RaceRecord, UserAchievement, Achievement } from "@shared/schema";
+import { useEffect } from "react";
+import { queryClient } from "@/lib/queryClient";
 
 export default function HomePage() {
   const { user, isGuest, exitGuestMode } = useAuth();
   
+  // Force refresh when component mounts to get the latest polls
+  useEffect(() => {
+    // Invalidate and refetch all polls data when the component mounts
+    queryClient.invalidateQueries({ queryKey: ["/api/polls"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/user/polls"] });
+  }, []);
+  
   const { data: polls = [], isLoading: pollsLoading } = useQuery<Poll[]>({
     queryKey: ["/api/polls"],
     // Guest users can still see polls
-    enabled: true
+    enabled: true,
+    // Force refetch on mount
+    refetchOnMount: true,
+    staleTime: 0
   });
   
   // Only fetch user-specific data if not in guest mode

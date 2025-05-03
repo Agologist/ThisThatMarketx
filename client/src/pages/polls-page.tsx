@@ -8,25 +8,39 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import ActivePolls from "@/components/poll/ActivePolls";
 import PollCreator from "@/components/poll/PollCreator";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Poll } from "@shared/schema";
+import { queryClient } from "@/lib/queryClient";
 
 export default function PollsPage() {
   const { user, isGuest, exitGuestMode } = useAuth();
   const [activeTab, setActiveTab] = useState<"all" | "my" | "trending">("all");
   
+  // Force refresh when component mounts to get the latest polls
+  useEffect(() => {
+    // Invalidate and refetch all polls data when the component mounts
+    queryClient.invalidateQueries({ queryKey: ["/api/polls"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/user/polls"] });
+  }, []);
+  
   // Fetch all polls
   const { data: polls = [], isLoading: pollsLoading } = useQuery<Poll[]>({
     queryKey: ["/api/polls"],
-    enabled: true
+    enabled: true,
+    // Force refetch on mount
+    refetchOnMount: true,
+    staleTime: 0
   });
   
   // Fetch user polls (only if authenticated)
   const { data: userPolls = [], isLoading: userPollsLoading } = useQuery<Poll[]>({
     queryKey: ["/api/user/polls"],
-    enabled: !isGuest && !!user
+    enabled: !isGuest && !!user,
+    // Force refetch on mount
+    refetchOnMount: true,
+    staleTime: 0
   });
   
   // Calculate which loading state to use based on active tab
