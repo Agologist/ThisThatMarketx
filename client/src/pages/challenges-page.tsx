@@ -94,78 +94,58 @@ export default function ChallengesPage() {
               <div className="mt-4 md:mt-0">
                 <button 
                   onClick={() => window.location.href = "/challenges/new"} 
-                  className="btn-gold py-2 px-6 rounded-md flex items-center"
+                  className="bg-[#FFD700] hover:bg-[#E6C200] text-black font-medium py-2 px-4 rounded-md flex items-center"
                 >
-                  <i className="mr-2">+</i>
+                  <span className="mr-2 font-bold">+</span>
                   New Challenge
                 </button>
               </div>
             )}
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Left side - Challenge creation and filters */}
-            <div className="lg:col-span-1">
-              <Card className="bg-card border-primary/30">
-                <CardHeader>
-                  <CardTitle className="text-xl font-montserrat font-bold">Filter Challenges</CardTitle>
-                  <CardDescription>
-                    Find challenges that interest you
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Tabs defaultValue="all" className="w-full" value={activeTab} onValueChange={(val) => setActiveTab(val as any)}>
-                    <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="all">All Challenges</TabsTrigger>
-                      <TabsTrigger value="my" disabled={isGuest}>My Challenges</TabsTrigger>
-                      <TabsTrigger value="trending">Trending</TabsTrigger>
-                    </TabsList>
-                  
-                    <TabsContent value="all" className="mt-0">
-                      <ActiveChallenges polls={polls} />
-                    </TabsContent>
-                    
-                    <TabsContent value="my" className="mt-0">
-                      {!isGuest ? (
-                        <ActiveChallenges polls={userPolls} />
-                      ) : (
-                        <Card className="bg-card border-primary/30">
-                          <CardContent className="pt-6">
-                            <div className="text-center py-8">
-                              <p className="text-muted-foreground mb-4">You need to sign in to see your challenges</p>
-                              <Button 
-                                variant="outline" 
-                                className="border-primary text-primary"
-                                onClick={exitGuestMode}
-                              >
-                                Sign in
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-                    </TabsContent>
-                    
-                    <TabsContent value="trending" className="mt-0">
-                      <ActiveChallenges polls={polls.slice(0, 3)} />
-                    </TabsContent>
-                  </Tabs>
-                  
-                  {!isGuest && (
-                    <div className="mt-8">
-                      <h3 className="font-medium mb-4">Create New Challenge</h3>
-                      <ChallengeCreator />
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+          <Tabs defaultValue="all" className="w-full" value={activeTab} onValueChange={(val) => setActiveTab(val as any)}>
+            <TabsList className="grid w-full max-w-md grid-cols-3 mb-8">
+              <TabsTrigger value="all">All Challenges</TabsTrigger>
+              <TabsTrigger value="my" disabled={isGuest}>My Challenges</TabsTrigger>
+              <TabsTrigger value="trending">Trending</TabsTrigger>
+            </TabsList>
             
-            {/* Right side - Challenge listings */}
-            <div className="lg:col-span-3">
-              {/* Challenge content is now displayed from the Tabs component in the left sidebar */}
+            <TabsContent value="all" className="mt-0">
+              <ActiveChallenges polls={polls} />
+            </TabsContent>
+            
+            <TabsContent value="my" className="mt-0">
+              {!isGuest ? (
+                <ActiveChallenges polls={userPolls} />
+              ) : (
+                <Card className="bg-card border-primary/30">
+                  <CardContent className="pt-6">
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground mb-4">You need to sign in to see your challenges</p>
+                      <Button 
+                        variant="outline" 
+                        className="border-primary text-primary"
+                        onClick={exitGuestMode}
+                      >
+                        Sign in
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="trending" className="mt-0">
+              <ActiveChallenges polls={polls.slice(0, 3)} />
+            </TabsContent>
+          </Tabs>
+          
+          {!isGuest && (
+            <div className="mt-8">
+              <h3 className="font-medium mb-4">Create New Challenge</h3>
+              <ChallengeCreator />
             </div>
-          </div>
+          )}
         </div>
       </main>
       
