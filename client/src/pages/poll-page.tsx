@@ -373,16 +373,20 @@ export default function ChallengePage() {
                   onClick={() => isPollActive && !hasVoted && setSelectedOption("B")}
                 >
                   {poll.optionBImage ? (
-                    <div className="h-48 bg-muted">
-                      <img 
-                        src={poll.optionBImage} 
-                        alt={poll.optionBText} 
-                        className="w-full h-full object-cover"
-                      />
+                    <div className="h-48 bg-muted flex items-center justify-center">
+                      <div className="w-40 h-40 rounded-full overflow-hidden border-4 border-primary/50">
+                        <img 
+                          src={poll.optionBImage} 
+                          alt={poll.optionBText} 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                     </div>
                   ) : (
                     <div className="h-48 bg-muted flex items-center justify-center">
-                      <span className="text-4xl text-primary font-racing">B</span>
+                      <div className="w-40 h-40 rounded-full flex items-center justify-center bg-primary/20 border-4 border-primary/50">
+                        <span className="text-4xl text-primary font-racing">B</span>
+                      </div>
                     </div>
                   )}
                   

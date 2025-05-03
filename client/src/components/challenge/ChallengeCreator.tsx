@@ -459,11 +459,15 @@ export default function ChallengeCreator() {
                           onClick={() => !isSearchingA && openFilePicker("A")}
                         >
                           {optionAImage ? (
-                            <img 
-                              src={optionAImage} 
-                              alt="Challenger 1" 
-                              className="w-full h-full object-cover" 
-                            />
+                            <div className="w-full h-full flex items-center justify-center">
+                              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary/50">
+                                <img 
+                                  src={optionAImage} 
+                                  alt="Challenger 1" 
+                                  className="w-full h-full object-cover" 
+                                />
+                              </div>
+                            </div>
                           ) : (
                             <div className="text-center p-4">
                               {isSearchingA ? (
@@ -547,11 +551,15 @@ export default function ChallengeCreator() {
                           onClick={() => !isSearchingB && openFilePicker("B")}
                         >
                           {optionBImage ? (
-                            <img 
-                              src={optionBImage} 
-                              alt="Challenger 2" 
-                              className="w-full h-full object-cover" 
-                            />
+                            <div className="w-full h-full flex items-center justify-center">
+                              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary/50">
+                                <img 
+                                  src={optionBImage} 
+                                  alt="Challenger 2" 
+                                  className="w-full h-full object-cover" 
+                                />
+                              </div>
+                            </div>
                           ) : (
                             <div className="text-center p-4">
                               {isSearchingB ? (
