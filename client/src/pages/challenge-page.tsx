@@ -5,15 +5,15 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, Share2, ChevronLeft, CheckIcon, XIcon, Trophy, Timer, Zap } from "lucide-react";
+import { Loader2, Share2, ChevronLeft, CheckIcon, XIcon } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { Poll, RaceRecord } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import RaceGame from "@/pages/race-game";
+import RaceGame from "./race-game";
 
 export default function ChallengePage() {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +24,7 @@ export default function ChallengePage() {
   const [isVoting, setIsVoting] = useState(false);
   const [forceRefresh, setForceRefresh] = useState(0);
   const [showWarGame, setShowWarGame] = useState(false);
+  const warGameStartedRef = useRef(false);
   
   const { data: poll, isLoading, refetch: refetchPoll } = useQuery<Poll>({
     queryKey: [`/api/polls/${id}`, forceRefresh],
@@ -40,14 +41,14 @@ export default function ChallengePage() {
   });
   
   const { data: userRaces } = useQuery<RaceRecord[]>({
-    queryKey: ["/api/user/races"],
+    queryKey: [`/api/races`, forceRefresh],
     enabled: !!user && !!poll?.isWar,
   });
   
   const hasVoted = userVoteData?.hasVoted || false;
   const userVoteOption = userVoteData?.option || null;
   
-  // Calculate challenge percentages for display
+  // Calculate poll percentages for display
   const totalVotes = (poll?.optionAVotes || 0) + (poll?.optionBVotes || 0);
   const optionAPercentage = totalVotes ? Math.round((poll?.optionAVotes || 0) / totalVotes * 100) : 0;
   const optionBPercentage = totalVotes ? Math.round((poll?.optionBVotes || 0) / totalVotes * 100) : 0;
@@ -55,64 +56,36 @@ export default function ChallengePage() {
   // Calculate remaining time
   const getRemainingTime = () => {
     if (!poll?.endTime) {
-      console.warn("DEBUG: No endTime found in challenge:", poll);
-      return { hours: 0, minutes: 0, seconds: 0 };
+      return { hours: 0, minutes: 0, seconds: 0, status: "unknown" };
     }
     
     const now = new Date();
     const end = new Date(poll.endTime);
     const diff = end.getTime() - now.getTime();
     
-    // Force log to the console to make sure we can see it
-    console.warn("⏰ TIME CHECK:", {
-      now: now.toISOString(),
-      nowTime: now.getTime(),
-      end: end.toISOString(),
-      endTime: end.getTime(),
-      diff: diff,
-      diffInMinutes: diff / (1000 * 60),
-      endTimeRaw: poll.endTime,
-      pollId: poll.id
-    });
-    
     if (diff <= 0) {
-      console.warn("⏰ CHALLENGE ENDED: Time difference is negative or zero:", diff);
-      return { hours: 0, minutes: 0, seconds: 0 };
+      return { hours: 0, minutes: 0, seconds: 0, status: "ended" };
     }
     
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((diff % (1000 * 60)) / 1000);
     
-    console.warn("⏰ REMAINING TIME:", { hours, minutes, seconds });
-    return { hours, minutes, seconds };
+    return { hours, minutes, seconds, status: "active" };
   };
   
-  // Initialize with zeros first and then update when challenge data is available
-  const [timeState, setTimeState] = useState({ hours: 0, minutes: 0, seconds: 0 });
+  // Initialize with zeros first and then update when poll data is available
+  const [timeState, setTimeState] = useState({ hours: 0, minutes: 0, seconds: 0, status: "unknown" });
   
-  // Update time state when challenge data is available
+  // Update time state when poll data is available
   useEffect(() => {
     if (poll?.endTime) {
       setTimeState(getRemainingTime());
     }
   }, [poll?.endTime]);
   
-  const { hours, minutes, seconds } = timeState;
-  const isChallengeActive = hours > 0 || minutes > 0 || seconds > 0;
-  
-  // Check if we should show the war game UI
-  useEffect(() => {
-    if (poll?.isWar && !isChallengeActive && hasVoted) {
-      setShowWarGame(true);
-    } else {
-      setShowWarGame(false);
-    }
-  }, [poll?.isWar, isChallengeActive, hasVoted]);
-  
-  // We're not scrolling automatically to the war game section anymore
-  // Users can still scroll manually if they want to see the race game
-  // This prevents automatic replaying of games in completed challenges
+  const { hours, minutes, seconds, status } = timeState;
+  const isChallengeActive = status === "active";
   
   // Add a timer update effect
   useEffect(() => {
@@ -122,40 +95,33 @@ export default function ChallengePage() {
       const newTime = getRemainingTime();
       setTimeState(newTime);
       
-      if (newTime.hours <= 0 && newTime.minutes <= 0 && newTime.seconds <= 0) {
+      if (newTime.status === "ended") {
         // Challenge has ended, refresh the challenge data
         queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}`] });
         clearInterval(intervalId);
+        
+        // If this is a WAR challenge, show the WAR game
+        if (poll?.isWar && !warGameStartedRef.current) {
+          warGameStartedRef.current = true;
+          // Show war game 3 seconds after the challenge ends
+          console.log("⚔️ Challenge ended! Starting War game in 3 seconds...");
+          setTimeout(() => {
+            setShowWarGame(true);
+          }, 3000);
+        }
       }
     }, 1000); // Update every second
     
     return () => clearInterval(intervalId);
-  }, [isChallengeActive, id]);
+  }, [isChallengeActive, id, poll?.isWar]);
   
-  // Automatically create a localStorage entry for expired War challenges if one doesn't exist
+  // Show War game for already expired challenges with war mode
   useEffect(() => {
-    // Only for expired War challenges that the user has voted on
-    if (!isChallengeActive && poll?.isWar && hasVoted) {
-      // Check if there's an existing race completion record
-      const savedRace = localStorage.getItem(`raceGame_poll_${id}`);
-      
-      // If no saved race data exists, create a completed race entry to prevent auto-starting
-      if (!savedRace) {
-        console.log(`Creating default race completion for war challenge ${id}`);
-        // Determine the winner based on poll results
-        const userWon = (userVoteOption === "A" && (poll.optionAVotes || 0) > (poll.optionBVotes || 0)) ||
-                      (userVoteOption === "B" && (poll.optionBVotes || 0) > (poll.optionAVotes || 0));
-        
-        localStorage.setItem(`raceGame_poll_${id}`, JSON.stringify({
-          gameState: "finished",
-          gameResult: { 
-            won: userWon, 
-            time: 30000 // Default time of 30 seconds
-          }
-        }));
-      }
+    if (poll?.isWar && status === "ended" && !warGameStartedRef.current) {
+      warGameStartedRef.current = true;
+      setShowWarGame(true);
     }
-  }, [isChallengeActive, poll, hasVoted, id, userVoteOption]);
+  }, [poll?.isWar, status]);
   
   const handleVote = async () => {
     if (!selectedOption || !isChallengeActive) return;
@@ -163,10 +129,7 @@ export default function ChallengePage() {
     setIsVoting(true);
     
     try {
-      console.log("Submitting vote:", { pollId: id, option: selectedOption });
-      
-      // Send the vote request regardless of whether user has already voted
-      // The server will return an error if the user has already voted
+      // Send the vote request
       const response = await apiRequest("POST", `/api/polls/${id}/vote`, { option: selectedOption });
       
       if (!response.ok) {
@@ -175,17 +138,14 @@ export default function ChallengePage() {
       }
       
       const result = await response.json();
-      console.log("Vote success response:", result);
       
-      // Immediately update the local challenge data for instant feedback
+      // Immediately update the local poll data for instant feedback
       if (result.poll) {
-        console.log("Updating challenge data with:", result.poll);
         queryClient.setQueryData([`/api/polls/${id}`], result.poll);
       }
       
       // Also update the vote status
       if (result.vote) {
-        console.log("Updating vote status with:", result.vote);
         queryClient.setQueryData([`/api/polls/${id}/vote`], {
           hasVoted: true,
           poll: result.poll,
@@ -196,7 +156,6 @@ export default function ChallengePage() {
       }
       
       // Let's force the query client to actually refresh with the new data
-      // First, invalidate ALL queries related to this challenge (including the vote)
       queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}`] });
       queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}/vote`] });
       
@@ -206,19 +165,10 @@ export default function ChallengePage() {
       // Manually refetch the data to ensure it's updated properly
       setTimeout(async () => {
         try {
-          console.log("🔄 Manually fetching the latest challenge data to ensure UI is up-to-date");
           const [voteResult, pollResult] = await Promise.all([
             refetchVoteData(),
             refetchPoll()
           ]);
-          console.log("🔄 After vote - refetched data:", { 
-            voteResult, 
-            pollResult,
-            currentPollData: pollResult.data,
-            optionAVotes: pollResult.data?.optionAVotes,
-            optionBVotes: pollResult.data?.optionBVotes,
-          });
-          
           // Set force refresh again to make absolutely sure we get fresh data
           setForceRefresh(prev => prev + 1);
         } catch (fetchError) {
@@ -228,7 +178,7 @@ export default function ChallengePage() {
       
       toast({
         title: "Vote recorded!",
-        description: `You voted for ${selectedOption === "A" ? poll.optionAText : poll.optionBText}`,
+        description: `You voted for ${selectedOption === "A" ? poll?.optionAText : poll?.optionBText}`,
       });
     } catch (error) {
       console.error("Voting error:", error);
@@ -311,11 +261,11 @@ export default function ChallengePage() {
         <div className="container max-w-4xl mx-auto">
           <Button 
             variant="outline" 
-            onClick={() => navigate("/challenges")}
+            onClick={() => navigate("/")}
             className="mb-6"
           >
             <ChevronLeft className="mr-2 h-4 w-4" />
-            Back to Challenges
+            Back to Dashboard
           </Button>
           
           <Card className="mb-8 border-primary/30">
@@ -356,53 +306,13 @@ export default function ChallengePage() {
                   </CardDescription>
                 </div>
                 
-                <div className="flex gap-2">
-                  {poll.isWar && (
-                    <div className="flex flex-col items-center">
-                      <Button 
-                        variant={isChallengeActive ? "destructive" : (hasVoted ? "success" : "outline")}
-                        size="sm"
-                        className="font-racing"
-                      >
-                        {isChallengeActive ? (
-                          <div className="flex items-center">
-                            <span className="mr-1">WAR</span>
-                            <svg className="w-3 h-3" viewBox="0 0 36 36">
-                              <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" strokeOpacity="0.5" strokeWidth="2"></circle>
-                              <circle 
-                                cx="18" 
-                                cy="18" 
-                                r="16" 
-                                fill="none" 
-                                stroke="currentColor" 
-                                strokeWidth="2" 
-                                style={{ 
-                                  strokeDashoffset: 283 * (1 - (hours * 60 + minutes) / (24 * 60))
-                                }}
-                              ></circle>
-                            </svg>
-                          </div>
-                        ) : (
-                          <span>{hasVoted ? "READY" : "UNAVAILABLE"}</span>
-                        )}
-                      </Button>
-                      
-                      {!isChallengeActive && hasVoted && (
-                        <div className="text-xs mt-1 font-bold font-racing">
-                          War Ready
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={shareChallenge}
-                  >
-                    <Share2 className="h-5 w-5" />
-                  </Button>
-                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={shareChallenge}
+                >
+                  <Share2 className="h-5 w-5" />
+                </Button>
               </div>
             </CardHeader>
             
@@ -491,86 +401,44 @@ export default function ChallengePage() {
                 </div>
               </div>
               
-              <div className="mt-6 flex justify-center">
-                {isChallengeActive && !hasVoted && (
-                  <Button 
-                    onClick={handleVote} 
-                    disabled={!selectedOption || isVoting}
-                    className="w-full max-w-xs"
-                  >
-                    {isVoting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Voting...
-                      </>
-                    ) : (
-                      'Vote Now'
-                    )}
-                  </Button>
-                )}
+              <div className="mt-6">
+                <Separator className="my-6" />
                 
-                {hasVoted && isChallengeActive && (
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground">
-                      You've already voted for <span className="font-medium text-primary">{userVoteOption === "A" ? poll.optionAText : poll.optionBText}</span>.
-                    </p>
+                <div className="mt-4 flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">
+                    Total votes: <span className="font-medium">{totalVotes}</span>
                   </div>
-                )}
-                
-                {!isChallengeActive && (
-                  <div className="text-center">
-                    <div className="mb-2 flex items-center justify-center gap-2">
-                      <Badge variant="outline" className="px-3 py-1 border-primary/30 text-primary font-medium">
-                        Final Results
-                      </Badge>
-                      
-                      {poll.isWar && (
-                        <Badge variant="destructive" className="px-3 py-1 font-racing uppercase">
-                          War Mode
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    <p className="text-sm text-muted-foreground">
-                      {totalVotes === 0 ? (
-                        "No votes were cast in this challenge."
-                      ) : (
-                        <>
-                          <span className="font-medium text-primary">
-                            {optionAPercentage > optionBPercentage 
-                              ? poll.optionAText 
-                              : optionBPercentage > optionAPercentage 
-                                ? poll.optionBText 
-                                : "It's a tie!"
-                            }
-                          </span> {" "}
-                          {optionAPercentage !== optionBPercentage ? "won with " : ""}
-                          {optionAPercentage > optionBPercentage 
-                            ? `${optionAPercentage}% of the votes`
-                            : optionBPercentage > optionAPercentage 
-                              ? `${optionBPercentage}% of the votes`
-                              : ""
-                          }.
-                        </>
-                      )}
-                    </p>
-                  </div>
-                )}
+                  
+                  {poll.isWar && (
+                    <Badge 
+                      variant="destructive"
+                      className="font-racing uppercase"
+                    >
+                      War Mode
+                    </Badge>
+                  )}
+                </div>
               </div>
             </CardContent>
             
-            <CardFooter className="border-t pt-4 flex justify-between">
-              <span className="text-sm text-muted-foreground">
-                Created {new Date(poll.createdAt).toLocaleDateString()}
-              </span>
-              
+            <CardFooter>
               <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={shareChallenge}
+                onClick={handleVote}
+                disabled={!isChallengeActive || isVoting || !selectedOption || hasVoted}
+                className="w-full"
               >
-                <Share2 className="mr-1 h-4 w-4" />
-                Share
+                {isVoting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Voting...
+                  </>
+                ) : hasVoted ? (
+                  "Vote Recorded"
+                ) : !isChallengeActive ? (
+                  "Challenge Ended"
+                ) : (
+                  `Vote for ${selectedOption === "A" ? poll.optionAText : selectedOption === "B" ? poll.optionBText : "Selected Option"}`
+                )}
               </Button>
             </CardFooter>
           </Card>
@@ -584,194 +452,106 @@ export default function ChallengePage() {
                 </Badge>
               </div>
               
-              {/* Check if this race has already been completed */}
-              {(() => {
-                // Check if there's a saved race for this poll
-                const savedRace = localStorage.getItem(`raceGame_poll_${id}`);
-                console.log(`DEBUG: Checking saved race for poll ${id}:`, {
-                  savedRace,
-                  hasLocalStorage: !!savedRace
-                });
-                
-                if (savedRace) {
-                  try {
-                    const parsedRace = JSON.parse(savedRace);
-                    console.log("DEBUG: Parsed race data:", parsedRace);
+              {/* Handle no-votes scenarios */}
+              {totalVotes === 0 ? (
+                <div className="text-center p-8">
+                  <div className="mb-4 text-primary text-6xl">⚠️</div>
+                  <h3 className="text-2xl font-bold mb-2">
+                    War Unavailable
+                  </h3>
+                  <p className="text-muted-foreground mb-6">
+                    This War challenge expired without any votes. No racing contest is available.
+                  </p>
+                  
+                  {/* Static race track with idle cars */}
+                  <div className="bg-black/80 p-4 rounded-lg mb-6 max-w-md mx-auto">
+                    <div className="flex justify-between mb-2 text-sm font-medium">
+                      <span className="text-primary">{poll.optionAText}</span>
+                      <span className="text-primary">{poll.optionBText}</span>
+                    </div>
                     
-                    // If this game has a "finished" state, show the completion message instead
-                    if (parsedRace.gameState === "finished") {
-                      return (
-                        <div className="text-center p-8">
-                          <div className="mb-4 text-primary text-6xl">🏁</div>
-                          <h3 className="text-2xl font-bold mb-2">
-                            Race Already Completed
-                          </h3>
-                          <p className="text-muted-foreground mb-6">
-                            You've already completed this challenge race.
-                          </p>
-                          
-                          {/* Race track results visualization */}
-                          <div className="bg-black/80 p-4 rounded-lg mb-6 max-w-md mx-auto">
-                            <div className="flex justify-between mb-2 text-sm font-medium">
-                              <div className="flex items-center">
-                                <div className="w-6 h-6 rounded-full bg-primary/30 flex items-center justify-center text-primary mr-2">
-                                  {userVoteOption === "A" ? "A" : "B"}
-                                </div>
-                                <span className="text-white">{userVoteOption === "A" ? poll.optionAText : poll.optionBText}</span>
-                              </div>
-                              <div className="flex items-center">
-                                <span className="text-white">{userVoteOption === "A" ? poll.optionBText : poll.optionAText}</span>
-                                <div className="w-6 h-6 rounded-full bg-destructive/30 flex items-center justify-center text-destructive ml-2">
-                                  {userVoteOption === "A" ? "B" : "A"}
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div className="relative h-16 bg-gradient-to-r from-black via-gray-900 to-black rounded-lg border border-gray-800 overflow-hidden mb-3">
-                              {/* Center line */}
-                              <div className="absolute left-1/2 top-0 bottom-0 w-0.5 h-full bg-yellow-400 transform -translate-x-1/2"></div>
-                              
-                              {/* Car positions based on actual poll results */}
-                              {poll.optionAVotes > poll.optionBVotes ? (
-                                // Option A won the poll - show A car victorious and B car exploded
-                                <>
-                                  {/* Option A car won and pushed to the right */}
-                                  <div className="absolute left-[75%] top-1/2 -translate-y-1/2 transform -scale-x-100">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
-                                      <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
-                                      <circle cx="8.5" cy="17.5" r="2.5"/>
-                                      <circle cx="15.5" cy="17.5" r="2.5"/>
-                                    </svg>
-                                  </div>
-                                  
-                                  {/* Option B car lost with explosion at the edge */}
-                                  <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                                    <div className="w-10 h-10 flex items-center justify-center">
-                                      <div className="absolute w-10 h-10 rounded-full bg-red-500/30 animate-ping-slow"></div>
-                                      <div className="absolute w-7 h-7 rounded-full bg-red-500/40 animate-ping-slow delay-100"></div>
-                                      <div className="absolute w-4 h-4 rounded-full bg-red-500/50 animate-ping-slow delay-200"></div>
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-flame">
-                                        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
-                                      </svg>
-                                    </div>
-                                  </div>
-                                </>
-                              ) : poll.optionBVotes > poll.optionAVotes ? (
-                                // Option B won the poll - show B car victorious and A car exploded
-                                <>
-                                  {/* Option A car lost with explosion at the edge */}
-                                  <div className="absolute left-2 top-1/2 -translate-y-1/2">
-                                    <div className="w-10 h-10 flex items-center justify-center">
-                                      <div className="absolute w-10 h-10 rounded-full bg-red-500/30 animate-ping-slow"></div>
-                                      <div className="absolute w-7 h-7 rounded-full bg-red-500/40 animate-ping-slow delay-100"></div>
-                                      <div className="absolute w-4 h-4 rounded-full bg-red-500/50 animate-ping-slow delay-200"></div>
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-flame">
-                                        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
-                                      </svg>
-                                    </div>
-                                  </div>
-                                  
-                                  {/* Option B car won */}
-                                  <div className="absolute right-[75%] top-1/2 -translate-y-1/2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
-                                      <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
-                                      <circle cx="8.5" cy="17.5" r="2.5"/>
-                                      <circle cx="15.5" cy="17.5" r="2.5"/>
-                                    </svg>
-                                  </div>
-                                </>
-                              ) : (
-                                // Tie - show both cars at center line (extremely rare)
-                                <>
-                                  <div className="absolute left-[48%] top-1/2 -translate-y-1/2 transform -scale-x-100">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
-                                      <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
-                                      <circle cx="8.5" cy="17.5" r="2.5"/>
-                                      <circle cx="15.5" cy="17.5" r="2.5"/>
-                                    </svg>
-                                  </div>
-                                  <div className="absolute right-[48%] top-1/2 -translate-y-1/2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
-                                      <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
-                                      <circle cx="8.5" cy="17.5" r="2.5"/>
-                                      <circle cx="15.5" cy="17.5" r="2.5"/>
-                                    </svg>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                            
-                            {/* Race outcome text - based on poll outcome and user's vote */}
-                            <p className="text-lg font-bold mb-1">
-                              {poll.optionAVotes > poll.optionBVotes ? (
-                                // Option A won the poll
-                                userVoteOption === "A" ? (
-                                  <span className="text-green-500">Your car won!</span>
-                                ) : (
-                                  <span className="text-red-500">Your car lost!</span>
-                                )
-                              ) : poll.optionBVotes > poll.optionAVotes ? (
-                                // Option B won the poll
-                                userVoteOption === "B" ? (
-                                  <span className="text-green-500">Your car won!</span>
-                                ) : (
-                                  <span className="text-red-500">Your car lost!</span>
-                                )
-                              ) : (
-                                // Tie - extremely rare, but possible
-                                <span className="text-yellow-500">Race ended in a tie!</span>
-                              )}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              Race completed in {(parsedRace.gameResult?.time / 1000).toFixed(2)} seconds
-                            </p>
-                          </div>
-                          
-                          {/* Race stats */}
-                          <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
-                            <div className="bg-muted/70 rounded-lg p-3 flex items-center">
-                              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3 text-primary">
-                                <Trophy className="h-4 w-4" />
-                              </div>
-                              <div className="text-left">
-                                <h5 className="text-sm font-medium">Your Car</h5>
-                                <p className="text-xs text-muted-foreground">
-                                  {userVoteOption === "A" ? poll.optionAText : poll.optionBText}
-                                </p>
-                              </div>
-                            </div>
-                            
-                            <div className="bg-muted/70 rounded-lg p-3 flex items-center">
-                              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3 text-primary">
-                                <Timer className="h-4 w-4" />
-                              </div>
-                              <div className="text-left">
-                                <h5 className="text-sm font-medium">Race Time</h5>
-                                <p className="text-xs text-muted-foreground">
-                                  {(parsedRace.gameResult?.time / 1000).toFixed(2)} seconds
-                                </p>
-                              </div>
-                            </div>
-                          </div>
+                    <div className="relative h-12 rounded-lg overflow-hidden bg-gradient-to-r from-neutral-800 to-neutral-900 flex items-center">
+                      <div className="absolute left-1/2 top-0 bottom-0 transform -translate-x-1/2 w-[60%] h-full border-x-4 border-white/70 bg-black/40"></div>
+                      <div className="absolute left-0 top-0 bottom-0 w-[20%] bg-gradient-to-r from-red-900/80 to-red-700/60"></div>
+                      <div className="absolute right-0 top-0 bottom-0 w-[20%] bg-gradient-to-l from-red-900/80 to-red-700/60"></div>
+                      
+                      {/* Static cars in the center */}
+                      <div className="absolute left-[40%] top-1/2 transform -translate-y-1/2 -translate-x-1/2">
+                        <div className="h-8 w-8 flex items-center justify-center opacity-50">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
+                            <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
+                            <circle cx="8.5" cy="17.5" r="2.5"/>
+                            <circle cx="15.5" cy="17.5" r="2.5"/>
+                          </svg>
                         </div>
-                      );
-                    }
-                  } catch (e) {
-                    console.error("Failed to parse saved race state:", e);
-                  }
-                }
-                
-                // If no saved race or the race isn't finished, show the full race component
-                return (
-                  <RaceGame 
-                    races={userRaces || []} 
-                    pollId={parseInt(id)}
-                    optionAText={poll.optionAText}
-                    optionBText={poll.optionBText}
-                    option={userVoteOption}
-                  />
-                );
-              })()}
+                      </div>
+                      <div className="absolute right-[40%] top-1/2 transform -translate-y-1/2 -translate-x-1/2">
+                        <div className="h-8 w-8 flex items-center justify-center opacity-50">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car" style={{ transform: 'scaleX(-1)' }}>
+                            <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
+                            <circle cx="8.5" cy="17.5" r="2.5"/>
+                            <circle cx="15.5" cy="17.5" r="2.5"/>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : !hasVoted ? (
+                <div className="text-center p-8">
+                  <div className="mb-4 text-primary text-6xl">🚫</div>
+                  <h3 className="text-2xl font-bold mb-2">
+                    War Missed
+                  </h3>
+                  <p className="text-muted-foreground mb-6">
+                    You didn't vote in this War challenge before it expired. 
+                    Voting is required to participate in the racing contest.
+                  </p>
+                  
+                  {/* Static race track with idle cars */}
+                  <div className="bg-black/80 p-4 rounded-lg mb-6 max-w-md mx-auto">
+                    <div className="flex justify-between mb-2 text-sm font-medium">
+                      <span className="text-primary">{poll.optionAText}</span>
+                      <span className="text-primary">{poll.optionBText}</span>
+                    </div>
+                    
+                    <div className="relative h-12 rounded-lg overflow-hidden bg-gradient-to-r from-neutral-800 to-neutral-900 flex items-center">
+                      <div className="absolute left-1/2 top-0 bottom-0 transform -translate-x-1/2 w-[60%] h-full border-x-4 border-white/70 bg-black/40"></div>
+                      <div className="absolute left-0 top-0 bottom-0 w-[20%] bg-gradient-to-r from-red-900/80 to-red-700/60"></div>
+                      <div className="absolute right-0 top-0 bottom-0 w-[20%] bg-gradient-to-l from-red-900/80 to-red-700/60"></div>
+                      
+                      {/* Static cars in the center */}
+                      <div className="absolute left-[40%] top-1/2 transform -translate-y-1/2 -translate-x-1/2">
+                        <div className="h-8 w-8 flex items-center justify-center opacity-50">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
+                            <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
+                            <circle cx="8.5" cy="17.5" r="2.5"/>
+                            <circle cx="15.5" cy="17.5" r="2.5"/>
+                          </svg>
+                        </div>
+                      </div>
+                      <div className="absolute right-[40%] top-1/2 transform -translate-y-1/2 -translate-x-1/2">
+                        <div className="h-8 w-8 flex items-center justify-center opacity-50">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car" style={{ transform: 'scaleX(-1)' }}>
+                            <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
+                            <circle cx="8.5" cy="17.5" r="2.5"/>
+                            <circle cx="15.5" cy="17.5" r="2.5"/>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                // If the user voted, show the actual race
+                <RaceGame 
+                  races={userRaces || []} 
+                  pollId={parseInt(id)}
+                  optionAText={poll.optionAText}
+                  optionBText={poll.optionBText}
+                  option={userVoteOption}
+                />
+              )}
             </Card>
           )}
         </div>
