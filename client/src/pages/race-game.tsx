@@ -525,12 +525,13 @@ export default function RaceGame() {
                            }}>
                         {leftExploded ? (
                           <div className="relative">
-                            <img 
-                              src={carImages[selectedCar]} 
-                              alt="Left car" 
-                              className="h-14 w-auto opacity-50"
-                              style={{ transform: 'scaleX(1)' }} /* Left car facing right */
-                            />
+                            <div className="h-14 w-14 flex items-center justify-center opacity-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
+                                <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
+                                <circle cx="8.5" cy="17.5" r="2.5"/>
+                                <circle cx="15.5" cy="17.5" r="2.5"/>
+                              </svg>
+                            </div>
                             <div className="absolute inset-0 flex items-center justify-center">
                               <div className="text-destructive text-2xl">💥</div>
                             </div>
@@ -557,12 +558,13 @@ export default function RaceGame() {
                            }}>
                         {rightExploded ? (
                           <div className="relative">
-                            <img 
-                              src={carImages[(selectedCar + 2) % carImages.length]} 
-                              alt="Right car" 
-                              className="h-14 w-auto opacity-50"
-                              style={{ transform: 'scaleX(-1)' }}
-                            />
+                            <div className="h-14 w-14 flex items-center justify-center opacity-50" style={{ transform: 'scaleX(-1)' }}>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
+                                <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
+                                <circle cx="8.5" cy="17.5" r="2.5"/>
+                                <circle cx="15.5" cy="17.5" r="2.5"/>
+                              </svg>
+                            </div>
                             <div className="absolute inset-0 flex items-center justify-center">
                               <div className="text-destructive text-2xl">💥</div>
                             </div>
@@ -688,7 +690,6 @@ export default function RaceGame() {
                                     </div>
                                   </div>
                                   <span className="font-medium">Left Car</span>
-                                  <span className="text-xs text-muted-foreground">Use 'A' key</span>
                                 </div>
                               </div>
                               
@@ -707,7 +708,6 @@ export default function RaceGame() {
                                     </div>
                                   </div>
                                   <span className="font-medium">Right Car</span>
-                                  <span className="text-xs text-muted-foreground">Use 'D' key</span>
                                 </div>
                               </div>
                             </div>
@@ -781,7 +781,6 @@ export default function RaceGame() {
                               </button>
                               <div className="mt-2 text-center">
                                 <p className="text-sm font-medium">Push Left Car</p>
-                                <p className="text-xs text-muted-foreground">Press 'A' key</p>
                               </div>
                             </div>
                           )}
@@ -799,7 +798,6 @@ export default function RaceGame() {
                               </button>
                               <div className="mt-2 text-center">
                                 <p className="text-sm font-medium">Push Right Car</p>
-                                <p className="text-xs text-muted-foreground">Press 'D' key</p>
                               </div>
                             </div>
                           )}
