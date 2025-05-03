@@ -26,13 +26,10 @@ const googleProvider = new GoogleAuthProvider();
 // Configure X (formerly Twitter) provider with API credentials
 const xProvider = new TwitterAuthProvider();
 
-// Add X credentials from environment variables if they exist
-if (import.meta.env.VITE_TWITTER_API_KEY && import.meta.env.VITE_TWITTER_API_SECRET) {
-  xProvider.setCustomParameters({
-    'api_key': import.meta.env.VITE_TWITTER_API_KEY,
-    'api_secret_key': import.meta.env.VITE_TWITTER_API_SECRET
-  });
-}
+// Firebase handles Twitter/X API credentials automatically and securely on the backend
+// We should not manually set API keys for X in the frontend code
+// Instead, they should be configured in the Firebase console
+// Passing these as custom parameters causes the auth/internal-error
 
 // Google sign-in function
 export const signInWithGoogle = async (): Promise<UserCredential> => {
@@ -71,13 +68,10 @@ export const signInWithX = async (): Promise<UserCredential> => {
     }
   }
   
-  // Configure X provider with parameters for better experience
+  // Configure X provider with minimal parameters to prevent auth errors
+  // Note: API keys should be configured in Firebase Console, not here
   xProvider.setCustomParameters({
-    // Don't force login prompt
-    'force_login': 'false',
-    // Include callback URL for better redirect handling
-    'oauth_callback': window.location.origin,
-    // Add cache-busting parameter
+    // Add cache-busting parameter to prevent caching issues
     'state': `auth_${Math.random().toString(36).substring(2, 10)}_${Date.now()}`
   });
   
