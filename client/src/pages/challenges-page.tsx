@@ -122,12 +122,12 @@ export default function ChallengesPage() {
                     </TabsList>
                   
                     <TabsContent value="all" className="mt-0">
-                      <ActivePolls polls={polls} />
+                      <ActiveChallenges polls={polls} />
                     </TabsContent>
                     
                     <TabsContent value="my" className="mt-0">
                       {!isGuest ? (
-                        <ActivePolls polls={userPolls} />
+                        <ActiveChallenges polls={userPolls} />
                       ) : (
                         <Card className="bg-card border-primary/30">
                           <CardContent className="pt-6">
@@ -147,14 +147,14 @@ export default function ChallengesPage() {
                     </TabsContent>
                     
                     <TabsContent value="trending" className="mt-0">
-                      <ActivePolls polls={polls.slice(0, 3)} />
+                      <ActiveChallenges polls={polls.slice(0, 3)} />
                     </TabsContent>
                   </Tabs>
                   
                   {!isGuest && (
                     <div className="mt-8">
                       <h3 className="font-medium mb-4">Create New Challenge</h3>
-                      <PollCreator />
+                      <ChallengeCreator />
                     </div>
                   )}
                 </CardContent>
