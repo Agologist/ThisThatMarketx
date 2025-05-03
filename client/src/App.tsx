@@ -6,6 +6,7 @@ import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
 import ChallengesPage from "@/pages/challenges-page";
 import ChallengePage from "@/pages/challenge-page";
+import RaceGame from "@/pages/race-game";
 import { ProtectedRoute } from "./lib/protected-route";
 import { ThemeProvider } from "next-themes";
 
@@ -16,6 +17,7 @@ function Router() {
       <ProtectedRoute path="/challenges" component={ChallengesPage} />
       <ProtectedRoute path="/polls/:id" component={ChallengePage} />
       <ProtectedRoute path="/challenges/:id" component={ChallengePage} />
+      <ProtectedRoute path="/race" component={RaceGame} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>

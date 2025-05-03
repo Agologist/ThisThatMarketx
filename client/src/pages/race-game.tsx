@@ -42,7 +42,10 @@ export default function RaceGame() {
   
   const [searchParams] = useLocation();
   const pollId = Number(new URLSearchParams(searchParams).get("pollId") || "0");
-  const option = new URLSearchParams(searchParams).get("option") || "A";
+  const option = new URLSearchParams(searchParams).get("option") || "";
+  
+  // Allow standalone mode when accessed directly from the footer
+  const isStandaloneMode = pollId === 0 && !option;
   
   // Game state
   const [gameState, setGameState] = useState<"ready" | "countdown" | "racing" | "finished">("ready");
@@ -59,8 +62,10 @@ export default function RaceGame() {
   
   // Car selection and options
   const [selectedCar, setSelectedCar] = useState(0);
+  // For standalone mode, allow user to select car
+  const [userCarSelection, setUserCarSelection] = useState<"left" | "right" | "">("");
   // Determine which car the user voted for (left = A, right = B)
-  const userCar = option === "A" ? "left" : "right";
+  const userCar = isStandaloneMode ? userCarSelection : (option === "A" ? "left" : "right");
   const [gameResult, setGameResult] = useState<{ won: boolean; time: number } | null>(null);
   const [leftExploded, setLeftExploded] = useState(false);
   const [rightExploded, setRightExploded] = useState(false);
@@ -659,14 +664,54 @@ export default function RaceGame() {
                             <path d="M7.493 18.75c-.425 0-.82-.236-.975-.632A7.48 7.48 0 0 1 6 15.375c0-1.75.599-3.358 1.602-4.634.151-.192.373-.309.6-.397.473-.183.89-.514 1.212-.924a9.042 9.042 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V2.75A.75.75 0 0 1 15 2a2.25 2.25 0 0 1 2.25 2.25c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H14.23c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23h-.777ZM2.331 10.977a11.969 11.969 0 0 0-.831 4.398 12 12 0 0 0 .52 3.507c.26.85 1.084 1.368 1.973 1.368H4.9c.445 0 .72-.498.523-.898a8.963 8.963 0 0 1-.924-3.977c0-1.708.476-3.305 1.302-4.666.245-.403-.028-.959-.5-.959H4.25c-.832 0-1.612.453-1.918 1.227Z" />
                           </svg>
                         </button>
+                        {/* Car selection in standalone mode */}
+                        {isStandaloneMode && (
+                          <div className="w-full mb-6">
+                            <h3 className="text-center text-lg font-medium mb-4">Select Your Car</h3>
+                            <div className="flex justify-center gap-6">
+                              <div 
+                                className={`p-4 border rounded-lg cursor-pointer transition-all ${userCarSelection === "left" ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"}`}
+                                onClick={() => setUserCarSelection("left")}
+                              >
+                                <div className="flex flex-col items-center">
+                                  <div className="mb-2 bg-background p-3 rounded-full">
+                                    <div className="w-12 h-12" dangerouslySetInnerHTML={{ __html: carImages[0] }} />
+                                  </div>
+                                  <span className="font-medium">Left Car</span>
+                                  <span className="text-xs text-muted-foreground">Use 'A' key</span>
+                                </div>
+                              </div>
+                              
+                              <div 
+                                className={`p-4 border rounded-lg cursor-pointer transition-all ${userCarSelection === "right" ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"}`}
+                                onClick={() => setUserCarSelection("right")}
+                              >
+                                <div className="flex flex-col items-center">
+                                  <div className="mb-2 bg-background p-3 rounded-full">
+                                    <div className="w-12 h-12" dangerouslySetInnerHTML={{ __html: carImages[1] }} />
+                                  </div>
+                                  <span className="font-medium">Right Car</span>
+                                  <span className="text-xs text-muted-foreground">Use 'D' key</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
                         <Button 
                           className="btn-gold w-full"
                           size="lg"
                           onClick={startCountdown}
+                          disabled={isStandaloneMode && !userCarSelection}
                         >
                           Start Race
                         </Button>
-                        <p className="text-sm text-muted-foreground mt-2">Click Start to enable voting</p>
+                        
+                        {isStandaloneMode && !userCarSelection ? (
+                          <p className="text-sm text-muted-foreground mt-2">Select a car to start racing</p>
+                        ) : (
+                          <p className="text-sm text-muted-foreground mt-2">Click Start to enable voting</p>
+                        )}
                       </div>
                     )}
                     
