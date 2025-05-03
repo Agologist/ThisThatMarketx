@@ -13,6 +13,7 @@ export const users = pgTable("users", {
   profileImageUrl: text("profile_image_url"),
   firebaseUid: text("firebase_uid").unique(),
   photoURL: text("photo_url"),
+  replitId: text("replit_id").unique(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -24,6 +25,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   profileImageUrl: true,
   firebaseUid: true,
   photoURL: true,
+  replitId: true,
 });
 
 // Poll model
