@@ -3,11 +3,11 @@ import { BarChart3, Trophy } from "lucide-react";
 
 interface StatCardsProps {
   pollCount: number;
-  raceWins: number;
+  warWins: number;
   achievements: number;
 }
 
-export default function StatCards({ pollCount, raceWins, achievements }: StatCardsProps) {
+export default function StatCards({ pollCount, warWins, achievements }: StatCardsProps) {
   const stats = [
     {
       title: "Active Polls",
@@ -19,8 +19,8 @@ export default function StatCards({ pollCount, raceWins, achievements }: StatCar
       }
     },
     {
-      title: "Race Wins",
-      value: raceWins,
+      title: "Wars Won",
+      value: warWins,
       icon: <Trophy className="text-primary" />,
       change: {
         value: 5,
