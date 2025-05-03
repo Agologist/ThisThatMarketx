@@ -62,7 +62,7 @@ export default function HomePage() {
     : `Welcome back, ${user?.displayName || user?.username}`;
   
   const welcomeSubtitle = isGuest
-    ? "Browse polls and see what others are voting on"
+    ? "Browse challenges and see what others are voting on"
     : "Your creative data dashboard";
 
   return (
@@ -74,7 +74,7 @@ export default function HomePage() {
           <InfoIcon className="h-4 w-4 text-primary" />
           <AlertTitle>You're browsing as a guest</AlertTitle>
           <AlertDescription className="flex items-center justify-between">
-            <span>Sign in to create polls, vote, and participate in races.</span>
+            <span>Sign in to create challenges, vote, and participate in races.</span>
             <Button 
               variant="outline" 
               className="ml-4 border-primary text-primary"
@@ -99,10 +99,10 @@ export default function HomePage() {
               <div className="mt-4 md:mt-0">
                 <button 
                   onClick={() => {
-                    // Scroll to the PollCreator section
-                    const pollCreatorElement = document.getElementById("poll-creator");
-                    if (pollCreatorElement) {
-                      pollCreatorElement.scrollIntoView({ behavior: "smooth" });
+                    // Scroll to the ChallengeCreator section
+                    const challengeCreatorElement = document.getElementById("challenge-creator");
+                    if (challengeCreatorElement) {
+                      challengeCreatorElement.scrollIntoView({ behavior: "smooth" });
                     }
                   }}
                   className="btn-gold py-2 px-6 rounded-md flex items-center"
@@ -117,7 +117,7 @@ export default function HomePage() {
           {/* Stats cards section removed */}
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            {!isGuest && <div id="poll-creator"><PollCreator /></div>}
+            {!isGuest && <div id="challenge-creator"><PollCreator /></div>}
             <div className={isGuest ? "lg:col-span-2" : ""}>
               <ActivePolls polls={polls} />
             </div>

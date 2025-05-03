@@ -86,9 +86,9 @@ export default function PollsPage() {
           <div className="flex flex-col md:flex-row items-start justify-between mb-8">
             <div>
               <h2 className="font-montserrat font-bold text-3xl">
-                Poll Collection
+                Challenge Collection
               </h2>
-              <p className="text-muted-foreground mt-2">Browse, vote, and create fun "This or That" polls</p>
+              <p className="text-muted-foreground mt-2">Browse, vote, and create fun "This or That" challenges</p>
             </div>
             {!isGuest && (
               <div className="mt-4 md:mt-0">
@@ -97,34 +97,34 @@ export default function PollsPage() {
                   className="btn-gold py-2 px-6 rounded-md flex items-center"
                 >
                   <i className="mr-2">+</i>
-                  New Poll
+                  New Challenge
                 </button>
               </div>
             )}
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Left side - Poll creation and filters */}
+            {/* Left side - Challenge creation and filters */}
             <div className="lg:col-span-1">
               <Card className="bg-card border-primary/30">
                 <CardHeader>
-                  <CardTitle className="text-xl font-montserrat font-bold">Filter Polls</CardTitle>
+                  <CardTitle className="text-xl font-montserrat font-bold">Filter Challenges</CardTitle>
                   <CardDescription>
-                    Find polls that interest you
+                    Find challenges that interest you
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue="all" className="w-full" value={activeTab} onValueChange={(val) => setActiveTab(val as any)}>
                     <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="all">All Polls</TabsTrigger>
-                      <TabsTrigger value="my" disabled={isGuest}>My Polls</TabsTrigger>
+                      <TabsTrigger value="all">All Challenges</TabsTrigger>
+                      <TabsTrigger value="my" disabled={isGuest}>My Challenges</TabsTrigger>
                       <TabsTrigger value="trending">Trending</TabsTrigger>
                     </TabsList>
                   </Tabs>
                   
                   {!isGuest && (
                     <div className="mt-8">
-                      <h3 className="font-medium mb-4">Create New Poll</h3>
+                      <h3 className="font-medium mb-4">Create New Challenge</h3>
                       <PollCreator />
                     </div>
                   )}
@@ -132,7 +132,7 @@ export default function PollsPage() {
               </Card>
             </div>
             
-            {/* Right side - Poll listings */}
+            {/* Right side - Challenge listings */}
             <div className="lg:col-span-3">
               <TabsContent value="all" className="mt-0">
                 <ActivePolls polls={polls} />
@@ -145,7 +145,7 @@ export default function PollsPage() {
                   <Card className="bg-card border-primary/30">
                     <CardContent className="pt-6">
                       <div className="text-center py-8">
-                        <p className="text-muted-foreground mb-4">You need to sign in to see your polls</p>
+                        <p className="text-muted-foreground mb-4">You need to sign in to see your challenges</p>
                         <Button 
                           variant="outline" 
                           className="border-primary text-primary"
