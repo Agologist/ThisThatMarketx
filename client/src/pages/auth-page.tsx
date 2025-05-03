@@ -48,11 +48,12 @@ export default function AuthPage() {
           
           // Determine provider - extract root name without '.com'
           const providerId = result.user.providerData[0]?.providerId || '';
+          // Use the exact provider ID from Firebase to ensure compatibility
           const provider = providerId.includes('twitter') 
-            ? 'x' 
+            ? 'twitter.com' 
             : providerId.includes('google')
-              ? 'google'
-              : 'unknown';
+              ? 'google.com'
+              : providerId;
           
           // Call your server to register or login the Firebase user
           const res = await fetch('/api/auth/firebase', {
@@ -126,7 +127,7 @@ export default function AuthPage() {
           email: result.user.email,
           displayName: result.user.displayName || result.user.providerData[0]?.displayName || 'Google User',
           photoURL: result.user.photoURL,
-          provider: 'google'
+          provider: 'google.com'
         }),
       });
       
@@ -221,7 +222,7 @@ export default function AuthPage() {
           email: result.user.email, // This might be null from Twitter
           displayName: result.user.displayName || result.user.providerData[0]?.displayName || 'X User',
           photoURL: result.user.photoURL,
-          provider: 'x'
+          provider: 'twitter.com'
         }),
       });
       

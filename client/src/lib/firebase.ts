@@ -81,23 +81,50 @@ export const signInWithX = async (): Promise<UserCredential> => {
   try {
     // First, try popup auth for better user experience
     authInProgress = true;
-    return await signInWithPopup(auth, xProvider);
+    
+    // Enhanced error logging to track potential issues
+    console.log("Beginning X authentication with provider:", xProvider);
+    
+    // This is where we'll catch most Twitter/X auth errors
+    const result = await signInWithPopup(auth, xProvider);
+    console.log("X authentication successful with popup");
+    return result;
   } catch (error: any) {
-    console.log("Popup auth error:", error.code);
+    // Log the full error object for better debugging
+    console.log("X authentication error:", { code: error.code, message: error.message, fullError: error });
+    
+    // Check for internal error first (this is often X configuration issues)
+    if (error.code === 'auth/internal-error') {
+      console.error("X auth internal error - this typically means missing or invalid API credentials in Firebase");
+      throw new Error(`X authentication failed due to a configuration issue. Please ensure X is properly configured in the Firebase console. (Error: ${error.message})`);
+    }
     
     // If popup is blocked or closed, try redirect instead
     if (!authInProgress || error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
+      console.log("Popup was blocked or closed, trying redirect flow");
       // Track that we're doing a redirect auth
       localStorage.setItem('auth_redirect_in_progress', 'x');
       
-      // Perform redirect auth
-      await signInWithRedirect(auth, xProvider);
-      
-      // This line will not execute as the page will redirect
-      return new Promise(() => {});
+      try {
+        // Perform redirect auth - this will navigate away from the current page
+        await signInWithRedirect(auth, xProvider);
+        
+        // This line will not execute as the page will redirect
+        return new Promise(() => {});
+      } catch (redirectError: any) {
+        console.error("Error during redirect auth:", redirectError);
+        throw redirectError;
+      }
     }
     
-    // If it's another error, throw it
+    // If it's another error, throw it with additional context
+    if (error.code === 'auth/unauthorized-domain') {
+      throw new Error(`This domain is not authorized for Firebase auth. Add ${window.location.origin} to authorized domains in the Firebase Console.`);
+    } else if (error.code === 'auth/operation-not-allowed') {
+      throw new Error("X sign-in is not enabled in Firebase. Enable it in the Firebase Console under Authentication > Sign-in methods.");
+    }
+    
+    // Generic error handling
     throw error;
   }
 };
