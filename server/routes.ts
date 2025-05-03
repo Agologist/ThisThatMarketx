@@ -382,7 +382,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Race game and achievements routes
+  // Battle game and achievements routes
+  app.post("/api/battles", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const { time, won, pollId, option } = req.body;
+      const userId = req.user!.id;
+      
+      const record = await storage.createRaceRecord({
+        userId,
+        time,
+        won,
+        pollId: pollId || null,
+        option: option || null
+      });
+      
+      await checkAndUpdateRaceAchievements(userId);
+      
+      res.status(201).json(record);
+    } catch (error) {
+      console.error("Error saving battle record:", error);
+      res.status(500).json({ message: "Failed to save battle record" });
+    }
+  });
+  
+  // Keep original races endpoint for backward compatibility
   app.post("/api/races", async (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -410,6 +437,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Battle game endpoint aliases - support both terminology sets 
+  app.get("/api/user/battles", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      // Get all votes for the user
+      const votes = await storage.getUserVotes(req.user.id);
+      const polls = await storage.getPolls();
+      
+      // Combine poll data with votes to create a comprehensive list
+      const votedPolls = votes.map(vote => {
+        const poll = polls.find(p => p.id === vote.pollId);
+        if (poll) {
+          return {
+            id: vote.id,
+            userId: vote.userId,
+            pollId: vote.pollId,
+            option: vote.option,
+            votedAt: vote.votedAt,
+            pollQuestion: poll.question,
+            pollOptionAText: poll.optionAText,
+            pollOptionBText: poll.optionBText,
+            pollEndTime: poll.endTime,
+            isActive: new Date(poll.endTime) > new Date(),
+            createdAt: poll.createdAt || new Date(0)
+          };
+        }
+        return vote;
+      });
+      
+      res.json(votedPolls);
+    } catch (error) {
+      console.error('Error fetching user battles:', error);
+      res.status(500).json({ message: "Failed to fetch user battles" });
+    }
+  });
+  
+  // Keep original races endpoint for backward compatibility
   app.get("/api/user/races", async (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -515,6 +582,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error updating achievements:", error);
     }
   }
+
+  // Add alias for GET /api/races - maps to battles
+  app.get("/api/battles", async (req, res) => {
+    try {
+      // For standalone mode, just return an empty array
+      res.json([]);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch battles" });
+    }
+  });
+
+  // Keep original GET /api/races for backward compatibility
+  app.get("/api/races", async (req, res) => {
+    try {
+      // For standalone mode, just return an empty array
+      res.json([]);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch races" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
