@@ -86,9 +86,8 @@ export default function ChallengesPage() {
           <div className="flex flex-col md:flex-row items-start justify-between mb-8">
             <div>
               <h2 className="font-montserrat font-bold text-3xl">
-                Challenge Collection
+                Challenges
               </h2>
-              <p className="text-muted-foreground mt-2">Browse, vote, and create fun "This or That" challenges</p>
             </div>
             {!isGuest && (
               <div className="mt-4 md:mt-0">
