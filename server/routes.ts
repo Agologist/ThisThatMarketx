@@ -697,11 +697,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("All user races:", JSON.stringify(userRaces, null, 2));
       
-      // Filter to include only battles that the user won
-      // Note: We're counting all won battles, not just those tied to challenges
-      const wonBattles = userRaces.filter(race => race.won === true);
+      // Filter to include only challenge-related battles that the user won
+      const wonBattles = userRaces.filter(race => race.won === true && race.pollId !== null);
       
-      console.log("Filtered won battles:", JSON.stringify(wonBattles, null, 2));
+      console.log("Filtered won battles (challenge-related only):", JSON.stringify(wonBattles, null, 2));
       
       res.json(wonBattles);
     } catch (error) {

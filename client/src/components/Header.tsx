@@ -436,7 +436,7 @@ export default function Header() {
                     {votesDropdownOpen && userVotes.length > 0 && (
                       <div className="ml-2 pl-7 flex flex-col gap-1">
                         {userVotes.map((vote: any) => {
-                          const poll = userPolls.find(p => p.id === vote.pollId) || { question: `Challenge #${vote.pollId}` };
+                          const poll = userPolls.find((p: any) => p.id === vote.pollId) || { question: `Challenge #${vote.pollId}` };
                           const voteTime = vote.votedAt ? new Date(vote.votedAt).toLocaleDateString() : '';
                           return (
                             <Link 
