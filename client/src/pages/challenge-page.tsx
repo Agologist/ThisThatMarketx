@@ -568,13 +568,86 @@ export default function ChallengePage() {
                   War Mode
                 </Badge>
               </div>
-              <RaceGame 
-                races={userRaces || []} 
-                pollId={parseInt(id)}
-                optionAText={poll.optionAText}
-                optionBText={poll.optionBText}
-                option={userVoteOption}
-              />
+              
+              {/* Check if this race has already been completed */}
+              {(() => {
+                // Check if there's a saved race for this poll
+                const savedRace = localStorage.getItem(`raceGame_poll_${id}`);
+                
+                if (savedRace) {
+                  try {
+                    const parsedRace = JSON.parse(savedRace);
+                    
+                    // If this game has a "finished" state, show the completion message instead
+                    if (parsedRace.gameState === "finished") {
+                      return (
+                        <div className="text-center p-8">
+                          <div className="mb-4 text-primary text-6xl">🏁</div>
+                          <h3 className="text-2xl font-bold mb-2">
+                            Race Already Completed
+                          </h3>
+                          <p className="text-muted-foreground mb-4">
+                            You've already completed this challenge race. 
+                            {parsedRace.gameResult?.won 
+                              ? " Congratulations on your victory!" 
+                              : " Better luck next time!"}
+                          </p>
+                          <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
+                            <div className="bg-muted rounded p-3 flex items-center">
+                              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3 text-primary">
+                                <Trophy className="h-4 w-4" />
+                              </div>
+                              <div>
+                                <h5 className="text-sm font-medium">Result</h5>
+                                <p className="text-xs text-muted-foreground">
+                                  {parsedRace.gameResult?.won ? "Victory" : "Defeat"}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="bg-muted rounded p-3 flex items-center">
+                              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3 text-primary">
+                                <Timer className="h-4 w-4" />
+                              </div>
+                              <div>
+                                <h5 className="text-sm font-medium">Time</h5>
+                                <p className="text-xs text-muted-foreground">
+                                  {(parsedRace.gameResult?.time / 1000).toFixed(2)}s
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="bg-muted rounded p-3 flex items-center">
+                              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3 text-primary">
+                                <Zap className="h-4 w-4" />
+                              </div>
+                              <div>
+                                <h5 className="text-sm font-medium">Car</h5>
+                                <p className="text-xs text-muted-foreground">
+                                  {userVoteOption === "A" ? poll.optionAText : poll.optionBText}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                  } catch (e) {
+                    console.error("Failed to parse saved race state:", e);
+                  }
+                }
+                
+                // If no saved race or the race isn't finished, show the full race component
+                return (
+                  <RaceGame 
+                    races={userRaces || []} 
+                    pollId={parseInt(id)}
+                    optionAText={poll.optionAText}
+                    optionBText={poll.optionBText}
+                    option={userVoteOption}
+                  />
+                );
+              })()}
             </Card>
           )}
         </div>
