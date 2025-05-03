@@ -93,7 +93,6 @@ export default function HomePage() {
               <h2 className="font-montserrat font-bold text-3xl">
                 {welcomeTitle}
               </h2>
-              <p className="text-muted-foreground mt-2">{welcomeSubtitle}</p>
             </div>
             {!isGuest && (
               <div className="mt-4 md:mt-0">
