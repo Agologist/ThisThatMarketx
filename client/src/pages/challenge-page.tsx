@@ -543,14 +543,158 @@ export default function ChallengePage() {
                   </div>
                 </div>
               ) : (
-                // If the user voted, show the actual race
-                <RaceGame 
-                  races={userRaces || []} 
-                  pollId={parseInt(id)}
-                  optionAText={poll.optionAText}
-                  optionBText={poll.optionBText}
-                  option={userVoteOption}
-                />
+                // If the user voted, show the race/results
+                (() => {
+                  // Check if there's a saved race for this poll
+                  const savedRace = localStorage.getItem(`raceGame_poll_${id}`);
+                  console.log(`DEBUG: Checking saved race for poll ${id}:`, {
+                    savedRace,
+                    hasLocalStorage: !!savedRace
+                  });
+                  
+                  if (savedRace) {
+                    try {
+                      const parsedRace = JSON.parse(savedRace);
+                      console.log("DEBUG: Parsed race data:", parsedRace);
+                      
+                      // If this game has a "finished" state, show the completion message instead
+                      if (parsedRace.gameState === "finished") {
+                        return (
+                          <div className="text-center p-8">
+                            <div className="mb-4 text-primary text-6xl">🏁</div>
+                            <h3 className="text-2xl font-bold mb-2">
+                              Race Already Completed
+                            </h3>
+                            <p className="text-muted-foreground mb-6">
+                              You've already completed this challenge race.
+                            </p>
+                            
+                            {/* Race track results visualization */}
+                            <div className="bg-black/80 p-4 rounded-lg mb-6 max-w-md mx-auto">
+                              <div className="flex justify-between mb-2 text-sm font-medium">
+                                <div className="flex items-center">
+                                  <div className="w-6 h-6 rounded-full bg-primary/30 flex items-center justify-center text-primary mr-2">
+                                    {userVoteOption === "A" ? "A" : "B"}
+                                  </div>
+                                  <span className="text-white">{userVoteOption === "A" ? poll.optionAText : poll.optionBText}</span>
+                                </div>
+                                <div className="flex items-center">
+                                  <span className="text-white">{userVoteOption === "A" ? poll.optionBText : poll.optionAText}</span>
+                                  <div className="w-6 h-6 rounded-full bg-destructive/30 flex items-center justify-center text-destructive ml-2">
+                                    {userVoteOption === "A" ? "B" : "A"}
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className="relative h-16 bg-gradient-to-r from-black via-gray-900 to-black rounded-lg border border-gray-800 overflow-hidden mb-3">
+                                {/* Center line */}
+                                <div className="absolute left-1/2 top-0 bottom-0 w-0.5 h-full bg-yellow-400 transform -translate-x-1/2"></div>
+                                
+                                {/* Car positions based on actual poll results */}
+                                {poll.optionAVotes > poll.optionBVotes ? (
+                                  // Option A won the poll - show A car victorious and B car exploded
+                                  <>
+                                    {/* Option A car won and pushed to the right */}
+                                    <div className="absolute left-[75%] top-1/2 -translate-y-1/2 transform -scale-x-100">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
+                                        <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
+                                        <circle cx="8.5" cy="17.5" r="2.5"/>
+                                        <circle cx="15.5" cy="17.5" r="2.5"/>
+                                      </svg>
+                                    </div>
+                                    
+                                    {/* Option B car lost with explosion at the edge */}
+                                    <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                                      <div className="w-10 h-10 flex items-center justify-center">
+                                        <div className="absolute w-10 h-10 rounded-full bg-red-500/30 animate-ping-slow"></div>
+                                        <div className="absolute w-7 h-7 rounded-full bg-red-500/40 animate-ping-slow delay-100"></div>
+                                        <div className="absolute w-4 h-4 rounded-full bg-red-500/50 animate-ping-slow delay-200"></div>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-flame">
+                                          <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+                                        </svg>
+                                      </div>
+                                    </div>
+                                  </>
+                                ) : poll.optionBVotes > poll.optionAVotes ? (
+                                  // Option B won the poll - show B car victorious and A car exploded
+                                  <>
+                                    {/* Option B car won and pushed to the left */}
+                                    <div className="absolute right-[75%] top-1/2 -translate-y-1/2">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
+                                        <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
+                                        <circle cx="8.5" cy="17.5" r="2.5"/>
+                                        <circle cx="15.5" cy="17.5" r="2.5"/>
+                                      </svg>
+                                    </div>
+                                    
+                                    {/* Option A car lost with explosion at the edge */}
+                                    <div className="absolute left-2 top-1/2 -translate-y-1/2">
+                                      <div className="w-10 h-10 flex items-center justify-center">
+                                        <div className="absolute w-10 h-10 rounded-full bg-red-500/30 animate-ping-slow"></div>
+                                        <div className="absolute w-7 h-7 rounded-full bg-red-500/40 animate-ping-slow delay-100"></div>
+                                        <div className="absolute w-4 h-4 rounded-full bg-red-500/50 animate-ping-slow delay-200"></div>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-flame">
+                                          <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+                                        </svg>
+                                      </div>
+                                    </div>
+                                  </>
+                                ) : (
+                                  // Tie - show both cars in the middle
+                                  <>
+                                    <div className="absolute left-[45%] top-1/2 -translate-y-1/2">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
+                                        <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
+                                        <circle cx="8.5" cy="17.5" r="2.5"/>
+                                        <circle cx="15.5" cy="17.5" r="2.5"/>
+                                      </svg>
+                                    </div>
+                                    <div className="absolute right-[45%] top-1/2 -translate-y-1/2 transform -scale-x-100">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
+                                        <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
+                                        <circle cx="8.5" cy="17.5" r="2.5"/>
+                                        <circle cx="15.5" cy="17.5" r="2.5"/>
+                                      </svg>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                              
+                              <div className="text-center font-racing text-sm">
+                                {poll.optionAVotes > poll.optionBVotes ? 
+                                  "TEAM A WINS!" : 
+                                  poll.optionBVotes > poll.optionAVotes ? 
+                                    "TEAM B WINS!" : 
+                                    "IT'S A TIE!"}
+                              </div>
+                            </div>
+                            
+                            {/* Display performance stats if they exist */}
+                            {parsedRace.time && (
+                              <div className="mt-4 text-sm text-muted-foreground">
+                                <p>Your performance: <span className="font-semibold">{(parsedRace.time / 1000).toFixed(2)}s</span></p>
+                                <p>Result: <span className="font-semibold">{parsedRace.won ? "Won" : "Lost"}</span></p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }
+                    } catch (error) {
+                      console.error("Error parsing race data:", error);
+                    }
+                  }
+                  
+                  // If no saved race or the race isn't finished, show the full race component
+                  return (
+                    <RaceGame 
+                      races={userRaces || []} 
+                      pollId={parseInt(id)}
+                      optionAText={poll.optionAText}
+                      optionBText={poll.optionBText}
+                      option={userVoteOption}
+                    />
+                  );
+                })()
               )}
             </Card>
           )}
