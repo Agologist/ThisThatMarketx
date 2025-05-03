@@ -543,22 +543,22 @@ export default function ChallengePage() {
                   </div>
                 </div>
               ) : (
-                // If the user voted, show the race/results
+                // If the user voted, show the battle/results
                 (() => {
-                  // Check if there's a saved race for this poll
-                  const savedRace = localStorage.getItem(`raceGame_poll_${id}`);
-                  console.log(`DEBUG: Checking saved race for poll ${id}:`, {
-                    savedRace,
-                    hasLocalStorage: !!savedRace
+                  // Check if there's a saved battle for this poll
+                  const savedBattle = localStorage.getItem(`raceGame_poll_${id}`);
+                  console.log(`DEBUG: Checking saved battle for poll ${id}:`, {
+                    savedBattle,
+                    hasLocalStorage: !!savedBattle
                   });
                   
-                  if (savedRace) {
+                  if (savedBattle) {
                     try {
-                      const parsedRace = JSON.parse(savedRace);
-                      console.log("DEBUG: Parsed race data:", parsedRace);
+                      const parsedBattle = JSON.parse(savedBattle);
+                      console.log("DEBUG: Parsed battle data:", parsedBattle);
                       
                       // If this game has a "finished" state, show the completion message instead
-                      if (parsedRace.gameState === "finished") {
+                      if (parsedBattle.gameState === "finished") {
                         return (
                           <div className="text-center p-8">
                             <div className="mb-4 text-primary text-6xl">🏁</div>
@@ -670,21 +670,21 @@ export default function ChallengePage() {
                             </div>
                             
                             {/* Display performance stats if they exist */}
-                            {parsedRace.time && (
+                            {parsedBattle.time && (
                               <div className="mt-4 text-sm text-muted-foreground">
-                                <p>Your performance: <span className="font-semibold">{(parsedRace.time / 1000).toFixed(2)}s</span></p>
-                                <p>Result: <span className="font-semibold">{parsedRace.won ? "Won" : "Lost"}</span></p>
+                                <p>Your performance: <span className="font-semibold">{(parsedBattle.time / 1000).toFixed(2)}s</span></p>
+                                <p>Result: <span className="font-semibold">{parsedBattle.won ? "Won" : "Lost"}</span></p>
                               </div>
                             )}
                           </div>
                         );
                       }
                     } catch (error) {
-                      console.error("Error parsing race data:", error);
+                      console.error("Error parsing battle data:", error);
                     }
                   }
                   
-                  // If no saved race or the race isn't finished, show the full race component
+                  // If no saved battle or the battle isn't finished, show the full battle component
                   return (
                     <RaceGame 
                       races={userRaces || []} 
