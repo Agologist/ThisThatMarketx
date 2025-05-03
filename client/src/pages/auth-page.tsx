@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FlagIcon, CheckIcon, TerminalIcon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { signInWithGoogle, signInWithTwitter, handleRedirectResult } from "@/lib/firebase";
+import { signInWithGoogle, signInWithX, handleRedirectResult } from "@/lib/firebase";
 import { loginWithReplit } from "@/hooks/use-replit-auth";
 import { useToast } from "@/hooks/use-toast";
 import { toast as toastInstance } from "@/hooks/use-toast";
@@ -203,7 +203,7 @@ export default function AuthPage() {
         loadingIndicator.style.display = 'inline-flex';
       }
       
-      const result = await signInWithTwitter();
+      const result = await signInWithX();
       
       // Success - hide loading indicator
       if (loadingIndicator) {

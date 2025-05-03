@@ -24,11 +24,11 @@ const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
 // Configure X (formerly Twitter) provider with API credentials
-const twitterProvider = new TwitterAuthProvider();
+const xProvider = new TwitterAuthProvider();
 
 // Add X credentials from environment variables if they exist
 if (import.meta.env.VITE_TWITTER_API_KEY && import.meta.env.VITE_TWITTER_API_SECRET) {
-  twitterProvider.setCustomParameters({
+  xProvider.setCustomParameters({
     'api_key': import.meta.env.VITE_TWITTER_API_KEY,
     'api_secret_key': import.meta.env.VITE_TWITTER_API_SECRET
   });
@@ -46,20 +46,20 @@ export const signInWithGoogle = async (): Promise<UserCredential> => {
  * 3. If not logged in, tries popup authentication which is more user-friendly
  * 4. If popup fails or is blocked, falls back to redirect authentication
  */
-export const signInWithTwitter = async (): Promise<UserCredential> => {
+export const signInWithX = async (): Promise<UserCredential> => {
   // Create a fresh provider each time to avoid caching issues
-  const twitterProvider = new TwitterAuthProvider();
+  const xProvider = new TwitterAuthProvider();
   
   // First check if we already have a user logged in with X (Twitter)
   const currentUser = auth.currentUser;
   if (currentUser) {
     // Check if this user is logged in with X (Twitter)
-    const twitterProvider = currentUser.providerData.find(
+    const xProviderInfo = currentUser.providerData.find(
       provider => provider.providerId === 'twitter.com'
     );
     
-    if (twitterProvider) {
-      console.log("User already authenticated with X (Twitter)");
+    if (xProviderInfo) {
+      console.log("User already authenticated with X");
       
       // Return a promise that resolves with the current user credential
       // We need to format this to match UserCredential structure
@@ -71,8 +71,8 @@ export const signInWithTwitter = async (): Promise<UserCredential> => {
     }
   }
   
-  // Configure X (Twitter) provider with parameters for better experience
-  twitterProvider.setCustomParameters({
+  // Configure X provider with parameters for better experience
+  xProvider.setCustomParameters({
     // Don't force login prompt
     'force_login': 'false',
     // Include callback URL for better redirect handling
@@ -87,17 +87,17 @@ export const signInWithTwitter = async (): Promise<UserCredential> => {
   try {
     // First, try popup auth for better user experience
     authInProgress = true;
-    return await signInWithPopup(auth, twitterProvider);
+    return await signInWithPopup(auth, xProvider);
   } catch (error: any) {
     console.log("Popup auth error:", error.code);
     
     // If popup is blocked or closed, try redirect instead
     if (!authInProgress || error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
       // Track that we're doing a redirect auth
-      localStorage.setItem('auth_redirect_in_progress', 'twitter');
+      localStorage.setItem('auth_redirect_in_progress', 'x');
       
       // Perform redirect auth
-      await signInWithRedirect(auth, twitterProvider);
+      await signInWithRedirect(auth, xProvider);
       
       // This line will not execute as the page will redirect
       return new Promise(() => {});
@@ -107,6 +107,9 @@ export const signInWithTwitter = async (): Promise<UserCredential> => {
     throw error;
   }
 };
+
+// For backward compatibility
+export const signInWithTwitter = signInWithX;
 
 // Function to handle authentication redirect result
 export const handleRedirectResult = async (): Promise<UserCredential | null> => {
@@ -130,9 +133,18 @@ export const handleRedirectResult = async (): Promise<UserCredential | null> => 
       // Clear the "in progress" flag
       localStorage.removeItem('auth_redirect_in_progress');
       
+      // Handle X provider specially
+      let providerIdToCheck = '';
+      if (redirectProvider === 'x') {
+        // X (formerly Twitter) still uses twitter.com as the provider ID in Firebase
+        providerIdToCheck = 'twitter.com';
+      } else {
+        providerIdToCheck = `${redirectProvider}.com`;
+      }
+      
       // Check if the current user has the provider we were redirecting for
       const hasProvider = auth.currentUser.providerData.some(
-        provider => provider.providerId === `${redirectProvider}.com`
+        provider => provider.providerId === providerIdToCheck
       );
       
       if (hasProvider) {
@@ -141,7 +153,7 @@ export const handleRedirectResult = async (): Promise<UserCredential | null> => 
         // Return a synthetic credential that matches the shape expected
         return {
           user: auth.currentUser,
-          providerId: `${redirectProvider}.com`,
+          providerId: providerIdToCheck,
           operationType: 'signIn'
         } as UserCredential;
       }
