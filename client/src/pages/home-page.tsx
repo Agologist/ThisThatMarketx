@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ChallengeCreator from "@/components/challenge/ChallengeCreator";
 import HomePageChallenges from "@/components/challenge/HomePageChallenges";
+import UserStatCards from "@/components/dashboard/UserStatCards";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, InfoIcon } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -113,7 +114,8 @@ export default function HomePage() {
             )}
           </div>
           
-          {/* Stats cards section removed */}
+          {/* User Stats Cards Section */}
+          {!isGuest && <UserStatCards />}
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {!isGuest && <div id="challenge-creator"><ChallengeCreator /></div>}

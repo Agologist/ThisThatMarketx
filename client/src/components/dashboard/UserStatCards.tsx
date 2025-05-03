@@ -3,7 +3,7 @@ import {
   FileText, 
   Trophy, 
   Award, 
-  Vote as VoteIcon
+  CheckSquare
 } from "lucide-react";
 import { Link } from "wouter";
 import { 
@@ -163,7 +163,7 @@ export default function UserStatCards() {
       title: "Votes",
       value: voteCount,
       rank: voteRank,
-      icon: <VoteIcon className="text-primary" />,
+      icon: <CheckSquare className="text-primary" />,
       dropdown: (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -184,7 +184,7 @@ export default function UserStatCards() {
                       href={`/polls/${vote.pollId}`} 
                       className="cursor-pointer flex items-center"
                     >
-                      <VoteIcon className="h-4 w-4 mr-2 text-primary" />
+                      <CheckSquare className="h-4 w-4 mr-2 text-primary" />
                       <span className="truncate">{poll.question} <span className="text-xs text-muted-foreground">({voteTime})</span></span>
                     </Link>
                   </DropdownMenuItem>
