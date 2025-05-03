@@ -123,28 +123,28 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
   const startTimeRef = useRef<number | null>(null);
   const hasAutoStartedRef = useRef(false);
   
-  const { data: userRaces, isLoading: racesLoading } = useQuery<RaceRecord[]>({
-    queryKey: ["/api/user/races"],
+  const { data: userBattles, isLoading: battlesLoading } = useQuery<RaceRecord[]>({
+    queryKey: ["/api/user/battles"],
   });
   
-  const saveRaceMutation = useMutation({
-    mutationFn: async (raceData: { time: number; won: boolean }) => {
-      const res = await apiRequest("POST", "/api/races", raceData);
+  const saveBattleMutation = useMutation({
+    mutationFn: async (battleData: { time: number; won: boolean }) => {
+      const res = await apiRequest("POST", "/api/battles", battleData);
       return await res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/user/races"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/battles"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user/achievements"] });
       
       toast({
-        title: gameResult?.won ? "Victory!" : "Race Complete",
+        title: gameResult?.won ? "Victory!" : "Battle Complete",
         description: `You finished in ${(gameResult?.time || 0) / 1000} seconds`,
       });
     },
     onError: () => {
       toast({
         title: "Error",
-        description: "Failed to save race results",
+        description: "Failed to save battle results",
         variant: "destructive",
       });
     }
@@ -353,7 +353,7 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
         setRightExploded(true);
         setRightPosition(-PLATFORM_EDGE); // Position at edge
         
-        // Calculate race time
+        // Calculate battle time
         const elapsed = Date.now() - (startTimeRef.current || 0);
         
         // Delay end of battle to show explosion animation
@@ -444,7 +444,7 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
     }
     
     // Save battle results
-    saveRaceMutation.mutate({ time, won: playerWon });
+    saveBattleMutation.mutate({ time, won: playerWon });
   };
   
   // Reset the game
@@ -461,21 +461,21 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
   
   // Calculate best time
   const getBestTime = () => {
-    if (!userRaces || userRaces.length === 0) return "N/A";
+    if (!userBattles || userBattles.length === 0) return "N/A";
     
-    const bestRace = [...userRaces].sort((a, b) => a.time - b.time)[0];
-    return `${(bestRace.time / 1000).toFixed(2)}s`;
+    const bestBattle = [...userBattles].sort((a, b) => a.time - b.time)[0];
+    return `${(bestBattle.time / 1000).toFixed(2)}s`;
   };
   
   // Calculate win rate
   const getWinRate = () => {
-    if (!userRaces || userRaces.length === 0) return "0%";
+    if (!userBattles || userBattles.length === 0) return "0%";
     
-    const wins = userRaces.filter(race => race.won).length;
-    return `${Math.round((wins / userRaces.length) * 100)}%`;
+    const wins = userBattles.filter(battle => battle.won).length;
+    return `${Math.round((wins / userBattles.length) * 100)}%`;
   };
   
-  if (racesLoading) {
+  if (battlesLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
