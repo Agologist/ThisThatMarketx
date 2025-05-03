@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChartBarIcon, Share2, MoreVertical, FilterIcon } from "lucide-react";
 import { useLocation } from "wouter";
 import { Poll } from "@shared/schema";
@@ -13,6 +13,16 @@ export default function HomePageChallenges({ polls }: HomePageChallengesProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const [timeNow, setTimeNow] = useState(new Date());
+  
+  // Update time every second to keep timers current
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimeNow(new Date());
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
   
   const ITEMS_PER_PAGE = 2;
   const totalChallenges = polls.length;
@@ -30,9 +40,8 @@ export default function HomePageChallenges({ polls }: HomePageChallengesProps) {
   };
   
   const getRemainingTime = (endTime: Date) => {
-    const now = new Date();
     const end = new Date(endTime);
-    const diff = end.getTime() - now.getTime();
+    const diff = end.getTime() - timeNow.getTime();
     
     if (diff <= 0) return { hours: 0, minutes: 0, seconds: 0, status: "Ended" };
     
@@ -43,13 +52,24 @@ export default function HomePageChallenges({ polls }: HomePageChallengesProps) {
     let status = "Active";
     if (hours < 3) status = "Ending Soon";
     
-    return { hours, minutes, seconds, status };
+    // Format time display
+    let timeDisplay = "";
+    if (hours > 0) {
+      timeDisplay = `${hours}h`;
+      if (minutes > 0) timeDisplay += ` ${minutes}m`;
+    } else if (minutes > 0) {
+      timeDisplay = `${minutes}m`;
+      if (seconds > 0) timeDisplay += ` ${seconds}s`;
+    } else {
+      timeDisplay = `${seconds}s`;
+    }
+    
+    return { hours, minutes, seconds, status, timeDisplay };
   };
   
   const formatDate = (date: Date) => {
-    const now = new Date();
     const pollDate = new Date(date);
-    const diffDays = Math.floor((now.getTime() - pollDate.getTime()) / (1000 * 60 * 60 * 24));
+    const diffDays = Math.floor((timeNow.getTime() - pollDate.getTime()) / (1000 * 60 * 60 * 24));
     
     if (diffDays === 0) return "Today";
     if (diffDays === 1) return "Yesterday";
@@ -79,7 +99,7 @@ export default function HomePageChallenges({ polls }: HomePageChallengesProps) {
   };
   
   return (
-    <div className="bg-[#111] rounded-lg overflow-hidden">
+    <div className="bg-[#1a1a1a] rounded-lg overflow-hidden">
       {/* Header */}
       <div className="flex justify-between items-center p-4">
         <h2 className="text-xl font-bold text-white">Active Challenges</h2>
@@ -94,28 +114,28 @@ export default function HomePageChallenges({ polls }: HomePageChallengesProps) {
       </div>
       
       {/* Column headers */}
-      <div className="grid grid-cols-6 border-b border-[#333] px-4 py-2">
-        <div className="text-sm font-medium text-gray-400">Challenge</div>
-        <div className="text-sm font-medium text-gray-400">Created</div>
-        <div className="text-sm font-medium text-gray-400">Votes</div>
-        <div className="text-sm font-medium text-gray-400">Time Left</div>
-        <div className="text-sm font-medium text-gray-400">Status</div>
-        <div className="text-sm font-medium text-gray-400 text-right">Actions</div>
+      <div className="flex border-b border-[#333] px-4 py-2">
+        <div className="text-sm font-medium text-gray-400 flex-grow">Challenge</div>
+        <div className="text-sm font-medium text-gray-400 w-24">Created</div>
+        <div className="text-sm font-medium text-gray-400 w-24">Votes</div>
+        <div className="text-sm font-medium text-gray-400 w-24">Time Left</div>
+        <div className="text-sm font-medium text-gray-400 w-24">Status</div>
+        <div className="text-sm font-medium text-gray-400 w-28 text-right">Actions</div>
       </div>
       
       {/* Challenge rows */}
       {getPaginatedChallenges().map((poll) => {
-        const { status } = getRemainingTime(poll.endTime);
+        const { status, timeDisplay } = getRemainingTime(poll.endTime);
         const totalVotes = (poll.optionAVotes || 0) + (poll.optionBVotes || 0);
         
         return (
           <div 
             key={poll.id}
-            className="grid grid-cols-6 items-center border-b border-[#333] px-4 py-3 cursor-pointer hover:bg-[#222]"
+            className="flex items-center border-b border-[#333] px-4 py-3 cursor-pointer hover:bg-[#222]"
             onClick={() => navigate(`/challenges/${poll.id}`)}
           >
             {/* Challenge */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-grow">
               <div className="w-10 h-10 bg-black flex items-center justify-center rounded">
                 <span className="text-[#FFD700] text-xl">📋</span>
               </div>
@@ -126,15 +146,15 @@ export default function HomePageChallenges({ polls }: HomePageChallengesProps) {
             </div>
             
             {/* Created */}
-            <div className="text-gray-400">
+            <div className="text-gray-400 w-24">
               {formatDate(poll.createdAt || new Date())}
             </div>
             
             {/* Votes */}
-            <div>
+            <div className="w-24">
               <div className="flex items-center gap-2">
                 <span className="text-white">{totalVotes}</span>
-                <div className="w-20 h-1.5 bg-[#333] rounded-full overflow-hidden">
+                <div className="w-12 h-1.5 bg-[#333] rounded-full overflow-hidden">
                   <div 
                     className="bg-[#FFD700] h-full rounded-full" 
                     style={{ width: `${Math.min((totalVotes / 100) * 100, 100)}%` }}
@@ -144,7 +164,7 @@ export default function HomePageChallenges({ polls }: HomePageChallengesProps) {
             </div>
             
             {/* Time Left */}
-            <div className="flex items-center">
+            <div className="flex items-center w-24">
               {status === "Ended" ? (
                 <div className="flex items-center">
                   <span className="text-gray-400 mr-1">○</span>
@@ -153,13 +173,13 @@ export default function HomePageChallenges({ polls }: HomePageChallengesProps) {
               ) : (
                 <div className="flex items-center">
                   <span className={status === "Ending Soon" ? "text-red-500 mr-1" : "text-[#FFD700] mr-1"}>●</span>
-                  <span className="text-white">Active</span>
+                  <span className="text-white">{timeDisplay}</span>
                 </div>
               )}
             </div>
             
             {/* Status */}
-            <div>
+            <div className="w-24">
               <span className={`
                 px-3 py-1 rounded-full text-xs font-medium
                 ${status === "Active" ? "bg-[#FFD700]/20 text-[#FFD700] border border-[#FFD700]/30" : 
@@ -171,7 +191,7 @@ export default function HomePageChallenges({ polls }: HomePageChallengesProps) {
             </div>
             
             {/* Actions */}
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 w-28">
               <button className="text-gray-400 hover:text-white" onClick={(e) => shareChallenge(poll, e)}>
                 <Share2 className="h-4 w-4" />
               </button>
@@ -193,14 +213,16 @@ export default function HomePageChallenges({ polls }: HomePageChallengesProps) {
       })}
       
       {/* Pagination */}
-      <div className="flex justify-between items-center p-4">
+      <div className="flex justify-between items-center p-4 border-t border-[#333]">
         <div className="text-sm text-gray-400">
-          Showing {getPaginatedChallenges().length} of {totalChallenges} challenges
+          Showing {getPaginatedChallenges().length} of {totalChallenges} challenge{totalChallenges !== 1 ? 's' : ''}
         </div>
         
         <div className="flex items-center gap-1">
           <button 
-            className="w-8 h-8 flex items-center justify-center bg-[#111] text-gray-400 hover:text-white rounded"
+            className={`w-8 h-8 flex items-center justify-center rounded ${
+              currentPage === 1 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-white hover:bg-[#222]'
+            }`}
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
           >
@@ -209,8 +231,7 @@ export default function HomePageChallenges({ polls }: HomePageChallengesProps) {
             </svg>
           </button>
           
-          {Array.from({ length: Math.min(totalPages, 7) }).map((_, i) => {
-            // Since we're displaying 7 numbers at most, no need for ellipsis with this small number of pages
+          {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
             const pageNumber = i + 1;
             
             return (
@@ -218,8 +239,8 @@ export default function HomePageChallenges({ polls }: HomePageChallengesProps) {
                 key={i}
                 className={`w-8 h-8 flex items-center justify-center rounded ${
                   currentPage === pageNumber 
-                    ? "bg-[#FFD700] text-black" 
-                    : "bg-[#222] text-gray-400 hover:text-white"
+                    ? "bg-[#FFD700] text-black font-medium" 
+                    : "text-gray-400 hover:text-white hover:bg-[#222]"
                 }`}
                 onClick={() => handlePageChange(pageNumber)}
               >
@@ -229,7 +250,9 @@ export default function HomePageChallenges({ polls }: HomePageChallengesProps) {
           })}
           
           <button 
-            className="w-8 h-8 flex items-center justify-center bg-[#111] text-gray-400 hover:text-white rounded"
+            className={`w-8 h-8 flex items-center justify-center rounded ${
+              currentPage === totalPages ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-white hover:bg-[#222]'
+            }`}
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
           >
