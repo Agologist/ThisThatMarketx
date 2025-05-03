@@ -108,12 +108,16 @@ export const raceRecords = pgTable("race_records", {
   time: integer("time").notNull(), // time in milliseconds
   won: boolean("won").default(false),
   racedAt: timestamp("raced_at").defaultNow(),
+  pollId: integer("poll_id"),
+  option: text("option"),
 });
 
 export const insertRaceRecordSchema = createInsertSchema(raceRecords).pick({
   userId: true,
   time: true,
   won: true,
+  pollId: true,
+  option: true,
 });
 
 // Type definitions
