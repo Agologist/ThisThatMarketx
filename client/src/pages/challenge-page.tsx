@@ -10,8 +10,9 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
-import { Poll } from "@shared/schema";
+import { Poll, RaceRecord } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import RaceGame from "@/components/game/RaceGame";
 
 export default function ChallengePage() {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +22,7 @@ export default function ChallengePage() {
   const [selectedOption, setSelectedOption] = useState<"A" | "B" | null>(null);
   const [isVoting, setIsVoting] = useState(false);
   const [forceRefresh, setForceRefresh] = useState(0);
+  const [showWarGame, setShowWarGame] = useState(false);
   
   const { data: poll, isLoading, refetch: refetchPoll } = useQuery<Poll>({
     queryKey: [`/api/polls/${id}`, forceRefresh],
@@ -34,6 +36,11 @@ export default function ChallengePage() {
     enabled: !!user && !!id,
     staleTime: 0, // Don't use cache
     refetchOnMount: true, // Always refetch on mount
+  });
+  
+  const { data: userRaces } = useQuery<RaceRecord[]>({
+    queryKey: ["/api/user/races"],
+    enabled: !!user && !!poll?.isWar,
   });
   
   const hasVoted = userVoteData?.hasVoted || false;
@@ -92,6 +99,15 @@ export default function ChallengePage() {
   
   const { hours, minutes, seconds } = timeState;
   const isChallengeActive = hours > 0 || minutes > 0 || seconds > 0;
+  
+  // Check if we should show the war game UI
+  useEffect(() => {
+    if (poll?.isWar && !isChallengeActive && hasVoted) {
+      setShowWarGame(true);
+    } else {
+      setShowWarGame(false);
+    }
+  }, [poll?.isWar, isChallengeActive, hasVoted]);
   
   // Add a timer update effect
   useEffect(() => {
@@ -474,6 +490,21 @@ export default function ChallengePage() {
               </Button>
             </CardFooter>
           </Card>
+          
+          {/* War Game section - visible only for ended challenges with isWar enabled */}
+          {showWarGame && poll.isWar && !isChallengeActive && (
+            <Card className="mb-8 border-primary/30 relative overflow-hidden">
+              <div className="absolute top-2 right-2 z-10">
+                <Badge variant="destructive" className="font-racing uppercase">
+                  War Mode
+                </Badge>
+              </div>
+              <RaceGame 
+                races={userRaces || []} 
+                pollId={parseInt(id)}
+              />
+            </Card>
+          )}
         </div>
       </main>
       
