@@ -375,7 +375,7 @@ export default function AuthPage() {
       <div className="w-full md:w-1/2 bg-black p-6 md:p-12 flex items-center">
         <div className="max-w-lg mx-auto">
           <h1 className="font-racing text-5xl text-primary mb-6">Votes and Wars</h1>
-          <h2 className="text-3xl font-bold mb-6">Creative "This or That" Polls with a Racing Twist</h2>
+          <h2 className="text-3xl font-bold mb-6">Creative "This or That" Polls with a Battle Twist</h2>
           
           <div className="space-y-6 text-lg">
             <div className="flex items-start gap-3">
