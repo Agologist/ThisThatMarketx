@@ -54,6 +54,29 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
   // Allow standalone mode when accessed directly from the footer
   const isStandaloneMode = pollId === 0 && !userOption;
   
+  // Check if this race has already been completed (from localStorage)
+  const [hasCompletedRace, setHasCompletedRace] = useState(false);
+  
+  // Load saved race data from localStorage on initial render
+  useEffect(() => {
+    if (pollId > 0) {
+      try {
+        const savedRace = localStorage.getItem(`raceGame_poll_${pollId}`);
+        if (savedRace) {
+          const parsedRace = JSON.parse(savedRace);
+          // If this game has been finished already, show the finished state
+          if (parsedRace.gameState === "finished") {
+            setHasCompletedRace(true);
+            setGameState("finished");
+            setGameResult(parsedRace.gameResult);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load saved race state:", e);
+      }
+    }
+  }, [pollId]);
+  
   // Game state
   const [gameState, setGameState] = useState<"ready" | "countdown" | "racing" | "finished">("ready");
   const [countdownValue, setCountdownValue] = useState(3);
@@ -372,7 +395,8 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
   // Handle War mode challenges that have expired
   useEffect(() => {
     // Only for expired War challenges in ready state that haven't been auto-started yet
-    if (isExpiredChallenge && pollData?.isWar && gameState === "ready" && !hasAutoStartedRef.current) {
+    // AND haven't been completed previously (check hasCompletedRace)
+    if (isExpiredChallenge && pollData?.isWar && gameState === "ready" && !hasAutoStartedRef.current && !hasCompletedRace) {
       console.log(`⚠️ WAR CHALLENGE ${pollId} EXPIRED - Starting race game once`);
       
       // Mark as started to prevent repeated triggering
@@ -383,7 +407,7 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
         startCountdown();
       }, 500);
     }
-  }, [isExpiredChallenge, pollData, gameState, pollId, startCountdown]);
+  }, [isExpiredChallenge, pollData, gameState, pollId, startCountdown, hasCompletedRace]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -402,6 +426,18 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
     
     setGameState("finished");
     setGameResult({ won: playerWon, time });
+    
+    // Save game state to localStorage to prevent replaying in the same challenge
+    if (pollId > 0) {
+      try {
+        localStorage.setItem(`raceGame_poll_${pollId}`, JSON.stringify({
+          gameState: "finished",
+          gameResult: { won: playerWon, time }
+        }));
+      } catch (e) {
+        console.error("Failed to save race state to localStorage:", e);
+      }
+    }
     
     // Save race results
     saveRaceMutation.mutate({ time, won: playerWon });
