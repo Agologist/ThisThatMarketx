@@ -49,10 +49,21 @@ export default function Header() {
     enabled: !!user && !isGuest
   });
   
+  // Fetch user's won battles
+  const { data: userWonBattles = [] } = useQuery({
+    queryKey: ["/api/user/battles/won"],
+    queryFn: async () => {
+      if (!user) return [];
+      // Filter races that have pollId (only battles from challenges), and user won
+      return userRaces.filter((race: any) => race.pollId && race.won);
+    },
+    enabled: !!user && !isGuest
+  });
+  
   // Calculate stats
   const challengeCount = userPolls.length;
   const voteCount = (user?.id && !isGuest) ? userRaces.length : 0; // Consider using a proper votes count query when available
-  const warCount = userRaces.filter((race: any) => race.won).length;
+  const warCount = userWonBattles.length; // Only count wars from challenge-related battles
   const warPassesCount = activeWarPolls.length;
   
   // Calculate ranks based on count
@@ -185,14 +196,42 @@ export default function Header() {
                   {(!isGuest && user) && (
                     <>
                       <div className="px-2 py-1.5 grid grid-cols-2 gap-2">
-                        <div className="flex items-center">
-                          <FileText className="text-primary h-4 w-4 mr-1.5" />
-                          <div className="text-xs">
-                            <p className="text-muted-foreground">Challenges</p>
-                            <p className="font-bold">{challengeCount}</p>
-                            <p className="text-xs text-primary">Rank: {challengeRank}</p>
-                          </div>
-                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <div className="flex items-center cursor-pointer">
+                              <FileText className="text-primary h-4 w-4 mr-1.5" />
+                              <div className="text-xs">
+                                <p className="text-muted-foreground">Challenges</p>
+                                <p className="font-bold">{challengeCount}</p>
+                                <p className="text-xs text-primary">Rank: {challengeRank}</p>
+                              </div>
+                            </div>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuLabel>Challenges You Created</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            {userPolls.length > 0 ? (
+                              userPolls.map((poll: any) => {
+                                const createdDate = poll.createdAt ? new Date(poll.createdAt).toLocaleDateString() : '';
+                                return (
+                                  <DropdownMenuItem key={poll.id} asChild>
+                                    <Link 
+                                      href={`/polls/${poll.id}`} 
+                                      className="cursor-pointer flex items-center"
+                                    >
+                                      <FileText className="h-4 w-4 mr-2 text-primary" />
+                                      <span className="truncate">{poll.question} <span className="text-xs text-muted-foreground">({createdDate})</span></span>
+                                    </Link>
+                                  </DropdownMenuItem>
+                                );
+                              })
+                            ) : (
+                              <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                                You haven't created any challenges yet
+                              </div>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <div className="flex items-center cursor-pointer">
@@ -229,14 +268,47 @@ export default function Header() {
                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>
-                        <div className="flex items-center">
-                          <Trophy className="text-primary h-4 w-4 mr-1.5" />
-                          <div className="text-xs">
-                            <p className="text-muted-foreground">Wars</p>
-                            <p className="font-bold">{warCount}</p>
-                            <p className="text-xs text-primary">Rank: {warRank}</p>
-                          </div>
-                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <div className="flex items-center cursor-pointer">
+                              <Trophy className="text-primary h-4 w-4 mr-1.5" />
+                              <div className="text-xs">
+                                <p className="text-muted-foreground">Wars</p>
+                                <p className="font-bold">{warCount}</p>
+                                <p className="text-xs text-primary">Rank: {warRank}</p>
+                              </div>
+                            </div>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuLabel>Wars You've Won</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            {userWonBattles.length > 0 ? (
+                              userWonBattles.map((race: any) => {
+                                const battleTime = race.racedAt ? new Date(race.racedAt).toLocaleDateString() : '';
+                                return (
+                                  <DropdownMenuItem key={race.id} asChild>
+                                    <Link 
+                                      href={`/polls/${race.pollId}`} 
+                                      className="cursor-pointer flex items-center"
+                                    >
+                                      <Trophy className="h-4 w-4 mr-2 text-primary" />
+                                      <span className="truncate">
+                                        Battle Won 
+                                        <span className="text-xs text-muted-foreground ml-1">
+                                          ({battleTime}) - {race.time / 1000}s
+                                        </span>
+                                      </span>
+                                    </Link>
+                                  </DropdownMenuItem>
+                                );
+                              })
+                            ) : (
+                              <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                                You haven't won any challenge battles yet
+                              </div>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <div className="flex items-center cursor-pointer">
