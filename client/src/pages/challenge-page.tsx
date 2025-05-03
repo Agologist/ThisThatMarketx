@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { Poll, RaceRecord } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import RaceGame from "@/components/game/RaceGame";
+import RaceGame from "@/pages/race-game";
 
 export default function ChallengePage() {
   const { id } = useParams<{ id: string }>();
