@@ -327,13 +327,45 @@ export default function ChallengePage() {
                   </CardDescription>
                 </div>
                 
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={shareChallenge}
-                >
-                  <Share2 className="h-5 w-5" />
-                </Button>
+                <div className="flex gap-2">
+                  {poll.isWar && (
+                    <Button 
+                      variant={isChallengeActive ? "destructive" : (hasVoted ? "success" : "outline")}
+                      size="sm"
+                      className="font-racing"
+                    >
+                      {isChallengeActive ? (
+                        <div className="flex items-center">
+                          <span className="mr-1">WAR</span>
+                          <svg className="w-3 h-3" viewBox="0 0 36 36">
+                            <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" strokeOpacity="0.5" strokeWidth="2"></circle>
+                            <circle 
+                              cx="18" 
+                              cy="18" 
+                              r="16" 
+                              fill="none" 
+                              stroke="currentColor" 
+                              strokeWidth="2" 
+                              style={{ 
+                                strokeDashoffset: 283 * (1 - (hours * 60 + minutes) / (24 * 60))
+                              }}
+                            ></circle>
+                          </svg>
+                        </div>
+                      ) : (
+                        <span>{hasVoted ? "READY" : "UNAVAILABLE"}</span>
+                      )}
+                    </Button>
+                  )}
+                  
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={shareChallenge}
+                  >
+                    <Share2 className="h-5 w-5" />
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             
