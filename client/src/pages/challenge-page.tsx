@@ -573,10 +573,15 @@ export default function ChallengePage() {
               {(() => {
                 // Check if there's a saved race for this poll
                 const savedRace = localStorage.getItem(`raceGame_poll_${id}`);
+                console.log(`DEBUG: Checking saved race for poll ${id}:`, {
+                  savedRace,
+                  hasLocalStorage: !!savedRace
+                });
                 
                 if (savedRace) {
                   try {
                     const parsedRace = JSON.parse(savedRace);
+                    console.log("DEBUG: Parsed race data:", parsedRace);
                     
                     // If this game has a "finished" state, show the completion message instead
                     if (parsedRace.gameState === "finished") {
