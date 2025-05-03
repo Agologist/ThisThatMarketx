@@ -83,14 +83,9 @@ export default function ChallengesPage() {
       
       <main className="flex-grow py-6 px-4">
         <div className="container mx-auto">
-          <div className="flex flex-col md:flex-row items-start justify-between mb-8">
-            <div>
-              <h2 className="font-montserrat font-bold text-3xl">
-                Challenges
-              </h2>
-            </div>
+          <div className="flex justify-end mb-8">
             {!isGuest && (
-              <div className="mt-4 md:mt-0">
+              <div>
                 <button 
                   onClick={() => window.location.href = "/challenges/new"} 
                   className="btn-gold py-2 px-6 rounded-md flex items-center"
