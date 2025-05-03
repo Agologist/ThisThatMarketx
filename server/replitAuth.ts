@@ -114,6 +114,25 @@ export async function setupReplitAuth(app: Express) {
       })(req, res, next);
     });
     
+    // Add a logout route for Replit Auth
+    app.get("/api/auth/logout", (req: Request, res: Response) => {
+      req.logout(() => {
+        const config = getOidcConfig();
+        Promise.resolve(config).then(config => {
+          res.redirect(
+            client.buildEndSessionUrl(config, {
+              client_id: process.env.REPL_ID!,
+              post_logout_redirect_uri: `${req.protocol}://${req.hostname}/auth`,
+            }).href
+          );
+        }).catch(error => {
+          console.error("Error building end session URL:", error);
+          // Fallback to local logout if OIDC config fails
+          res.redirect("/auth");
+        });
+      });
+    });
+    
     console.log("Replit Auth setup completed successfully");
   } catch (error) {
     console.error("Failed to set up Replit Auth:", error);
