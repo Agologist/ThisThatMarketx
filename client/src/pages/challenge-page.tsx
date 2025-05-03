@@ -591,45 +591,118 @@ export default function ChallengePage() {
                           <h3 className="text-2xl font-bold mb-2">
                             Race Already Completed
                           </h3>
-                          <p className="text-muted-foreground mb-4">
-                            You've already completed this challenge race. 
-                            {parsedRace.gameResult?.won 
-                              ? " Congratulations on your victory!" 
-                              : " Better luck next time!"}
+                          <p className="text-muted-foreground mb-6">
+                            You've already completed this challenge race.
                           </p>
-                          <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
-                            <div className="bg-muted rounded p-3 flex items-center">
+                          
+                          {/* Race track results visualization */}
+                          <div className="bg-black/80 p-4 rounded-lg mb-6 max-w-md mx-auto">
+                            <div className="flex justify-between mb-2 text-sm font-medium">
+                              <div className="flex items-center">
+                                <div className="w-6 h-6 rounded-full bg-primary/30 flex items-center justify-center text-primary mr-2">
+                                  {userVoteOption === "A" ? "A" : "B"}
+                                </div>
+                                <span className="text-white">{userVoteOption === "A" ? poll.optionAText : poll.optionBText}</span>
+                              </div>
+                              <div className="flex items-center">
+                                <span className="text-white">{userVoteOption === "A" ? poll.optionBText : poll.optionAText}</span>
+                                <div className="w-6 h-6 rounded-full bg-destructive/30 flex items-center justify-center text-destructive ml-2">
+                                  {userVoteOption === "A" ? "B" : "A"}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="relative h-16 bg-gradient-to-r from-black via-gray-900 to-black rounded-lg border border-gray-800 overflow-hidden mb-3">
+                              {/* Center line */}
+                              <div className="absolute left-1/2 top-0 bottom-0 w-0.5 h-full bg-yellow-400 transform -translate-x-1/2"></div>
+                              
+                              {/* Car positions */}
+                              {(parsedRace.gameResult?.won && userVoteOption === "A") || 
+                               (!parsedRace.gameResult?.won && userVoteOption === "B") ? (
+                                <>
+                                  {/* User's car (left side/option A) won */}
+                                  <div className="absolute left-[75%] top-1/2 -translate-y-1/2 transform -scale-x-100">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
+                                      <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
+                                      <circle cx="8.5" cy="17.5" r="2.5"/>
+                                      <circle cx="15.5" cy="17.5" r="2.5"/>
+                                    </svg>
+                                  </div>
+                                  
+                                  {/* Opponent's car (right side/option B) lost with explosion */}
+                                  <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                                    <div className="w-10 h-10 flex items-center justify-center">
+                                      <div className="absolute w-10 h-10 rounded-full bg-red-500/30 animate-ping-slow"></div>
+                                      <div className="absolute w-7 h-7 rounded-full bg-red-500/40 animate-ping-slow delay-100"></div>
+                                      <div className="absolute w-4 h-4 rounded-full bg-red-500/50 animate-ping-slow delay-200"></div>
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-flame">
+                                        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+                                      </svg>
+                                    </div>
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  {/* User's car (left/option A) lost with explosion */}
+                                  <div className="absolute left-2 top-1/2 -translate-y-1/2">
+                                    <div className="w-10 h-10 flex items-center justify-center">
+                                      <div className="absolute w-10 h-10 rounded-full bg-red-500/30 animate-ping-slow"></div>
+                                      <div className="absolute w-7 h-7 rounded-full bg-red-500/40 animate-ping-slow delay-100"></div>
+                                      <div className="absolute w-4 h-4 rounded-full bg-red-500/50 animate-ping-slow delay-200"></div>
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-flame">
+                                        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+                                      </svg>
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Opponent's car (right side/option B) won */}
+                                  <div className="absolute right-[75%] top-1/2 -translate-y-1/2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
+                                      <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
+                                      <circle cx="8.5" cy="17.5" r="2.5"/>
+                                      <circle cx="15.5" cy="17.5" r="2.5"/>
+                                    </svg>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                            
+                            {/* Race outcome text */}
+                            <p className="text-lg font-bold mb-1">
+                              {((parsedRace.gameResult?.won && userVoteOption === "A") || 
+                                (!parsedRace.gameResult?.won && userVoteOption === "B")) ? (
+                                <span className="text-green-500">Your car won!</span>
+                              ) : (
+                                <span className="text-red-500">Your car lost!</span>
+                              )}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Race completed in {(parsedRace.gameResult?.time / 1000).toFixed(2)} seconds
+                            </p>
+                          </div>
+                          
+                          {/* Race stats */}
+                          <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
+                            <div className="bg-muted/70 rounded-lg p-3 flex items-center">
                               <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3 text-primary">
                                 <Trophy className="h-4 w-4" />
                               </div>
-                              <div>
-                                <h5 className="text-sm font-medium">Result</h5>
+                              <div className="text-left">
+                                <h5 className="text-sm font-medium">Your Car</h5>
                                 <p className="text-xs text-muted-foreground">
-                                  {parsedRace.gameResult?.won ? "Victory" : "Defeat"}
+                                  {userVoteOption === "A" ? poll.optionAText : poll.optionBText}
                                 </p>
                               </div>
                             </div>
                             
-                            <div className="bg-muted rounded p-3 flex items-center">
+                            <div className="bg-muted/70 rounded-lg p-3 flex items-center">
                               <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3 text-primary">
                                 <Timer className="h-4 w-4" />
                               </div>
-                              <div>
-                                <h5 className="text-sm font-medium">Time</h5>
+                              <div className="text-left">
+                                <h5 className="text-sm font-medium">Race Time</h5>
                                 <p className="text-xs text-muted-foreground">
-                                  {(parsedRace.gameResult?.time / 1000).toFixed(2)}s
-                                </p>
-                              </div>
-                            </div>
-                            
-                            <div className="bg-muted rounded p-3 flex items-center">
-                              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3 text-primary">
-                                <Zap className="h-4 w-4" />
-                              </div>
-                              <div>
-                                <h5 className="text-sm font-medium">Car</h5>
-                                <p className="text-xs text-muted-foreground">
-                                  {userVoteOption === "A" ? poll.optionAText : poll.optionBText}
+                                  {(parsedRace.gameResult?.time / 1000).toFixed(2)} seconds
                                 </p>
                               </div>
                             </div>
