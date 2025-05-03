@@ -468,7 +468,9 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
                     {/* Vote counters */}
                     <div className="flex justify-between mb-4">
                       <div className="flex flex-col items-center">
-                        <div className="text-sm uppercase font-bold text-muted-foreground mb-1">Left</div>
+                        <div className="text-sm uppercase font-bold text-muted-foreground mb-1 truncate max-w-[120px]">
+                          {isStandaloneMode ? "Left" : (optionAText || "Left")}
+                        </div>
                         <div className="bg-primary/30 border border-primary/50 text-primary font-racing text-xl px-4 py-1 rounded-md shadow-inner shadow-primary/10">
                           {leftVotes}
                         </div>
@@ -480,7 +482,9 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
                         </div>
                       </div>
                       <div className="flex flex-col items-center">
-                        <div className="text-sm uppercase font-bold text-muted-foreground mb-1">Right</div>
+                        <div className="text-sm uppercase font-bold text-muted-foreground mb-1 truncate max-w-[120px]">
+                          {isStandaloneMode ? "Right" : (optionBText || "Right")}
+                        </div>
                         <div className="bg-destructive/30 border border-destructive/50 text-destructive font-racing text-xl px-4 py-1 rounded-md shadow-inner shadow-destructive/10">
                           {rightVotes}
                         </div>
@@ -655,14 +659,14 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
                           <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary">
                             <span className="text-xs">L</span>
                           </div>
-                          <span className="text-xs ml-1">Left</span>
+                          <span className="text-xs ml-1">{isStandaloneMode ? "Left" : (optionAText || "Left")}</span>
                         </div>
                         <span className="text-xs text-muted-foreground">vs</span>
                         <div className="flex items-center">
                           <div className="w-6 h-6 rounded-full bg-destructive/20 flex items-center justify-center text-destructive">
                             <span className="text-xs">R</span>
                           </div>
-                          <span className="text-xs ml-1">Right</span>
+                          <span className="text-xs ml-1">{isStandaloneMode ? "Right" : (optionBText || "Right")}</span>
                         </div>
                       </div>
                     </div>
@@ -699,7 +703,7 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
                                       </svg>
                                     </div>
                                   </div>
-                                  <span className="font-medium">Left Car</span>
+                                  <span className="font-medium">{isStandaloneMode ? "Left Car" : optionAText || "Left Car"}</span>
                                 </div>
                               </div>
                               
@@ -717,7 +721,7 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
                                       </svg>
                                     </div>
                                   </div>
-                                  <span className="font-medium">Right Car</span>
+                                  <span className="font-medium">{isStandaloneMode ? "Right Car" : optionBText || "Right Car"}</span>
                                 </div>
                               </div>
                             </div>
@@ -790,7 +794,7 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
                                 </svg>
                               </button>
                               <div className="mt-2 text-center">
-                                <p className="text-sm font-medium">Push Left Car</p>
+                                <p className="text-sm font-medium">Push {isStandaloneMode ? "Left Car" : (optionAText || "Left Car")}</p>
                               </div>
                             </div>
                           )}
@@ -807,7 +811,7 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
                                 </svg>
                               </button>
                               <div className="mt-2 text-center">
-                                <p className="text-sm font-medium">Push Right Car</p>
+                                <p className="text-sm font-medium">Push {isStandaloneMode ? "Right Car" : (optionBText || "Right Car")}</p>
                               </div>
                             </div>
                           )}

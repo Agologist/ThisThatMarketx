@@ -587,6 +587,8 @@ export default function ChallengePage() {
               <RaceGame 
                 races={userRaces || []} 
                 pollId={parseInt(id)}
+                optionAText={poll.optionAText}
+                optionBText={poll.optionBText}
               />
             </Card>
           )}
