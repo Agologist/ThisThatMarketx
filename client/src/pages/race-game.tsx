@@ -994,11 +994,89 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
                           </Button>
                         )}
                         
-                        {/* Show completion message for challenge games */}
+                        {/* Show a detailed completion message for challenge games */}
                         {!isStandaloneMode && (
-                          <p className="text-sm text-muted-foreground mt-2">
-                            This challenge race has been completed {gameResult?.won ? "with a win!" : "but you didn't win."}
-                          </p>
+                          <div className="text-center bg-muted/60 p-4 rounded-lg mt-4 max-w-md">
+                            <h3 className="text-lg font-medium mb-2">Race Results</h3>
+                            
+                            <div className="flex justify-between gap-3 mb-5">
+                              <div className="flex-1 rounded bg-muted p-3 text-center">
+                                <span className="text-xs text-muted-foreground block mb-1">Result</span>
+                                <div className="flex items-center justify-center gap-2">
+                                  {gameResult?.won ? (
+                                    <>
+                                      <Trophy className="h-4 w-4 text-green-500" />
+                                      <span className="font-medium">Victory</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <XIcon className="h-4 w-4 text-red-500" />
+                                      <span className="font-medium">Defeat</span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              <div className="flex-1 rounded bg-muted p-3 text-center">
+                                <span className="text-xs text-muted-foreground block mb-1">Time</span>
+                                <div className="flex items-center justify-center gap-2">
+                                  <Timer className="h-4 w-4 text-primary" />
+                                  <span className="font-medium">{(gameResult?.time || 0)/1000}s</span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Visual race track result */}
+                            <div className="bg-black p-2 rounded-md">
+                              <div className="relative h-10 flex items-center justify-center">
+                                {/* Center line */}
+                                <div className="absolute left-1/2 top-0 bottom-0 w-0.5 h-full bg-yellow-400"></div>
+                                
+                                {/* Car positions */}
+                                {gameResult?.won ? (
+                                  <>
+                                    {/* User won, show their car on right side */}
+                                    <div className="absolute left-[65%] top-1/2 -translate-y-1/2">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
+                                        <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7" />
+                                        <circle cx="8.5" cy="17.5" r="2.5" />
+                                        <circle cx="15.5" cy="17.5" r="2.5" />
+                                      </svg>
+                                    </div>
+                                    
+                                    {/* Explosion on the right side */}
+                                    <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-flame">
+                                        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+                                      </svg>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <>
+                                    {/* User lost, show explosion on left side */}
+                                    <div className="absolute left-0 top-1/2 -translate-y-1/2">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-flame">
+                                        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+                                      </svg>
+                                    </div>
+                                    
+                                    {/* Opponent car on the right side */}
+                                    <div className="absolute right-[65%] top-1/2 -translate-y-1/2">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
+                                        <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7" />
+                                        <circle cx="8.5" cy="17.5" r="2.5" />
+                                        <circle cx="15.5" cy="17.5" r="2.5" />
+                                      </svg>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="mt-3 text-xs text-muted-foreground">
+                              This challenge race has been completed and cannot be replayed.
+                            </div>
+                          </div>
                         )}
                       </div>
                     )}
