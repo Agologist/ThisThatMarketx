@@ -797,19 +797,29 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
                           </div>
                         )}
                         
-                        <Button 
-                          className="btn-gold w-full"
-                          size="lg"
-                          onClick={startCountdown}
-                          disabled={isStandaloneMode && !userCarSelection}
-                        >
-                          Start Race
-                        </Button>
+                        {/* Only show Start Race button for standalone games or for challenge games that haven't been completed yet */}
+                        {(isStandaloneMode || !localStorage.getItem(`raceGame_poll_${pollId}`)) && (
+                          <>
+                            <Button 
+                              className="btn-gold w-full"
+                              size="lg"
+                              onClick={startCountdown}
+                              disabled={isStandaloneMode && !userCarSelection}
+                            >
+                              Start Race
+                            </Button>
+                            
+                            {isStandaloneMode && !userCarSelection ? (
+                              <p className="text-sm text-muted-foreground mt-2">Select a car to start racing</p>
+                            ) : (
+                              <p className="text-sm text-muted-foreground mt-2">Click Start to enable voting</p>
+                            )}
+                          </>
+                        )}
                         
-                        {isStandaloneMode && !userCarSelection ? (
-                          <p className="text-sm text-muted-foreground mt-2">Select a car to start racing</p>
-                        ) : (
-                          <p className="text-sm text-muted-foreground mt-2">Click Start to enable voting</p>
+                        {/* Show message for completed challenge games */}
+                        {!isStandaloneMode && localStorage.getItem(`raceGame_poll_${pollId}`) && (
+                          <p className="text-sm text-muted-foreground mt-2">This challenge race has already been completed</p>
                         )}
                       </div>
                     )}
