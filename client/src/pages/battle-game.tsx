@@ -215,8 +215,8 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
   
   // Handle a vote for the left car
   const handleLeftVote = () => {
-    // Only process if the game is still racing
-    if (gameState !== "racing" || leftExploded || rightExploded) return;
+    // Only process if the game is still battling
+    if (gameState !== "battling" || leftExploded || rightExploded) return;
     
     // User can only play the car they voted for
     if (userCar !== "left") {
@@ -300,8 +300,8 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
   
   // Handle a vote for the right car
   const handleRightVote = () => {
-    // Only process if the game is still racing
-    if (gameState !== "racing" || leftExploded || rightExploded) return;
+    // Only process if the game is still battling
+    if (gameState !== "battling" || leftExploded || rightExploded) return;
     
     // User can only play the car they voted for
     if (userCar !== "right") {
@@ -509,7 +509,7 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
                   <div className="flex justify-between items-center">
                     <CardTitle className="text-2xl">Votes and Wars Battle</CardTitle>
                     <Badge variant="outline" className="bg-primary/10 text-primary">
-                      {gameState === "racing" ? "Racing!" : gameState === "countdown" ? "Ready..." : gameState === "finished" ? "Finished" : "Select Car"}
+                      {gameState === "battling" ? "Battling!" : gameState === "countdown" ? "Ready..." : gameState === "finished" ? "Finished" : "Select Car"}
                     </Badge>
                   </div>
                   <CardDescription>
@@ -517,7 +517,7 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
                       ? "Select your car and press the Start button"
                       : gameState === "countdown" 
                         ? "Battle starts in..."
-                        : gameState === "racing"
+                        : gameState === "battling"
                           ? "Click the thumbs-up button to vote!"
                           : "Battle complete! View your results below"}
                   </CardDescription>
@@ -719,7 +719,7 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
                     <div className="flex justify-between items-center mt-4">
                       <div className="flex items-center space-x-4">
                         <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                          {gameState === "racing" ? (
+                          {gameState === "battling" ? (
                             <Clock className="h-5 w-5" />
                           ) : gameState === "finished" ? (
                             gameResult?.won ? <Trophy className="h-5 w-5" /> : <Flag className="h-5 w-5" />
@@ -729,14 +729,14 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
                         </div>
                         <div>
                           <h4 className="text-sm font-medium">
-                            {gameState === "racing" 
+                            {gameState === "battling" 
                               ? `Time: ${(raceTime / 1000).toFixed(2)}s`
                               : gameState === "finished"
                                 ? `Finished in ${(gameResult?.time || 0) / 1000}s`
                                 : "Poll Battle Game"}
                           </h4>
                           <p className="text-xs text-muted-foreground">
-                            {gameState === "racing" 
+                            {gameState === "battling" 
                               ? "Click the thumbs-up button to vote!" 
                               : gameState === "finished"
                                 ? gameResult?.won ? "Great job! You won the battle!" : "Better luck next time!"
