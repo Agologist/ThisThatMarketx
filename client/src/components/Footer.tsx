@@ -19,7 +19,7 @@ export default function Footer() {
               Dashboard
             </Link>
             <Link href="/polls" className="text-muted-foreground hover:text-primary transition-colors text-sm">
-              Polls
+              Challenges
             </Link>
             <Link href="/race" className="text-muted-foreground hover:text-primary transition-colors text-sm">
               Race Game
