@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Loader2, Share2, ChevronLeft, CheckIcon, XIcon } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
@@ -421,57 +422,71 @@ export default function ChallengePage() {
                 </div>
               </div>
               
-              {isChallengeActive && (
-                <div className="mt-6 flex flex-col items-center">
+              <div className="mt-6 flex justify-center">
+                {isChallengeActive && !hasVoted && (
                   <Button 
-                    className="btn-gold w-full max-w-md" 
-                    size="lg"
-                    disabled={!selectedOption || isVoting || hasVoted}
-                    onClick={handleVote}
+                    onClick={handleVote} 
+                    disabled={!selectedOption || isVoting}
+                    className="w-full max-w-xs"
                   >
                     {isVoting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Recording vote...
+                        Voting...
                       </>
-                    ) : hasVoted ? (
-                      "You have already voted"
                     ) : (
-                      `Vote for ${selectedOption ? poll[selectedOption === "A" ? "optionAText" : "optionBText"] : ""}`
+                      'Vote Now'
                     )}
                   </Button>
-                  
-                  {hasVoted && (
-                    <p className="text-xs text-muted-foreground mt-2">
-                      You voted for {userVoteOption === "A" ? poll.optionAText : poll.optionBText}. 
-                      Votes cannot be changed once submitted.
+                )}
+                
+                {hasVoted && isChallengeActive && (
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">
+                      You've already voted for <span className="font-medium text-primary">{userVoteOption === "A" ? poll.optionAText : poll.optionBText}</span>.
                     </p>
-                  )}
-                </div>
-              )}
-              
-              <div className="mt-6">
-                <Separator className="my-4" />
-                <div className="text-center">
-                  <h3 className="font-medium text-xl mb-2">Total Votes: {totalVotes}</h3>
-                  <p className={isChallengeActive ? "text-muted-foreground" : "font-bold text-primary"}>
-                    {!isChallengeActive ? (
-                      // Show final result for ended challenges
-                      optionAPercentage > optionBPercentage 
-                        ? `${poll.optionAText} has won with ${optionAPercentage}% of the votes!` 
-                        : optionBPercentage > optionAPercentage
-                          ? `${poll.optionBText} has won with ${optionBPercentage}% of the votes!`
-                          : "The challenge ended in a tie!"
-                    ) : (
-                      // Show current status for active challenges
-                      optionAPercentage > optionBPercentage 
-                        ? `${poll.optionAText} is leading by ${optionAPercentage - optionBPercentage}%` 
-                        : optionBPercentage > optionAPercentage
-                          ? `${poll.optionBText} is leading by ${optionBPercentage - optionAPercentage}%`
-                          : "It's currently a tie!"
-                    )}
-                  </p>
-                </div>
+                  </div>
+                )}
+                
+                {!isChallengeActive && (
+                  <div className="text-center">
+                    <div className="mb-2 flex items-center justify-center gap-2">
+                      <Badge variant="outline" className="px-3 py-1 border-primary/30 text-primary font-medium">
+                        Final Results
+                      </Badge>
+                      
+                      {poll.isWar && (
+                        <Badge variant="destructive" className="px-3 py-1 font-racing uppercase">
+                          War Mode
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    <p className="text-sm text-muted-foreground">
+                      {totalVotes === 0 ? (
+                        "No votes were cast in this challenge."
+                      ) : (
+                        <>
+                          <span className="font-medium text-primary">
+                            {optionAPercentage > optionBPercentage 
+                              ? poll.optionAText 
+                              : optionBPercentage > optionAPercentage 
+                                ? poll.optionBText 
+                                : "It's a tie!"
+                            }
+                          </span> {" "}
+                          {optionAPercentage !== optionBPercentage ? "won with " : ""}
+                          {optionAPercentage > optionBPercentage 
+                            ? `${optionAPercentage}% of the votes`
+                            : optionBPercentage > optionAPercentage 
+                              ? `${optionBPercentage}% of the votes`
+                              : ""
+                          }.
+                        </>
+                      )}
+                    </p>
+                  </div>
+                )}
               </div>
             </CardContent>
             
