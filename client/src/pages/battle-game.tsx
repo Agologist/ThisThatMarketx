@@ -507,7 +507,7 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
               <Card className="border-primary/30">
                 <CardHeader>
                   <div className="flex justify-between items-center">
-                    <CardTitle className="text-2xl">Votes and Wars Race</CardTitle>
+                    <CardTitle className="text-2xl">Votes and Wars Battle</CardTitle>
                     <Badge variant="outline" className="bg-primary/10 text-primary">
                       {gameState === "racing" ? "Racing!" : gameState === "countdown" ? "Ready..." : gameState === "finished" ? "Finished" : "Select Car"}
                     </Badge>
@@ -516,10 +516,10 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
                     {gameState === "ready" 
                       ? "Select your car and press the Start button"
                       : gameState === "countdown" 
-                        ? "Race starts in..."
+                        ? "Battle starts in..."
                         : gameState === "racing"
                           ? "Click the thumbs-up button to vote!"
-                          : "Race complete! View your results below"}
+                          : "Battle complete! View your results below"}
                   </CardDescription>
                 </CardHeader>
                 
@@ -554,7 +554,7 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
                     </div>
                   )}
                   
-                  {/* Race track - single line with cars facing each other */}
+                  {/* Battle arena - single line with cars facing each other */}
                   <div className={`bg-black rounded-lg p-4 mb-4 ${gameState === "ready" ? "opacity-70" : ""}`}>
                     {/* Vote counters */}
                     <div className="flex justify-between mb-4">
@@ -715,7 +715,7 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
                       )}
                     </div>
                     
-                    {/* Race info bar */}
+                    {/* Battle info bar */}
                     <div className="flex justify-between items-center mt-4">
                       <div className="flex items-center space-x-4">
                         <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
@@ -733,13 +733,13 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
                               ? `Time: ${(raceTime / 1000).toFixed(2)}s`
                               : gameState === "finished"
                                 ? `Finished in ${(gameResult?.time || 0) / 1000}s`
-                                : "Poll Racing Game"}
+                                : "Poll Battle Game"}
                           </h4>
                           <p className="text-xs text-muted-foreground">
                             {gameState === "racing" 
                               ? "Click the thumbs-up button to vote!" 
                               : gameState === "finished"
-                                ? gameResult?.won ? "Great job! You won the race!" : "Better luck next time!"
+                                ? gameResult?.won ? "Great job! You won the battle!" : "Better luck next time!"
                                 : "Vote to advance your choice!"}
                           </p>
                         </div>
@@ -828,11 +828,11 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
                               onClick={startCountdown}
                               disabled={!userCarSelection}
                             >
-                              Start Race
+                              Start Battle
                             </Button>
                             
                             {!userCarSelection && (
-                              <p className="text-sm text-muted-foreground mt-2">Select a car to start racing</p>
+                              <p className="text-sm text-muted-foreground mt-2">Select a car to start the battle</p>
                             )}
                           </>
                         )}
@@ -871,14 +871,14 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
                           </div>
                         </div>
                         
-                        {/* Show Race Again button only in standalone mode */}
+                        {/* Show Battle Again button only in standalone mode */}
                         {isStandaloneMode && (
                           <Button 
                             className="btn-gold w-full"
                             size="lg"
                             onClick={resetGame}
                           >
-                            Race Again
+                            Battle Again
                           </Button>
                         )}
                       </div>
