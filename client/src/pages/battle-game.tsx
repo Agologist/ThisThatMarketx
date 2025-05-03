@@ -356,9 +356,9 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
         // Calculate race time
         const elapsed = Date.now() - (startTimeRef.current || 0);
         
-        // Delay end of race to show explosion animation
+        // Delay end of battle to show explosion animation
         setTimeout(() => {
-          finishRace(false, elapsed); // Right car loses because it fell off
+          finishBattle(false, elapsed); // Right car loses because it fell off
         }, 800);
         return;
       }
