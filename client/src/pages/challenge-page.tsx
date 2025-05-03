@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Share2, ChevronLeft, CheckIcon, XIcon } from "lucide-react";
+import { Loader2, Share2, ChevronLeft, CheckIcon, XIcon, Trophy, Timer, Zap } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
