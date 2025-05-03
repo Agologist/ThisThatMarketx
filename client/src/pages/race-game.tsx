@@ -59,6 +59,20 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
   // Allow standalone mode when accessed directly from the footer
   const isStandaloneMode = pollId === 0 && !userOption;
   
+  // Check if this is an expired challenge with a saved vote
+  const [isExpiredChallenge, setIsExpiredChallenge] = useState(false);
+  
+  // Additional check for retrieving poll data to determine if it's expired
+  const { data: pollData } = useQuery({
+    queryKey: ["/api/polls", pollId],
+    queryFn: async () => {
+      if (pollId <= 0) return null;
+      const res = await apiRequest("GET", `/api/polls/${pollId}`);
+      return await res.json();
+    },
+    enabled: !!pollId && pollId > 0,
+  });
+  
   // Game state
   const [gameState, setGameState] = useState<"ready" | "countdown" | "racing" | "finished">("ready");
   const [countdownValue, setCountdownValue] = useState(3);
@@ -335,6 +349,20 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
       setRightPosition(newRightPos);
     }, 100); // Short delay for visual effect
   };
+  
+  // Check if challenge is expired
+  useEffect(() => {
+    if (pollId > 0 && pollData) {
+      // Calculate if the challenge is expired
+      const now = new Date();
+      const endTime = new Date(pollData.endTime);
+      const isExpired = now > endTime;
+      
+      console.log("Challenge expiration check:", { pollId, now, endTime, isExpired });
+      
+      setIsExpiredChallenge(isExpired);
+    }
+  }, [pollId, pollData]);
   
   // Check for saved game state on component mount
   useEffect(() => {
@@ -821,26 +849,65 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
                             );
                           }
                           
-                          // For challenge mode, check if there's a saved game
-                          const savedGame = pollId > 0 ? localStorage.getItem(`raceGame_poll_${pollId}`) : null;
-                          
-                          if (savedGame) {
-                            // If there's a saved game, parse it to check if it's completed
-                            try {
-                              const parsedState = JSON.parse(savedGame);
-                              
-                              // If game is finished, show the message instead of the button
-                              if (parsedState.gameState === "finished") {
-                                return (
-                                  <p className="text-sm text-muted-foreground mt-2">This challenge race has already been completed</p>
-                                );
+                          // For challenge mode, first check if it's an expired challenge
+                          if (isExpiredChallenge) {
+                            console.log("This is an expired challenge - checking for saved game");
+                            
+                            // Check if there's a saved game for this challenge
+                            const savedGame = localStorage.getItem(`raceGame_poll_${pollId}`);
+                            
+                            // If there's a saved game that's finished, show the completion message
+                            if (savedGame) {
+                              try {
+                                const parsedState = JSON.parse(savedGame);
+                                if (parsedState.gameState === "finished") {
+                                  return (
+                                    <p className="text-sm text-muted-foreground mt-2">This challenge race has already been completed</p>
+                                  );
+                                }
+                              } catch (e) {
+                                console.error("Failed to parse saved race game state", e);
                               }
-                            } catch (e) {
-                              console.error("Failed to parse saved game state", e);
+                            }
+                            
+                            // The challenge is expired but hasn't been played yet - use a special variable
+                            // to track this state
+                            if (gameState === "ready") {
+                              return (
+                                <>
+                                  <Button 
+                                    className="btn-gold w-full"
+                                    size="lg"
+                                    onClick={startCountdown}
+                                  >
+                                    Start Race
+                                  </Button>
+                                  <p className="text-sm text-muted-foreground mt-2">Click Start to begin this expired challenge race</p>
+                                </>
+                              );
+                            }
+                          } else {
+                            // For active challenges, check if there's a saved game
+                            const savedGame = pollId > 0 ? localStorage.getItem(`raceGame_poll_${pollId}`) : null;
+                            
+                            if (savedGame) {
+                              // If there's a saved game, parse it to check if it's completed
+                              try {
+                                const parsedState = JSON.parse(savedGame);
+                                
+                                // If game is finished, show the message instead of the button
+                                if (parsedState.gameState === "finished") {
+                                  return (
+                                    <p className="text-sm text-muted-foreground mt-2">This challenge race has already been completed</p>
+                                  );
+                                }
+                              } catch (e) {
+                                console.error("Failed to parse saved game state", e);
+                              }
                             }
                           }
                           
-                          // If no saved game or parsing failed, show the button
+                          // If none of the conditions match, show the standard button
                           return (
                             <>
                               <Button 
@@ -881,6 +948,8 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
                             <path d="M7.493 18.75c-.425 0-.82-.236-.975-.632A7.48 7.48 0 0 1 6 15.375c0-1.75.599-3.358 1.602-4.634.151-.192.373-.309.6-.397.473-.183.89-.514 1.212-.924a9.042 9.042 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V2.75A.75.75 0 0 1 15 2a2.25 2.25 0 0 1 2.25 2.25c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H14.23c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23h-.777ZM2.331 10.977a11.969 11.969 0 0 0-.831 4.398 12 12 0 0 0 .52 3.507c.26.85 1.084 1.368 1.973 1.368H4.9c.445 0 .72-.498.523-.898a8.963 8.963 0 0 1-.924-3.977c0-1.708.476-3.305 1.302-4.666.245-.403-.028-.959-.5-.959H4.25c-.832 0-1.612.453-1.918 1.227Z" />
                           </svg>
                         </button>
+                        
+                        {/* Only show Race Again button for standalone games */}
                         {isStandaloneMode && (
                           <Button 
                             className="btn-gold w-full"
@@ -889,6 +958,13 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
                           >
                             Race Again
                           </Button>
+                        )}
+                        
+                        {/* Show completion message for challenge games */}
+                        {!isStandaloneMode && (
+                          <p className="text-sm text-muted-foreground mt-2">
+                            This challenge race has been completed {gameResult?.won ? "with a win!" : "but you didn't win."}
+                          </p>
                         )}
                       </div>
                     )}
