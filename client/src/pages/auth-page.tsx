@@ -193,10 +193,10 @@ export default function AuthPage() {
     }
   };
   
-  // Function to handle Twitter sign-in
-  const handleTwitterSignIn = async () => {
+  // Function to handle X (formerly Twitter) sign-in
+  const handleXSignIn = async () => {
     // Show visual loading indicator instead of a toast
-    const loadingIndicator = document.getElementById('twitter-loading');
+    const loadingIndicator = document.getElementById('x-loading');
     try {
       // Show loading state
       if (loadingIndicator) {
@@ -219,9 +219,9 @@ export default function AuthPage() {
         body: JSON.stringify({
           uid: result.user.uid,
           email: result.user.email, // This might be null from Twitter
-          displayName: result.user.displayName || result.user.providerData[0]?.displayName || 'Twitter User',
+          displayName: result.user.displayName || result.user.providerData[0]?.displayName || 'X User',
           photoURL: result.user.photoURL,
-          provider: 'twitter'
+          provider: 'x'
         }),
       });
       
@@ -233,13 +233,13 @@ export default function AuthPage() {
           const errorData = await res.json();
           toast({
             title: "Authentication failed",
-            description: errorData.message || "Failed to authenticate with Twitter",
+            description: errorData.message || "Failed to authenticate with X",
             variant: "destructive"
           });
         } catch {
           toast({
             title: "Authentication failed",
-            description: "Failed to authenticate with Twitter",
+            description: "Failed to authenticate with X",
             variant: "destructive"
           });
         }
@@ -249,7 +249,7 @@ export default function AuthPage() {
       if (loadingIndicator) {
         loadingIndicator.style.display = 'none';
       }
-      console.error("Twitter sign-in error:", error);
+      console.error("X sign-in error:", error);
       
       // Check if this is a Firebase error
       if (error instanceof FirebaseError) {
@@ -264,27 +264,27 @@ export default function AuthPage() {
           // This is a common error when the user closes the popup, no need for a destructive toast
           toast({
             title: "Authentication cancelled",
-            description: "You closed the Twitter login window",
+            description: "You closed the X login window",
             variant: "default"
           });
         } else if (error.code === 'auth/operation-not-allowed') {
           toast({
-            title: "Twitter login not enabled",
-            description: "Twitter authentication is not enabled in Firebase. Please enable it in the Firebase console: Authentication > Sign-in method > Twitter",
+            title: "X login not enabled",
+            description: "X authentication is not enabled in Firebase. Please enable it in the Firebase console: Authentication > Sign-in method > X (Twitter)",
             variant: "destructive",
             duration: 10000
           });
         } else if (error.code === 'auth/missing-oauth-client-secret' || error.message?.includes('request token')) {
           toast({
-            title: "Twitter configuration issue",
-            description: "There's an issue with the Twitter API credentials or callback URL configuration. Make sure you've properly configured your Twitter app in both Twitter Developer Portal and Firebase console.",
+            title: "X configuration issue",
+            description: "There's an issue with the X API credentials or callback URL configuration. Make sure you've properly configured your X app in both X Developer Portal and Firebase console.",
             variant: "destructive",
             duration: 10000
           });
         } else {
           toast({
             title: "Authentication failed",
-            description: `Failed to authenticate with Twitter: ${error.message || error.code || 'Unknown error'}`,
+            description: `Failed to authenticate with X: ${error.message || error.code || 'Unknown error'}`,
             variant: "destructive"
           });
         }
@@ -337,14 +337,14 @@ export default function AuthPage() {
             <Button 
               variant="outline" 
               className="w-full mb-4 h-12 flex items-center justify-center gap-3"
-              onClick={handleTwitterSignIn}
+              onClick={handleXSignIn}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" className="fill-current text-black">
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
               </svg>
               <span className="flex items-center">
                 Continue with X
-                <span id="twitter-loading" className="ml-2 animate-spin hidden" aria-hidden="true">
+                <span id="x-loading" className="ml-2 animate-spin hidden" aria-hidden="true">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
                   </svg>
