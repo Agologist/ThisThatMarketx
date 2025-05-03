@@ -114,8 +114,7 @@ export default function HomePage() {
             )}
           </div>
           
-          {/* User Stats Cards Section */}
-          {!isGuest && <UserStatCards />}
+          {/* User Stats Cards Section - Moved to hamburger menu */}
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {!isGuest && <div id="challenge-creator"><ChallengeCreator /></div>}

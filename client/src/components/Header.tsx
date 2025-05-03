@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { FlagIcon, User, LogOut, Menu, X, UserIcon, Trophy, Award, FileText } from "lucide-react";
+import UserStatCards from "@/components/dashboard/UserStatCards";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -409,113 +410,8 @@ export default function Header() {
                 </Link>
               ))}
               
-              {/* User Stats Grid for mobile */}
-              {(!isGuest && user) && (
-                <div className="grid grid-cols-2 gap-3 py-2">
-                  <div className="flex items-center p-2 bg-primary/10 rounded-md">
-                    <FileText className="text-primary h-5 w-5 mr-2" />
-                    <div>
-                      <p className="text-sm font-medium">Challenges</p>
-                      <p className="text-xl font-bold text-primary">{challengeCount}</p>
-                      <p className="text-xs text-primary">Rank: {challengeRank}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center p-2 bg-primary/10 rounded-md">
-                      <FileText className="text-primary h-5 w-5 mr-2 rotate-90" />
-                      <div>
-                        <p className="text-sm font-medium">Votes</p>
-                        <p className="text-xl font-bold text-primary">{voteCount}</p>
-                        <p className="text-xs text-primary">Rank: {voteRank}</p>
-                      </div>
-                      <button 
-                        className="ml-auto text-primary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setVotesDropdownOpen(!votesDropdownOpen);
-                        }}
-                      >
-                        {votesDropdownOpen ? (
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-up"><path d="m18 15-6-6-6 6"/></svg>
-                        ) : (
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>
-                        )}
-                      </button>
-                    </div>
-                    
-                    {/* Votes Dropdown */}
-                    {votesDropdownOpen && userVotes.length > 0 && (
-                      <div className="ml-2 pl-7 flex flex-col gap-1">
-                        {userVotes.map((vote: any) => {
-                          const poll = userPolls.find((p: any) => p.id === vote.pollId) || { question: `Challenge #${vote.pollId}` };
-                          const voteTime = vote.votedAt ? new Date(vote.votedAt).toLocaleDateString() : '';
-                          return (
-                            <Link 
-                              key={vote.id}
-                              href={`/polls/${vote.pollId}`}
-                              className="text-sm text-primary flex items-center py-1"
-                              onClick={() => setIsMenuOpen(false)}
-                            >
-                              <FileText className="h-4 w-4 mr-1.5 inline rotate-90" />
-                              <span className="truncate">{poll.question} <span className="text-xs text-muted-foreground">({voteTime})</span></span>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center p-2 bg-primary/10 rounded-md">
-                    <Trophy className="text-primary h-5 w-5 mr-2" />
-                    <div>
-                      <p className="text-sm font-medium">Wars</p>
-                      <p className="text-xl font-bold text-primary">{warCount}</p>
-                      <p className="text-xs text-primary">Rank: {warRank}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center p-2 bg-primary/10 rounded-md">
-                      <Award className="text-primary h-5 w-5 mr-2" />
-                      <div>
-                        <p className="text-sm font-medium">War Passes</p>
-                        <p className="text-xl font-bold text-primary">{warPassesCount}</p>
-                      </div>
-                      <button 
-                        className="ml-auto text-primary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setWarPassesDropdownOpen(!warPassesDropdownOpen);
-                        }}
-                      >
-                        {warPassesDropdownOpen ? (
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-up"><path d="m18 15-6-6-6 6"/></svg>
-                        ) : (
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>
-                        )}
-                      </button>
-                    </div>
-                    
-                    {/* War Passes List */}
-                    {warPassesDropdownOpen && activeWarPolls.length > 0 && (
-                      <div className="ml-2 pl-7 flex flex-col gap-1">
-                        {activeWarPolls.map((poll: any) => (
-                          <Link 
-                            key={poll.id}
-                            href={`/polls/${poll.id}`}
-                            className="text-sm text-primary flex items-center py-1"
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            <Trophy className="h-4 w-4 mr-1.5 inline" />
-                            <span className="truncate">{poll.question}</span>
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+              {/* User Stats Component for mobile */}
+              {(!isGuest && user) && <UserStatCards />}
               
               {showUserProfile ? (
                 <>
