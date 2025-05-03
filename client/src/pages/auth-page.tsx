@@ -3,9 +3,10 @@ import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FlagIcon, CheckIcon } from "lucide-react";
+import { FlagIcon, CheckIcon, TerminalIcon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { signInWithGoogle, signInWithTwitter, handleRedirectResult } from "@/lib/firebase";
+import { loginWithReplit } from "@/hooks/use-replit-auth";
 import { useToast } from "@/hooks/use-toast";
 import { toast as toastInstance } from "@/hooks/use-toast";
 import { FirebaseError } from "firebase/app";
@@ -335,7 +336,7 @@ export default function AuthPage() {
             
             <Button 
               variant="outline" 
-              className="w-full mb-6 h-12 flex items-center justify-center gap-3"
+              className="w-full mb-4 h-12 flex items-center justify-center gap-3"
               onClick={handleTwitterSignIn}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" className="fill-current text-[#1DA1F2]">
@@ -349,6 +350,15 @@ export default function AuthPage() {
                   </svg>
                 </span>
               </span>
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="w-full mb-6 h-12 flex items-center justify-center gap-3"
+              onClick={() => loginWithReplit()}
+            >
+              <TerminalIcon className="h-5 w-5 text-[#F26207]" />
+              Continue with Replit
             </Button>
                 
             <div className="relative flex items-center justify-center my-6">

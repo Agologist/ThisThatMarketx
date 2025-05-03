@@ -23,6 +23,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up Replit Auth
   await setupReplitAuth(app);
   
+  // Get current user endpoint for Replit Auth
+  app.get("/api/auth/user", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    try {
+      res.json(req.user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+  
   // Firebase authentication endpoint
   app.post("/api/auth/firebase", async (req, res) => {
     try {
