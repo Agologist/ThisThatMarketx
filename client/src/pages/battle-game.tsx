@@ -264,7 +264,7 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
         setRightExploded(true);
         setRightPosition(PLATFORM_EDGE); // Position at edge
         
-        // Calculate race time
+        // Calculate battle time
         const elapsed = Date.now() - (startTimeRef.current || 0);
         
         // Delay end of battle to show explosion animation
@@ -282,7 +282,7 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
         setLeftExploded(true);
         setLeftPosition(PLATFORM_EDGE); // Position at edge
         
-        // Calculate race time
+        // Calculate battle time
         const elapsed = Date.now() - (startTimeRef.current || 0);
         
         // Delay end of battle to show explosion animation
@@ -337,7 +337,7 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
         setLeftExploded(true);
         setLeftPosition(-PLATFORM_EDGE); // Position at edge
         
-        // Calculate race time
+        // Calculate battle time
         const elapsed = Date.now() - (startTimeRef.current || 0);
         
         // Delay end of battle to show explosion animation
