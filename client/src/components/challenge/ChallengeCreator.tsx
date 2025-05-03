@@ -737,6 +737,31 @@ export default function ChallengeCreator() {
               </div>
             )}
             
+            <FormField
+              control={form.control}
+              name="isWar"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between space-y-0 rounded-lg border border-primary/30 p-4 bg-black/20">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base flex items-center">
+                      <Sword className="w-5 h-5 mr-2 text-primary" />
+                      Enable War Mode
+                    </FormLabel>
+                    <FormDescription>
+                      After challenge ends, a 1-minute racing game will start where cars move based on votes
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      className="data-[state=checked]:bg-primary"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            
             <div className="pt-4">
               <Button 
                 type="submit" 
