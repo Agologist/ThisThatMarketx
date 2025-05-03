@@ -67,7 +67,7 @@ export default function ActivePolls({ polls }: ActivePollsProps) {
   const handleShare = (poll: Poll, e: React.MouseEvent) => {
     e.stopPropagation();
     
-    const shareUrl = `${window.location.origin}/polls/${poll.id}`;
+    const shareUrl = `${window.location.origin}/challenges/${poll.id}`;
     
     if (navigator.share) {
       navigator.share({
@@ -122,7 +122,7 @@ export default function ActivePolls({ polls }: ActivePollsProps) {
                   <TableRow 
                     key={poll.id}
                     className="cursor-pointer hover:bg-muted/10"
-                    onClick={() => navigate(`/polls/${poll.id}`)}
+                    onClick={() => navigate(`/challenges/${poll.id}`)}
                   >
                     <TableCell>
                       <div className="flex items-center">
@@ -203,7 +203,7 @@ export default function ActivePolls({ polls }: ActivePollsProps) {
                         size="icon"
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/polls/${poll.id}`);
+                          navigate(`/challenges/${poll.id}`);
                         }}
                       >
                         <ChartBarIcon className="h-4 w-4" />

@@ -107,7 +107,7 @@ export default function HomePage() {
                   className="bg-[#FFD700] hover:bg-[#E6C200] text-black font-medium py-2 px-4 rounded-md flex items-center"
                 >
                   <span className="mr-2 font-bold">+</span>
-                  Create Challenge
+                  New Challenge
                 </button>
               </div>
             )}

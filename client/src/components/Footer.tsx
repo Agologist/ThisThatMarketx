@@ -18,7 +18,7 @@ export default function Footer() {
             <Link href="/" className="text-muted-foreground hover:text-primary transition-colors text-sm">
               Dashboard
             </Link>
-            <Link href="/polls" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+            <Link href="/challenges" className="text-muted-foreground hover:text-primary transition-colors text-sm">
               Challenges
             </Link>
             <Link href="/race" className="text-muted-foreground hover:text-primary transition-colors text-sm">
