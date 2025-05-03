@@ -54,29 +54,29 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
   // Allow standalone mode when accessed directly from the footer
   const isStandaloneMode = pollId === 0 && !userOption;
   
-  // Check if this race has already been completed (from localStorage)
-  const [hasCompletedRace, setHasCompletedRace] = useState(false);
+  // Check if this battle has already been completed (from localStorage)
+  const [hasCompletedBattle, setHasCompletedBattle] = useState(false);
   
-  // Load saved race data from localStorage on initial render
+  // Load saved battle data from localStorage on initial render
   useEffect(() => {
     if (pollId > 0) {
       try {
-        const savedRace = localStorage.getItem(`raceGame_poll_${pollId}`);
-        if (savedRace) {
-          const parsedRace = JSON.parse(savedRace);
+        const savedBattle = localStorage.getItem(`battleGame_poll_${pollId}`);
+        if (savedBattle) {
+          const parsedBattle = JSON.parse(savedBattle);
           // If this game has been finished already, show the finished state
-          if (parsedRace.gameState === "finished") {
-            console.log(`Found completed race for poll ${pollId} - preventing restart`);
-            setHasCompletedRace(true);
+          if (parsedBattle.gameState === "finished") {
+            console.log(`Found completed battle for poll ${pollId} - preventing restart`);
+            setHasCompletedBattle(true);
             setGameState("finished");
-            setGameResult(parsedRace.gameResult);
+            setGameResult(parsedBattle.gameResult);
             
             // Make absolutely sure we don't auto-start
             hasAutoStartedRef.current = true;
           }
         }
       } catch (e) {
-        console.error("Failed to load saved race state:", e);
+        console.error("Failed to load saved battle state:", e);
       }
     }
   }, [pollId]);
@@ -267,9 +267,9 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
         // Calculate race time
         const elapsed = Date.now() - (startTimeRef.current || 0);
         
-        // Delay end of race to show explosion animation
+        // Delay end of battle to show explosion animation
         setTimeout(() => {
-          finishRace(true, elapsed); // Left car wins because right car fell off
+          finishBattle(true, elapsed); // Left car wins because right car fell off
         }, 800);
         return;
       }
@@ -285,9 +285,9 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
         // Calculate race time
         const elapsed = Date.now() - (startTimeRef.current || 0);
         
-        // Delay end of race to show explosion animation
+        // Delay end of battle to show explosion animation
         setTimeout(() => {
-          finishRace(false, elapsed); // Left car loses because it fell off
+          finishBattle(false, elapsed); // Left car loses because it fell off
         }, 800);
         return;
       }
@@ -340,9 +340,9 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
         // Calculate race time
         const elapsed = Date.now() - (startTimeRef.current || 0);
         
-        // Delay end of race to show explosion animation
+        // Delay end of battle to show explosion animation
         setTimeout(() => {
-          finishRace(true, elapsed); // Right car wins because left car fell off
+          finishBattle(true, elapsed); // Right car wins because left car fell off
         }, 800);
         return;
       }
@@ -386,7 +386,7 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
   // Auto-start the game when loaded from a challenge
   useEffect(() => {
     // Only auto-start when not in standalone mode, in "ready" state, and game hasn't been completed
-    if (!isStandaloneMode && gameState === "ready" && userOption && !hasCompletedRace) {
+    if (!isStandaloneMode && gameState === "ready" && userOption && !hasCompletedBattle) {
       // Small delay to ensure component is fully rendered
       const autoStartTimer = setTimeout(() => {
         startCountdown();
@@ -394,14 +394,14 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
       
       return () => clearTimeout(autoStartTimer);
     }
-  }, [isStandaloneMode, gameState, userOption, hasCompletedRace]);
+  }, [isStandaloneMode, gameState, userOption, hasCompletedBattle]);
   
   // Handle War mode challenges that have expired
   useEffect(() => {
     // Only for expired War challenges in ready state that haven't been auto-started yet
-    // AND haven't been completed previously (check hasCompletedRace)
-    if (isExpiredChallenge && pollData?.isWar && gameState === "ready" && !hasAutoStartedRef.current && !hasCompletedRace) {
-      console.log(`⚠️ WAR CHALLENGE ${pollId} EXPIRED - Starting race game once`);
+    // AND haven't been completed previously (check hasCompletedBattle)
+    if (isExpiredChallenge && pollData?.isWar && gameState === "ready" && !hasAutoStartedRef.current && !hasCompletedBattle) {
+      console.log(`⚠️ WAR CHALLENGE ${pollId} EXPIRED - Starting battle game once`);
       
       // Mark as started to prevent repeated triggering
       hasAutoStartedRef.current = true;
@@ -411,7 +411,7 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
         startCountdown();
       }, 500);
     }
-  }, [isExpiredChallenge, pollData, gameState, pollId, startCountdown, hasCompletedRace]);
+  }, [isExpiredChallenge, pollData, gameState, pollId, startCountdown, hasCompletedBattle]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -422,8 +422,8 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
     };
   }, []);
   
-  // Finish the race
-  const finishRace = (playerWon: boolean, time: number) => {
+  // Finish the battle
+  const finishBattle = (playerWon: boolean, time: number) => {
     if (raceTimerRef.current) {
       clearInterval(raceTimerRef.current);
     }
@@ -434,16 +434,16 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
     // Save game state to localStorage to prevent replaying in the same challenge
     if (pollId > 0) {
       try {
-        localStorage.setItem(`raceGame_poll_${pollId}`, JSON.stringify({
+        localStorage.setItem(`battleGame_poll_${pollId}`, JSON.stringify({
           gameState: "finished",
           gameResult: { won: playerWon, time }
         }));
       } catch (e) {
-        console.error("Failed to save race state to localStorage:", e);
+        console.error("Failed to save battle state to localStorage:", e);
       }
     }
     
-    // Save race results
+    // Save battle results
     saveRaceMutation.mutate({ time, won: playerWon });
   };
   
