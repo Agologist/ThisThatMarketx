@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Share2, ChevronLeft, CheckIcon, XIcon, Copy, X, Twitter, Facebook, Linkedin, Link, Smartphone } from "lucide-react";
+import { Loader2, Share2, ChevronLeft, CheckIcon, XIcon, Copy, X, Facebook, Link, Smartphone } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState, useEffect, useRef } from "react";
 import { Separator } from "@/components/ui/separator";
@@ -375,10 +375,13 @@ export default function ChallengePage() {
                       <Button 
                         variant="outline" 
                         size="icon" 
-                        className="h-10 w-full hover:bg-[#1DA1F2]/10" 
+                        className="h-10 w-full hover:bg-[#000000]/10" 
                         onClick={() => shareToSocial('twitter')}
                       >
-                        <Twitter className="h-5 w-5 text-[#1DA1F2]" />
+                        {/* X logo (formerly Twitter) */}
+                        <svg className="h-5 w-5 text-[#000000]" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
                       </Button>
                       <Button 
                         variant="outline" 
@@ -391,10 +394,13 @@ export default function ChallengePage() {
                       <Button 
                         variant="outline" 
                         size="icon" 
-                        className="h-10 w-full hover:bg-[#0A66C2]/10" 
-                        onClick={() => shareToSocial('linkedin')}
+                        className="h-10 w-full hover:bg-[#E4405F]/10" 
+                        onClick={() => shareToSocial('instagram')}
                       >
-                        <Linkedin className="h-5 w-5 text-[#0A66C2]" />
+                        {/* Instagram logo */}
+                        <svg className="h-5 w-5 text-[#E4405F]" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 2c2.717 0 3.056.01 4.122.06 1.065.05 1.79.217 2.428.465.66.254 1.216.598 1.772 1.153a4.908 4.908 0 0 1 1.153 1.772c.247.637.415 1.363.465 2.428.047 1.066.06 1.405.06 4.122 0 2.717-.01 3.056-.06 4.122-.05 1.065-.218 1.79-.465 2.428a4.883 4.883 0 0 1-1.153 1.772 4.915 4.915 0 0 1-1.772 1.153c-.637.247-1.363.415-2.428.465-1.066.047-1.405.06-4.122.06-2.717 0-3.056-.01-4.122-.06-1.065-.05-1.79-.218-2.428-.465a4.89 4.89 0 0 1-1.772-1.153 4.904 4.904 0 0 1-1.153-1.772c-.248-.637-.415-1.363-.465-2.428C2.013 15.056 2 14.717 2 12c0-2.717.01-3.056.06-4.122.05-1.066.217-1.79.465-2.428a4.88 4.88 0 0 1 1.153-1.772A4.897 4.897 0 0 1 5.45 2.525c.638-.248 1.362-.415 2.428-.465C8.944 2.013 9.283 2 12 2zm0 1.802c-2.67 0-2.987.01-4.04.059-.976.045-1.505.207-1.858.344-.466.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.136.353-.3.882-.344 1.857-.047 1.053-.059 1.37-.059 4.04 0 2.672.01 2.988.059 4.042.045.975.208 1.503.344 1.857.182.466.399.8.748 1.15.35.35.684.566 1.15.747.353.137.882.3 1.857.345 1.054.046 1.37.058 4.041.058 2.67 0 2.987-.01 4.04-.058.976-.045 1.504-.208 1.858-.345.466-.181.8-.398 1.15-.748.35-.35.566-.683.747-1.15.137-.352.3-.882.345-1.857.048-1.054.058-1.37.058-4.041 0-2.67-.01-2.987-.058-4.04-.045-.977-.208-1.505-.345-1.858-.18-.466-.397-.8-.747-1.15-.35-.35-.683-.566-1.15-.748-.353-.136-.882-.3-1.857-.344-1.054-.048-1.37-.058-4.041-.058zm0 3.063A5.135 5.135 0 1 1 12 17.135 5.135 5.135 0 0 1 12 6.865zm0 8.468A3.333 3.333 0 1 0 12 8.668a3.333 3.333 0 0 0 0 6.665zm6.538-8.671a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0z"/>
+                        </svg>
                       </Button>
                       <Button 
                         variant="outline" 
