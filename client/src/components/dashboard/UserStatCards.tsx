@@ -58,8 +58,8 @@ export default function UserStatCards() {
   // Calculate stats
   const challengeCount = userPolls.length;
   const voteCount = (user?.id && !isGuest) ? userVotes.length : 0;
-  // Count all battles won by the user
-  const warCount = userWonBattles.length;
+  // Count only challenge-based battles won by the user (with pollId)
+  const warCount = userWonBattles.filter(battle => battle.pollId).length;
   const warPassesCount = activeWarPolls.length;
   
   // Calculate ranks based on count and remaining to next rank
@@ -140,15 +140,17 @@ export default function UserStatCards() {
               userWonBattles.map((race: any) => {
                 const battleTime = race.racedAt ? new Date(race.racedAt).toLocaleDateString() : '';
                 
-                // Use title from backend if available, otherwise generate a title
+                // Use formatted title based on the specified pattern
                 let displayTitle = race.title || "";
                 if (!displayTitle) {
                   if (race.pollId) {
                     // Find the matching poll for challenge battles
                     const poll = allPolls.find((p: any) => p.id === race.pollId);
-                    displayTitle = poll ? poll.question : `Challenge #${race.pollId}`;
+                    const pollTitle = poll ? poll.question : `Challenge #${race.pollId}`;
+                    displayTitle = `Battle of ${pollTitle} (${battleTime})`;
                   } else {
-                    displayTitle = `Battle on ${battleTime}`;
+                    // Standalone battles - not shown in the Wars count but still displayed in the list
+                    displayTitle = `Battle of Speed Demons (${battleTime})`;
                   }
                 }
                 
