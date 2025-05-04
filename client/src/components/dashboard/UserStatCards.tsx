@@ -58,8 +58,8 @@ export default function UserStatCards() {
   // Calculate stats
   const challengeCount = userPolls.length;
   const voteCount = (user?.id && !isGuest) ? userVotes.length : 0;
-  // Count only challenge-based battles won by the user (with pollId)
-  const warCount = userWonBattles.filter((battle: any) => battle.pollId !== null).length;
+  // Count all battles won by the user for display
+  const warCount = userWonBattles.length;
   const warPassesCount = activeWarPolls.length;
   
   // Calculate ranks based on count and remaining to next rank
