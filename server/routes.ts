@@ -170,7 +170,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         diffMs: diffMs,
         diffMinutes: diffMinutes,
         isActive: diffMs > 0,
-        created: poll.createdAt.toISOString()
+        created: poll.createdAt ? poll.createdAt.toISOString() : 'null'
       });
       
       res.json(poll);
