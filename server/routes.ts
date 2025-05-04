@@ -724,19 +724,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (battle.pollId) {
           const poll = await storage.getPoll(battle.pollId);
           if (poll) {
+            // Format the date for display
+            const battleDate = battle.racedAt ? new Date(battle.racedAt) : new Date();
+            const formattedDate = battleDate.toLocaleDateString();
+            
             return {
               ...battle,
-              title: poll.question
+              title: `Battle of ${poll.question} (${formattedDate})`
             };
           }
         }
         
-        // For standalone battles, create a title based on date and time
-        const battleDateStr = battle.racedAt ? new Date(battle.racedAt).toLocaleDateString() : 'Unknown date';
-        const formattedTime = battle.racedAt ? new Date(battle.racedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Unknown time';
+        // For standalone battles, create a title based on date only
+        const battleDate = battle.racedAt ? new Date(battle.racedAt) : new Date();
+        const formattedDate = battleDate.toLocaleDateString();
+        
+        // For standalone battles, we'll use a generic name
         return {
           ...battle,
-          title: `Battle on ${battleDateStr} at ${formattedTime}`
+          title: `Battle of Speed Demons (${formattedDate})`
         };
       }));
       
