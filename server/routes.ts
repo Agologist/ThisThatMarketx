@@ -202,7 +202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         pollInfo: {
           id: poll.id,
           question: poll.question,
-          created: poll.createdAt.toISOString(),
+          created: poll.createdAt ? poll.createdAt.toISOString() : 'null',
           endTime: poll.endTime,
           parsedEndTime: endTime.toISOString(),
           timeDiffMs: diffMs,
