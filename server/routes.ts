@@ -728,6 +728,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const battleDate = battle.racedAt ? new Date(battle.racedAt) : new Date();
             const formattedDate = battleDate.toLocaleDateString();
             
+            // Return battle with formatted title for challenge battles
             return {
               ...battle,
               title: `Battle of ${poll.question} (${formattedDate})`
@@ -735,11 +736,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
         
-        // For standalone battles, create a title based on the challenge name (if any) or date
+        // For standalone battles, create a title based on date
         const battleDate = battle.racedAt ? new Date(battle.racedAt) : new Date();
         const formattedDate = battleDate.toLocaleDateString();
         
-        // For standalone battles, we'll use the same format with a generic title
+        // Return battle with formatted title for standalone battles
         return {
           ...battle,
           title: `Battle of Standalone Challenge (${formattedDate})`
