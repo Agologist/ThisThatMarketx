@@ -140,19 +140,8 @@ export default function UserStatCards() {
               userWonBattles.map((race: any) => {
                 const battleTime = race.racedAt ? new Date(race.racedAt).toLocaleDateString() : '';
                 
-                // Use formatted title based on the specified pattern
-                let displayTitle = race.title || "";
-                if (!displayTitle) {
-                  if (race.pollId) {
-                    // Find the matching poll for challenge battles
-                    const poll = allPolls.find((p: any) => p.id === race.pollId);
-                    const pollTitle = poll ? poll.question : `Challenge #${race.pollId}`;
-                    displayTitle = `Battle of ${pollTitle} (${battleTime})`;
-                  } else {
-                    // Standalone battles
-                    displayTitle = `Battle of Standalone Challenge (${battleTime})`;
-                  }
-                }
+                const displayTitle = race.title || "Unnamed Challenge";
+                const winTime = (race.time / 1000).toFixed(1); // Format time to 1 decimal place
                 
                 return (
                   <DropdownMenuItem key={race.id}>
@@ -162,22 +151,12 @@ export default function UserStatCards() {
                         className="cursor-pointer flex items-center w-full"
                       >
                         <Trophy className="h-4 w-4 mr-2 text-primary" />
-                        <span className="truncate">
-                          {displayTitle}
-                          <span className="text-xs text-muted-foreground ml-1">
-                            ({battleTime}) - {race.time / 1000}s
-                          </span>
-                        </span>
+                        <span className="truncate">{displayTitle} <span className="text-xs text-muted-foreground">({battleTime}) - {winTime}s</span></span>
                       </Link>
                     ) : (
                       <div className="flex items-center">
                         <Trophy className="h-4 w-4 mr-2 text-primary" />
-                        <span className="truncate">
-                          {displayTitle}
-                          <span className="text-xs text-muted-foreground ml-1">
-                            ({battleTime}) - {race.time / 1000}s
-                          </span>
-                        </span>
+                        <span className="truncate">{displayTitle} <span className="text-xs text-muted-foreground">({battleTime}) - {winTime}s</span></span>
                       </div>
                     )}
                   </DropdownMenuItem>

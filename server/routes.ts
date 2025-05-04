@@ -736,32 +736,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Modify the display data - for standalone battles, add title information
+      // Modify the display data with formats matching Challenges and Votes
       const enhancedBattles = await Promise.all(wonBattles.map(async (battle) => {
         // If the battle is linked to a poll
         if (battle.pollId) {
           const poll = await storage.getPoll(battle.pollId);
           if (poll) {
-            // Format the date for display
-            const battleDate = battle.racedAt ? new Date(battle.racedAt) : new Date();
-            const formattedDate = battleDate.toLocaleDateString();
-            
-            // Return battle with formatted title for challenge battles
+            // Return challenge-based battle with just poll title
             return {
               ...battle,
-              title: `Battle of ${poll.question} (${formattedDate})`
+              title: poll.question
             };
           }
         }
         
-        // For standalone battles, create a title based on date
-        const battleDate = battle.racedAt ? new Date(battle.racedAt) : new Date();
-        const formattedDate = battleDate.toLocaleDateString();
-        
-        // Return battle with formatted title for standalone battles
+        // For standalone battles
         return {
           ...battle,
-          title: `Battle of Standalone Challenge (${formattedDate})`
+          title: "Standalone Challenge"
         };
       }));
       
