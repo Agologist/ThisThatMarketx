@@ -299,6 +299,10 @@ export default function Header() {
                             {userWonBattles.length > 0 ? (
                               userWonBattles.map((race: any) => {
                                 const battleTime = race.racedAt ? new Date(race.racedAt).toLocaleDateString() : '';
+                                // Find the matching poll for challenge battles
+                                const poll = race.pollId ? allPolls.find((p: any) => p.id === race.pollId) : null;
+                                const challengeTitle = poll ? poll.question : `Challenge #${race.pollId}`;
+                                
                                 return (
                                   <DropdownMenuItem key={race.id}>
                                     {race.pollId ? (
@@ -308,7 +312,7 @@ export default function Header() {
                                       >
                                         <Trophy className="h-4 w-4 mr-2 text-primary" />
                                         <span className="truncate">
-                                          Battle Won (Challenge)
+                                          {challengeTitle}
                                           <span className="text-xs text-muted-foreground ml-1">
                                             ({battleTime}) - {race.time / 1000}s
                                           </span>
