@@ -79,8 +79,8 @@ export default function Header() {
   // Calculate stats
   const challengeCount = userPolls.length;
   const voteCount = (user?.id && !isGuest) ? userVotes.length : 0;
-  // Count only challenge-based battles won by the user (with pollId)
-  const warCount = userWonBattles.filter(battle => battle.pollId).length;
+  // Count all battles won by the user
+  const warCount = userWonBattles.length;
   const warPassesCount = activeWarPolls.length;
   
   // Calculate ranks based on count
@@ -320,8 +320,8 @@ export default function Header() {
                                     const pollTitle = poll ? poll.question : `Challenge #${race.pollId}`;
                                     displayTitle = `Battle of ${pollTitle} (${battleTime})`;
                                   } else {
-                                    // Standalone battles - not shown in the Wars count but still displayed in the list
-                                    displayTitle = `Battle of Speed Demons (${battleTime})`;
+                                    // Standalone battles
+                                    displayTitle = `Battle of Standalone Challenge (${battleTime})`;
                                   }
                                 }
                                 

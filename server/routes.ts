@@ -735,14 +735,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
         
-        // For standalone battles, create a title based on date only
+        // For standalone battles, create a title based on the challenge name (if any) or date
         const battleDate = battle.racedAt ? new Date(battle.racedAt) : new Date();
         const formattedDate = battleDate.toLocaleDateString();
         
-        // For standalone battles, we'll use a generic name
+        // For standalone battles, we'll use the same format with a generic title
         return {
           ...battle,
-          title: `Battle of Speed Demons (${formattedDate})`
+          title: `Battle of Standalone Challenge (${formattedDate})`
         };
       }));
       
