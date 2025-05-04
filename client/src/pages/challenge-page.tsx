@@ -837,7 +837,7 @@ export default function ChallengePage() {
                                 )}
                               </div>
                               
-                              <div className="text-center font-racing text-sm">
+                              <div className="text-center font-racing text-xl text-primary text-shadow-lg">
                                 {poll.optionAVotes > poll.optionBVotes ? 
                                   "TEAM A WINS!" : 
                                   poll.optionBVotes > poll.optionAVotes ? 
