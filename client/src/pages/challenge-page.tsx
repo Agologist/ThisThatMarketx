@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Share2, ChevronLeft, CheckIcon, XIcon } from "lucide-react";
+import { Loader2, Share2, ChevronLeft, CheckIcon, XIcon, Copy, X, Twitter, Facebook, Linkedin, Link, Smartphone } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState, useEffect, useRef } from "react";
 import { Separator } from "@/components/ui/separator";
@@ -14,6 +14,11 @@ import { Badge } from "@/components/ui/badge";
 import { Poll, RaceRecord } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import BattleGame from "./battle-game";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 export default function ChallengePage() {
   const { id } = useParams<{ id: string }>();
@@ -193,21 +198,57 @@ export default function ChallengePage() {
     }
   };
   
+  const [showShareMenu, setShowShareMenu] = useState(false);
+  
   const shareChallenge = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: poll?.question || "Check out this challenge",
-        text: `Vote on "${poll?.question}"`,
-        url: window.location.href,
-      }).catch((error) => console.log('Error sharing', error));
-    } else {
-      // Fallback for browsers that don't support the Web Share API
-      navigator.clipboard.writeText(window.location.href);
-      toast({
-        title: "Link copied!",
-        description: "Challenge link copied to clipboard",
-      });
+    // Always show our custom sharing menu first
+    setShowShareMenu(true);
+  };
+  
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast({
+      title: "Link copied!",
+      description: "Challenge link copied to clipboard",
+    });
+    setShowShareMenu(false);
+  };
+  
+  const shareToSocial = (platform: string) => {
+    let shareUrl = '';
+    const encodedUrl = encodeURIComponent(window.location.href);
+    const encodedTitle = encodeURIComponent(poll?.question || "Check out this challenge");
+    const encodedText = encodeURIComponent(`Vote on "${poll?.question}" in this battle challenge!`);
+    
+    switch(platform) {
+      case 'twitter':
+        shareUrl = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
+        break;
+      case 'facebook':
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+        break;
+      case 'linkedin':
+        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
+        break;
+      case 'whatsapp':
+        shareUrl = `https://wa.me/?text=${encodedText}%20${encodedUrl}`;
+        break;
+      case 'native':
+        if (navigator.share) {
+          navigator.share({
+            title: poll?.question || "Check out this challenge",
+            text: `Vote on "${poll?.question}"`,
+            url: window.location.href,
+          }).catch(error => console.log('Error sharing', error));
+        }
+        break;
     }
+    
+    if (shareUrl) {
+      window.open(shareUrl, '_blank', 'noopener,noreferrer');
+    }
+    
+    setShowShareMenu(false);
   };
   
   if (isLoading) {
@@ -307,13 +348,89 @@ export default function ChallengePage() {
                   </CardDescription>
                 </div>
                 
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={shareChallenge}
-                >
-                  <Share2 className="h-5 w-5" />
-                </Button>
+                <Popover open={showShareMenu} onOpenChange={setShowShareMenu}>
+                  <PopoverTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => setShowShareMenu(true)}
+                    >
+                      <Share2 className="h-5 w-5" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-72 p-4">
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-sm font-medium">Share this challenge</h3>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6" 
+                        onClick={() => setShowShareMenu(false)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    <div className="grid grid-cols-4 gap-2 mb-3">
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="h-10 w-full hover:bg-[#1DA1F2]/10" 
+                        onClick={() => shareToSocial('twitter')}
+                      >
+                        <Twitter className="h-5 w-5 text-[#1DA1F2]" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="h-10 w-full hover:bg-[#1877F2]/10" 
+                        onClick={() => shareToSocial('facebook')}
+                      >
+                        <Facebook className="h-5 w-5 text-[#1877F2]" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="h-10 w-full hover:bg-[#0A66C2]/10" 
+                        onClick={() => shareToSocial('linkedin')}
+                      >
+                        <Linkedin className="h-5 w-5 text-[#0A66C2]" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="h-10 w-full hover:bg-[#25D366]/10" 
+                        onClick={() => shareToSocial('whatsapp')}
+                      >
+                        <svg className="h-5 w-5 text-[#25D366]" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M17.6 6.32A8.42 8.42 0 0 0 12.18 4h-.08a8.4 8.4 0 0 0-8.45 8.45 8.45 8.45 0 0 0 1.19 4.3L4 20.26l3.5-.78a8.3 8.3 0 0 0 4.11 1.06h.06a8.36 8.36 0 0 0 8.39-8.47 8.43 8.43 0 0 0-2.46-6.15zm-5.42 13h-.05a6.95 6.95 0 0 1-3.54-1l-.24-.15-2.61.59.58-2.47-.17-.24a7.08 7.08 0 0 1-1.05-3.69 7 7 0 0 1 7-7c1.93 0 3.67.71 5 2a6.9 6.9 0 0 1 2 5c0 3.82-3.22 7-6.93 7zm3.33-5.3c-.21-.09-1.23-.62-1.42-.68s-.32-.11-.47.09c-.14.21-.56.68-.68.83-.12.14-.25.15-.46.06a5.8 5.8 0 0 1-1.75-1.12 6.43 6.43 0 0 1-1.21-1.55c-.14-.23 0-.35.09-.47s.21-.26.32-.38l.11-.19c.1-.17.15-.37.22-.56.08-.2 0-.38-.05-.53s-.47-1.13-.64-1.55c-.17-.4-.35-.35-.47-.36s-.26 0-.4 0a.78.78 0 0 0-.56.26 2.37 2.37 0 0 0-.71 1.74c0 1 .73 2 .83 2.15s1.42 2.34 3.53 3.18a12.1 12.1 0 0 0 1.4.53 3.65 3.65 0 0 0 1.52.11c.5-.07 1.23-.52 1.4-1a1.79 1.79 0 0 0 .1-1.02c-.12-.1-.24-.17-.45-.28z" />
+                        </svg>
+                      </Button>
+                    </div>
+                    
+                    <div className="flex flex-col gap-2">
+                      {navigator.share && (
+                        <Button 
+                          variant="outline"
+                          className="w-full justify-start" 
+                          onClick={() => shareToSocial('native')}
+                        >
+                          <Smartphone className="h-4 w-4 mr-2" />
+                          <span>Share via device</span>
+                        </Button>
+                      )}
+                      
+                      <Button 
+                        variant="outline"
+                        className="w-full justify-start" 
+                        onClick={copyToClipboard}
+                      >
+                        <Copy className="h-4 w-4 mr-2" />
+                        <span>Copy link</span>
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
             </CardHeader>
             
