@@ -127,7 +127,7 @@ export default function AuthPage() {
           email: result.user.email,
           displayName: result.user.displayName || result.user.providerData[0]?.displayName || 'Google User',
           photoURL: result.user.photoURL,
-          provider: 'google.com'
+          provider: 'google'
         }),
       });
       
@@ -222,7 +222,7 @@ export default function AuthPage() {
           email: result.user.email, // This might be null from Twitter
           displayName: result.user.displayName || result.user.providerData[0]?.displayName || 'X User',
           photoURL: result.user.photoURL,
-          provider: 'twitter.com'
+          provider: 'x'
         }),
       });
       

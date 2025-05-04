@@ -68,12 +68,9 @@ export const signInWithX = async (): Promise<UserCredential> => {
     }
   }
   
-  // Configure X provider with minimal parameters to prevent auth errors
-  // Note: API keys should be configured in Firebase Console, not here
-  xProvider.setCustomParameters({
-    // Add cache-busting parameter to prevent caching issues
-    'state': `auth_${Math.random().toString(36).substring(2, 10)}_${Date.now()}`
-  });
+  // Don't set any custom parameters - using stock configuration
+  // Custom parameters can sometimes cause issues with X authentication
+  console.log("Using default X provider configuration without custom parameters");
   
   // Create a flag to prevent double auth attempts
   let authInProgress = false;
