@@ -49,6 +49,12 @@ export default function UserStatCards() {
     enabled: !!user && !isGuest
   });
   
+  // Fetch all polls for reference when displaying battle results
+  const { data: allPolls = [] } = useQuery<Poll[]>({
+    queryKey: ["/api/polls"],
+    enabled: !!user && !isGuest
+  });
+  
   // Calculate stats
   const challengeCount = userPolls.length;
   const voteCount = (user?.id && !isGuest) ? userVotes.length : 0;

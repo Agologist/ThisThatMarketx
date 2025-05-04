@@ -65,6 +65,17 @@ export default function Header() {
     enabled: !!user && !isGuest
   });
   
+  // Fetch all polls for reference when displaying battle results
+  const { data: allPolls = [] } = useQuery({
+    queryKey: ["/api/polls"],
+    queryFn: async () => {
+      const res = await fetch("/api/polls", { credentials: "include" });
+      if (!res.ok) return [];
+      return await res.json();
+    },
+    enabled: !!user && !isGuest
+  });
+  
   // Calculate stats
   const challengeCount = userPolls.length;
   const voteCount = (user?.id && !isGuest) ? userVotes.length : 0;
