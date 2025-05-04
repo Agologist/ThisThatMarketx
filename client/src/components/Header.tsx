@@ -79,8 +79,8 @@ export default function Header() {
   // Calculate stats
   const challengeCount = userPolls.length;
   const voteCount = (user?.id && !isGuest) ? userVotes.length : 0;
-  // Count all battles won by the user
-  const warCount = userWonBattles.length;
+  // Count only challenge-based battles won by the user (with pollId)
+  const warCount = userWonBattles.filter(battle => battle.pollId).length;
   const warPassesCount = activeWarPolls.length;
   
   // Calculate ranks based on count
