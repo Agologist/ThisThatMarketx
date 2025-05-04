@@ -838,19 +838,27 @@ export default function ChallengePage() {
                               </div>
                               
                               <div className="text-center font-racing text-xl text-primary text-shadow-lg">
-                                {poll.optionAVotes > poll.optionBVotes ? 
-                                  "TEAM A WINS!" : 
-                                  poll.optionBVotes > poll.optionAVotes ? 
-                                    "TEAM B WINS!" : 
-                                    "IT'S A TIE!"}
+                                {/* If the user played the battle, show their personal result */}
+                                {parsedBattle.gameResult ? (
+                                  parsedBattle.gameResult.won ? 
+                                    `YOU WIN!` : 
+                                    `YOU LOSE!`
+                                ) : (
+                                  /* Otherwise fall back to team results */
+                                  poll.optionAVotes > poll.optionBVotes ? 
+                                    "TEAM A WINS!" : 
+                                    poll.optionBVotes > poll.optionAVotes ? 
+                                      "TEAM B WINS!" : 
+                                      "IT'S A TIE!"
+                                )}
                               </div>
                             </div>
                             
                             {/* Display performance stats if they exist */}
-                            {parsedBattle.time && (
+                            {parsedBattle.gameResult?.time && (
                               <div className="mt-4 text-sm text-muted-foreground">
-                                <p>Your performance: <span className="font-semibold">{(parsedBattle.time / 1000).toFixed(2)}s</span></p>
-                                <p>Result: <span className="font-semibold">{parsedBattle.won ? "Won" : "Lost"}</span></p>
+                                <p>Your performance: <span className="font-semibold">{(parsedBattle.gameResult.time / 1000).toFixed(2)}s</span></p>
+                                <p>Result: <span className="font-semibold">{parsedBattle.gameResult.won ? "Won" : "Lost"}</span></p>
                               </div>
                             )}
                           </div>
