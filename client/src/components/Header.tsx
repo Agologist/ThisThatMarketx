@@ -327,7 +327,7 @@ export default function Header() {
                                     ) : (
                                       <div className="flex items-center">
                                         <Trophy className="h-4 w-4 mr-2 text-primary" />
-                                        <span className="truncate">{displayTitle} <span className="text-xs text-muted-foreground">({battleTime}) - {winTime}s</span></span>
+                                        <span className="truncate">Standalone Challenge <span className="text-xs text-muted-foreground">({battleTime}) - {winTime}s</span></span>
                                       </div>
                                     )}
                                   </DropdownMenuItem>
