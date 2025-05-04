@@ -139,9 +139,18 @@ export default function UserStatCards() {
             {userWonBattles.length > 0 ? (
               userWonBattles.map((race: any) => {
                 const battleTime = race.racedAt ? new Date(race.racedAt).toLocaleDateString() : '';
-                // Find the matching poll for challenge battles
-                const poll = race.pollId ? allPolls.find((p: any) => p.id === race.pollId) : null;
-                const challengeTitle = poll ? poll.question : `Challenge #${race.pollId}`;
+                
+                // Use title from backend if available, otherwise generate a title
+                let displayTitle = race.title || "";
+                if (!displayTitle) {
+                  if (race.pollId) {
+                    // Find the matching poll for challenge battles
+                    const poll = allPolls.find((p: any) => p.id === race.pollId);
+                    displayTitle = poll ? poll.question : `Challenge #${race.pollId}`;
+                  } else {
+                    displayTitle = `Battle on ${battleTime}`;
+                  }
+                }
                 
                 return (
                   <DropdownMenuItem key={race.id}>
@@ -152,7 +161,7 @@ export default function UserStatCards() {
                       >
                         <Trophy className="h-4 w-4 mr-2 text-primary" />
                         <span className="truncate">
-                          {challengeTitle}
+                          {displayTitle}
                           <span className="text-xs text-muted-foreground ml-1">
                             ({battleTime}) - {race.time / 1000}s
                           </span>
@@ -162,7 +171,7 @@ export default function UserStatCards() {
                       <div className="flex items-center">
                         <Trophy className="h-4 w-4 mr-2 text-primary" />
                         <span className="truncate">
-                          Battle Won (Standalone)
+                          {displayTitle}
                           <span className="text-xs text-muted-foreground ml-1">
                             ({battleTime}) - {race.time / 1000}s
                           </span>

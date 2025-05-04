@@ -718,9 +718,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For now, count all battles the user has won regardless of pollId
       const wonBattles = userRaces.filter(race => race.won === true);
       
-      console.log("Filtered won battles:", JSON.stringify(wonBattles, null, 2));
+      // Modify the display data - for standalone battles, add title information
+      const enhancedBattles = await Promise.all(wonBattles.map(async (battle) => {
+        // If the battle is linked to a poll
+        if (battle.pollId) {
+          const poll = await storage.getPoll(battle.pollId);
+          if (poll) {
+            return {
+              ...battle,
+              title: poll.question
+            };
+          }
+        }
+        
+        // For standalone battles, create a title based on date and time
+        const battleDateStr = battle.racedAt ? new Date(battle.racedAt).toLocaleDateString() : 'Unknown date';
+        const formattedTime = battle.racedAt ? new Date(battle.racedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Unknown time';
+        return {
+          ...battle,
+          title: `Battle on ${battleDateStr} at ${formattedTime}`
+        };
+      }));
       
-      res.json(wonBattles);
+      console.log("Filtered won battles:", JSON.stringify(enhancedBattles, null, 2));
+      
+      res.json(enhancedBattles);
     } catch (error) {
       console.error('Error fetching won battles:', error);
       res.status(500).json({ message: "Failed to fetch won battles" });
