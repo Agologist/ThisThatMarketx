@@ -16,7 +16,7 @@ export default function Footer() {
             </Link>
           </div>
           
-          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-4 md:mb-0">
+          <div className="md:ml-auto flex flex-wrap justify-center gap-x-8 gap-y-2 mb-4 md:mb-0 md:mr-8">
             <Link href="/" className="text-muted-foreground hover:text-primary transition-colors text-sm">
               Dashboard
             </Link>
@@ -27,8 +27,6 @@ export default function Footer() {
               Battle Game
             </Link>
           </div>
-          
-          <div className="flex-grow"></div>
         </div>
         
         <div className="border-t border-primary/20 mt-6 pt-6 flex flex-col md:flex-row justify-between items-center">
