@@ -81,7 +81,8 @@ export default function Header() {
   const voteCount = (user?.id && !isGuest) ? userVotes.length : 0;
   // Count all battles won by the user for display
   const warCount = userWonBattles.length;
-  const warPassesCount = activeWarPolls.length;
+  // For War Passes, only count active polls that have isWar set to true
+  const warPassesCount = (activeWarPolls || []).length;
   
   // Calculate ranks based on count
   const getRank = (count: number): string => {
