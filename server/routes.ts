@@ -750,10 +750,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
         
-        // For standalone battles
+        // For standalone battles, give them a more descriptive name
+        // Get the latest challenge from the user
+        const userPolls = await storage.getUserPolls(battle.userId);
+        let title = "Challenge";
+        
+        if (userPolls.length > 0) {
+          // If user has created challenges, use their most recent one's name
+          title = userPolls[0].question;
+        } else {
+          // Try to find any challenge the user has voted on
+          const userVotes = await storage.getUserVotes(battle.userId);
+          if (userVotes.length > 0) {
+            const poll = await storage.getPoll(userVotes[0].pollId);
+            if (poll) {
+              title = poll.question;
+            }
+          }
+        }
+        
         return {
           ...battle,
-          title: "Challenge"
+          title: title
         };
       }));
       
