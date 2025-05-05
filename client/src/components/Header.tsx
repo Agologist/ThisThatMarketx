@@ -165,78 +165,39 @@ export default function Header() {
   const showUserProfile = user || isGuest;
   
   return (
-    <header style={{
-      backgroundColor: "black", 
-      borderBottom: "1px solid rgba(255, 215, 0, 0.3)",
-      position: "sticky",
-      top: 0,
-      zIndex: 50,
-      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
-    }}>
-      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "16px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Link href="/" style={{ display: "flex", alignItems: "center" }}>
-            <FlagIcon style={{ color: "#FFD700", height: "24px", width: "24px", marginRight: "8px" }} />
-            <h1 style={{ fontFamily: "Racing Sans One, cursive", color: "#FFD700", fontSize: "24px", letterSpacing: "1px" }}>
-              Votes and Wars
+    <header className="header-enhanced">
+      <div className="container mx-auto px-4 py-4">
+        <div className="flex justify-between items-center">
+          <Link href="/" className="flex items-center group">
+            <FlagIcon className="text-primary h-6 w-6 mr-2 group-hover:scale-110 transition-transform" />
+            <h1 className="font-racing text-primary text-2xl tracking-wider">
+              <span className="group-hover:text-yellow-400 transition-colors">Votes</span> and <span className="group-hover:text-yellow-400 transition-colors">Wars</span>
             </h1>
           </Link>
           
           {/* Mobile Nav Toggle */}
           <button 
-            style={{
-              display: "block",
-              borderRadius: "50%", 
-              padding: "8px",
-              color: "#FFD700",
-              background: "transparent",
-              border: "none",
-              cursor: "pointer"
-            }}
+            className="block rounded-full p-2 text-primary bg-transparent border-0 cursor-pointer lg:hidden"
             onClick={toggleMenu}
             aria-label="Toggle menu"
           >
-            {isMenuOpen ? <X style={{width: "24px", height: "24px"}} /> : <Menu style={{width: "24px", height: "24px"}} />}
+            {isMenuOpen ? 
+              <X className="h-6 w-6" /> : 
+              <Menu className="h-6 w-6" />}
           </button>
           
           {/* Desktop Navigation */}
-          <nav style={{ display: "flex", alignItems: "center", gap: "32px" }} className="hidden lg:flex">
+          <nav className="hidden lg:flex items-center gap-8">
             {navLinks.map((link) => (
               <Link 
                 key={link.href} 
                 href={link.href}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  padding: "8px 12px",
-                  borderRadius: "6px",
-                  fontFamily: "Montserrat, sans-serif",
-                  fontWeight: 500,
-                  color: link.active ? "#FFD700" : "#FFFFFF",
-                  backgroundColor: link.active ? "rgba(255, 215, 0, 0.1)" : "transparent",
-                  position: "relative",
-                  transition: "all 0.2s ease"
-                }}
+                className={`nav-link ${link.active ? 'nav-link-active' : 'nav-link-inactive'}`}
               >
-                <span style={{ 
-                  color: link.active ? "#FFD700" : "rgba(255, 255, 255, 0.6)", 
-                  marginRight: "6px" 
-                }}>
+                <span className={link.active ? 'nav-icon-active' : 'nav-icon-inactive'}>
                   {link.icon}
                 </span>
                 {link.label}
-                {link.active && (
-                  <span style={{
-                    position: "absolute",
-                    bottom: "-4px",
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    width: "8px",
-                    height: "8px",
-                    backgroundColor: "#FFD700",
-                    borderRadius: "50%"
-                  }}></span>
-                )}
               </Link>
             ))}
             
