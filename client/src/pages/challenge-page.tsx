@@ -983,9 +983,9 @@ export default function ChallengePage() {
                   }
                   
                   // If no saved battle or the battle isn't finished, show the full battle component
-                  // Special case for Challenge 25
-                  if (id === "25") {
-                    // Create and save a completed record for Challenge 25 first to prevent future issues
+                  // Special case for Challenge 25, 29, and 30
+                  if (id === "25" || id === "29" || id === "30") {
+                    // Create and save a completed record for these challenges to prevent future issues
                     const completedBattleData = {
                       gameState: "finished",
                       gameResult: { won: true, time: 30000 },
@@ -996,9 +996,9 @@ export default function ChallengePage() {
                     // Save to both old and new formats for maximum compatibility
                     localStorage.setItem(`raceGame_poll_${id}`, JSON.stringify(completedBattleData));
                     localStorage.setItem(`battleGame_poll_${id}`, JSON.stringify(completedBattleData));
-                    localStorage.setItem('challenge25_completed', 'true');
+                    localStorage.setItem(`challenge${id}_completed`, 'true');
                     
-                    console.log("Challenge 25: Created permanent completion record before rendering game");
+                    console.log(`Challenge ${id}: Created permanent completion record before rendering game`);
                     
                     // Return a completed message rather than the game
                     return (
@@ -1008,7 +1008,7 @@ export default function ChallengePage() {
                           Battle Already Completed
                         </h3>
                         <p className="text-muted-foreground mb-6">
-                          Challenge 25 has been completed and is no longer available.
+                          Challenge {id} has been completed and is no longer available.
                         </p>
                       </div>
                     );
