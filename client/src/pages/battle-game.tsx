@@ -57,6 +57,11 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
   // Check if this battle has already been completed (from localStorage)
   const [hasCompletedBattle, setHasCompletedBattle] = useState(false);
   
+  // Query for user battles
+  const { data: userBattles, isLoading: battlesLoading } = useQuery<RaceRecord[]>({
+    queryKey: ["/api/user/battles"],
+  });
+
   // Load saved battle data from localStorage and check DB for completed battles
   useEffect(() => {
     if (pollId > 0) {
@@ -181,10 +186,6 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
   const battleTimerRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
   const hasAutoStartedRef = useRef(false);
-  
-  const { data: userBattles, isLoading: battlesLoading } = useQuery<RaceRecord[]>({
-    queryKey: ["/api/user/battles"],
-  });
   
   const saveBattleMutation = useMutation({
     mutationFn: async (battleData: { time: number; won: boolean }) => {
