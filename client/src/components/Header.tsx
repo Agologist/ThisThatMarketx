@@ -137,8 +137,24 @@ export default function Header() {
   };
   
   const navLinks = [
-    { href: "/", label: "Dashboard", active: location === "/" },
-    { href: "/challenges", label: "Challenges", active: location.startsWith("/challenges") || location.startsWith("/polls") },
+    { 
+      href: "/", 
+      label: "Dashboard", 
+      active: location === "/",
+      icon: <Trophy className="h-4 w-4 mr-1.5" />
+    },
+    { 
+      href: "/challenges", 
+      label: "Challenges", 
+      active: location.startsWith("/challenges") || location.startsWith("/polls"),
+      icon: <FileText className="h-4 w-4 mr-1.5" />
+    },
+    { 
+      href: "/battle-game", 
+      label: "War Game", 
+      active: location.startsWith("/battle-game"),
+      icon: <Terminal className="h-4 w-4 mr-1.5" />
+    }
   ];
   
   const getInitials = (name: string) => {
@@ -149,17 +165,19 @@ export default function Header() {
   const showUserProfile = user || isGuest;
   
   return (
-    <header className="bg-black border-b border-primary/50">
-      <div className="container mx-auto px-4 py-3">
+    <header className="bg-black border-b border-primary/30 sticky top-0 z-50 shadow-lg">
+      <div className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
-          <Link href="/" className="flex items-center">
-            <FlagIcon className="text-primary h-6 w-6 mr-2" />
-            <h1 className="font-racing text-primary text-2xl">Votes and Wars</h1>
+          <Link href="/" className="flex items-center group">
+            <FlagIcon className="text-primary h-6 w-6 mr-2 group-hover:scale-110 transition-transform" />
+            <h1 className="font-racing text-primary text-2xl tracking-wider">
+              <span className="group-hover:text-yellow-400 transition-colors">Votes</span> and <span className="group-hover:text-yellow-400 transition-colors">Wars</span>
+            </h1>
           </Link>
           
           {/* Mobile Nav Toggle */}
           <button 
-            className="lg:hidden text-primary"
+            className="lg:hidden text-primary hover:bg-primary/10 rounded-full p-2 transition-colors"
             onClick={toggleMenu}
             aria-label="Toggle menu"
           >
@@ -167,16 +185,22 @@ export default function Header() {
           </button>
           
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-6">
+          <nav className="hidden lg:flex items-center space-x-8">
             {navLinks.map((link) => (
               <Link 
                 key={link.href} 
                 href={link.href}
-                className={`hover:text-primary transition-colors font-montserrat font-medium ${
-                  link.active ? "text-primary" : "text-foreground"
+                className={`hover:text-primary transition-colors font-montserrat font-medium relative px-3 py-2 flex items-center rounded-md ${
+                  link.active 
+                    ? "text-primary bg-primary/10" 
+                    : "text-foreground hover:bg-background/10"
                 }`}
               >
+                <span className={`${link.active ? "text-primary" : "text-muted-foreground"}`}>
+                  {link.icon}
+                </span>
                 {link.label}
+                {link.active && <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-primary rounded-full"></span>}
               </Link>
             ))}
             
@@ -410,18 +434,23 @@ export default function Header() {
       
       {/* Mobile Navigation Menu */}
       {isMenuOpen && (
-        <div className="lg:hidden bg-black border-t border-primary/30">
-          <div className="container mx-auto px-4 py-3">
-            <nav className="flex flex-col space-y-4">
+        <div className="lg:hidden bg-black border-t border-primary/20 shadow-lg">
+          <div className="container mx-auto px-4 py-4">
+            <nav className="flex flex-col space-y-3">
               {navLinks.map((link) => (
                 <Link 
                   key={link.href} 
                   href={link.href}
-                  className={`py-2 font-montserrat font-medium ${
-                    link.active ? "text-primary" : "text-foreground hover:text-primary transition-colors"
+                  className={`py-3 px-4 font-montserrat font-medium flex items-center rounded-md ${
+                    link.active 
+                      ? "text-primary bg-primary/10 border-l-4 border-primary" 
+                      : "text-foreground hover:text-primary hover:bg-primary/5 transition-colors border-l-4 border-transparent"
                   }`}
                   onClick={() => setIsMenuOpen(false)}
                 >
+                  <span className={`${link.active ? "text-primary" : "text-muted-foreground"} mr-3`}>
+                    {link.icon}
+                  </span>
                   {link.label}
                 </Link>
               ))}
@@ -451,7 +480,7 @@ export default function Header() {
                   {isGuest ? (
                     <Button 
                       variant="outline" 
-                      className="border-primary text-primary"
+                      className="border-primary text-primary hover:bg-primary/10 transition-colors shadow-md"
                       onClick={() => {
                         setIsMenuOpen(false);
                         exitGuestMode();
@@ -463,7 +492,7 @@ export default function Header() {
                   ) : (
                     <Button 
                       variant="outline" 
-                      className="border-primary text-primary" 
+                      className="border-primary text-primary hover:bg-primary/10 transition-colors shadow-md" 
                       onClick={handleLogout}
                     >
                       <LogOut className="mr-2 h-4 w-4" />
@@ -473,12 +502,13 @@ export default function Header() {
                 </>
               ) : (
                 <Button 
-                  className="btn-gold"
+                  className="btn-gold shadow-md hover:shadow-lg transform hover:scale-105 transition-all"
                   onClick={() => {
                     setIsMenuOpen(false);
                     exitGuestMode();
                   }}
                 >
+                  <UserIcon className="mr-2 h-4 w-4" />
                   Sign In
                 </Button>
               )}
