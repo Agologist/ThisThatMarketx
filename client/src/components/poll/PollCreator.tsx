@@ -164,7 +164,12 @@ export default function PollCreator() {
         title: "Challenge Created",
         description: "Your challenge has been created successfully",
       });
+      // Invalidate all the queries that might be affected by a new poll creation
       queryClient.invalidateQueries({ queryKey: ["/api/polls"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/polls"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/warpasses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/votes"] });
+      
       navigate(`/polls/${data.id}`);
       form.reset();
       setOptionAImage(null);

@@ -172,8 +172,12 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
     },
     onSuccess: (data) => {
       console.log("Battle saved successfully:", data);
+      // Invalidate all the queries that might be affected by battle completion
       queryClient.invalidateQueries({ queryKey: ["/api/user/battles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/battles/won"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user/achievements"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/warpasses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/races"] });
       
       toast({
         title: gameResult?.won ? "Victory!" : "Battle Complete",
