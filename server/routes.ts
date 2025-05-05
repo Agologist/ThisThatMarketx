@@ -675,28 +675,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      // Get active war polls that the user has voted in
-      const allPolls = await storage.getPolls();
-      const userVotes = [];
+      // Get all the user's votes
+      const userVotes = await storage.getUserVotes(req.user.id);
+      const warPasses = [];
       const now = new Date();
       
-      // For each active war poll, check if user has voted
-      for (const poll of allPolls) {
-        // Only include polls that are:
-        // 1. War polls
-        // 2. Still active (end time is in the future)
-        if (poll.isWar && new Date(poll.endTime) > now) {
-          const vote = await storage.getUserVoteForPoll(req.user.id, poll.id);
-          if (vote) {
-            userVotes.push({
-              ...poll,
-              userVote: vote
-            });
-          }
+      // For each vote, check if it's for a war poll
+      for (const vote of userVotes) {
+        const poll = await storage.getPoll(vote.pollId);
+        if (poll && poll.isWar) {
+          // Include both active and completed war polls where the user has voted
+          warPasses.push({
+            ...poll,
+            userVote: vote,
+            isActive: new Date(poll.endTime) > now
+          });
         }
       }
       
-      res.json(userVotes);
+      // Log for debugging
+      console.log(`Found ${warPasses.length} war passes for user ${req.user.id}`);
+      
+      res.json(warPasses);
     } catch (error) {
       console.error('Error fetching war passes:', error);
       res.status(500).json({ message: "Failed to fetch war passes" });
