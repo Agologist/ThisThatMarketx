@@ -165,6 +165,11 @@ export default function ChallengePage() {
       queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}`] });
       queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}/vote`] });
       
+      // Also invalidate user-specific queries that will be affected by this vote
+      queryClient.invalidateQueries({ queryKey: ["/api/user/votes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/warpasses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/battles/won"] });
+      
       // Use our force refresh state to trigger a brand new fetch
       setForceRefresh(prev => prev + 1);
       
