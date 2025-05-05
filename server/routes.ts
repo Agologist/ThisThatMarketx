@@ -753,7 +753,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // For standalone battles
         return {
           ...battle,
-          title: "Standalone Challenge"
+          title: "Challenge"
         };
       }));
       
