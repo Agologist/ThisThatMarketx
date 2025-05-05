@@ -1,5 +1,5 @@
 import { useAuth } from "@/hooks/use-auth";
-import Header from "@/components/Header";
+import NewHeader from "@/components/NewHeader";
 import Footer from "@/components/Footer";
 import ChallengeCreator from "@/components/challenge/ChallengeCreator";
 import HomePageChallenges from "@/components/challenge/HomePageChallenges";
@@ -49,7 +49,7 @@ export default function HomePage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
-        <Header />
+        <NewHeader />
         <main className="flex-grow flex items-center justify-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </main>
@@ -68,7 +68,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      <NewHeader />
       
       {isGuest && (
         <Alert className="max-w-4xl mx-auto mt-4 border-primary/30 bg-primary/5">

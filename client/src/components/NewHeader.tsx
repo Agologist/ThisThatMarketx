@@ -1,137 +1,95 @@
-import React, { useState } from "react";
-import { useLocation, Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { useReplitAuth, logoutFromReplit } from "@/hooks/use-replit-auth";
-import { useQuery } from "@tanstack/react-query";
+import {
+  Trophy,
+  FileText,
+  Award,
+  Menu,
+  X,
+  User as UserIcon,
+  LogOut,
+  Flag as FlagIcon,
+  Terminal
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { FlagIcon, User, LogOut, Menu, X, UserIcon, Trophy, Award, FileText, Terminal } from "lucide-react";
-import UserStatCards from "@/components/dashboard/UserStatCards";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import UserStatCards from "./dashboard/UserStatCards";
 
-export default function Header() {
+export default function NewHeader() {
+  const [location] = useLocation();
+  const { user, isLoading, isGuest, exitGuestMode, logoutMutation } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [votesDropdownOpen, setVotesDropdownOpen] = useState(false);
-  const [warPassesDropdownOpen, setWarPassesDropdownOpen] = useState(false);
-  const [location, navigate] = useLocation();
-  const { user, isGuest, logoutMutation, exitGuestMode } = useAuth();
-  
-  // Check if we have a Replit authenticated user
-  const { user: replitUser, isAuthenticated: isReplitAuth } = useReplitAuth();
-  
-  // Fetch user stats
-  const { data: userPolls = [] } = useQuery({
+
+  const {
+    data: userPolls = [],
+  } = useQuery({
     queryKey: ["/api/user/polls"],
-    queryFn: async () => {
-      if (!user) return [];
-      const res = await fetch("/api/user/polls", { credentials: "include" });
-      if (!res.ok) return [];
-      return await res.json();
-    },
-    enabled: !!user && !isGuest
+    enabled: !!user && !isGuest,
   });
-  
-  const { data: userVotes = [] } = useQuery({
+
+  const {
+    data: userVotes = [],
+  } = useQuery({
     queryKey: ["/api/user/votes"],
-    queryFn: async () => {
-      if (!user) return [];
-      const res = await fetch("/api/user/votes", { credentials: "include" });
-      if (!res.ok) return [];
-      return await res.json();
-    },
-    enabled: !!user && !isGuest
+    enabled: !!user && !isGuest,
   });
-  
-  const { data: activeWarPolls = [] } = useQuery({
-    queryKey: ["/api/user/warpasses"],
-    queryFn: async () => {
-      if (!user) return [];
-      const res = await fetch("/api/user/warpasses", { credentials: "include" });
-      if (!res.ok) return [];
-      return await res.json();
-    },
-    enabled: !!user && !isGuest
-  });
-  
-  // Fetch user's won battles directly from API
-  const { data: userWonBattles = [] } = useQuery({
+
+  const {
+    data: userWonBattles = [],
+  } = useQuery({
     queryKey: ["/api/user/battles/won"],
-    queryFn: async () => {
-      if (!user) return [];
-      const res = await fetch("/api/user/battles/won", { credentials: "include" });
-      if (!res.ok) return [];
-      return await res.json();
-    },
-    enabled: !!user && !isGuest
+    enabled: !!user && !isGuest,
   });
-  
-  // Fetch all polls for reference when displaying battle results
-  const { data: allPolls = [] } = useQuery({
-    queryKey: ["/api/polls"],
-    queryFn: async () => {
-      const res = await fetch("/api/polls", { credentials: "include" });
-      if (!res.ok) return [];
-      return await res.json();
-    },
-    enabled: !!user && !isGuest
+
+  const {
+    data: activeWarPolls = [],
+  } = useQuery({
+    queryKey: ["/api/user/warpasses"],
+    enabled: !!user && !isGuest,
   });
-  
-  // Calculate stats
-  const challengeCount = userPolls.length;
-  const voteCount = (user?.id && !isGuest) ? userVotes.length : 0;
-  // Count all battles won by the user for display
-  const warCount = userWonBattles.length;
-  const warPassesCount = activeWarPolls.length;
-  
-  // Calculate ranks based on count
-  const getRank = (count: number): string => {
-    if (count < 100) return "Egg";
-    if (count < 1000) return "Jack";
-    if (count < 10000) return "Queen";
-    if (count < 100000) return "King";
-    if (count < 1000000) return "Ace";
-    return "Jester";
+
+  const { toast } = useToast();
+
+  const handleLogout = () => {
+    logoutMutation.mutate();
+    
+    toast({
+      title: "Logged out",
+      description: "You have been logged out successfully"
+    });
   };
-  
+
+  // Calculate counts and ranks
+  const challengeCount = userPolls.length || 0;
+  const voteCount = userVotes.length || 0;
+  const warCount = userWonBattles.length || 0;
+  const warPassesCount = activeWarPolls.length || 0;
+
+  // Get ranks for each metric
+  const getRank = (count: number) => {
+    if (count >= 1000000) return "Jester";
+    if (count >= 100000) return "Ace";
+    if (count >= 10000) return "King";
+    if (count >= 1000) return "Queen";
+    if (count >= 100) return "Jack";
+    return "Egg";
+  };
+
   const challengeRank = getRank(challengeCount);
   const voteRank = getRank(voteCount);
   const warRank = getRank(warCount);
 
-  const handleLogout = async () => {
-    try {
-      // Check if we're logged in with Replit Auth
-      if (isReplitAuth) {
-        // Use Replit Auth logout
-        logoutFromReplit();
-        return; // We're done, the redirect will happen automatically
-      }
-      
-      // Import Firebase signOut dynamically to avoid circular dependencies
-      const { signOut } = await import('@/lib/firebase');
-      
-      // First sign out from Firebase if user was authenticated with it
-      if (user?.provider === 'firebase') {
-        await signOut();
-      }
-      
-      // Perform the server-side logout
-      logoutMutation.mutate(undefined, {
-        onSuccess: () => {
-          // Force hard navigation to the auth page after successful logout
-          window.location.href = '/auth';
-        },
-        onError: () => {
-          // Still redirect even if there's an error (client-side cleanup)
-          window.location.href = '/auth';
-        }
-      });
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Fallback to regular logout if Firebase logout fails
-      window.location.href = '/auth';
-    }
-  };
-  
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
@@ -141,19 +99,19 @@ export default function Header() {
       href: "/", 
       label: "Dashboard", 
       active: location === "/",
-      icon: <Trophy className="h-4 w-4 mr-1.5" />
+      icon: <Trophy size={16} className="mr-2" />
     },
     { 
       href: "/challenges", 
       label: "Challenges", 
       active: location.startsWith("/challenges") || location.startsWith("/polls"),
-      icon: <FileText className="h-4 w-4 mr-1.5" />
+      icon: <FileText size={16} className="mr-2" />
     },
     { 
       href: "/battle-game", 
       label: "War Game", 
       active: location.startsWith("/battle-game"),
-      icon: <Terminal className="h-4 w-4 mr-1.5" />
+      icon: <Terminal size={16} className="mr-2" />
     }
   ];
   
@@ -165,78 +123,42 @@ export default function Header() {
   const showUserProfile = user || isGuest;
   
   return (
-    <header style={{
-      backgroundColor: "black", 
-      borderBottom: "1px solid rgba(255, 215, 0, 0.3)",
-      position: "sticky",
-      top: 0,
-      zIndex: 50,
-      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
-    }}>
-      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "16px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Link href="/" style={{ display: "flex", alignItems: "center" }}>
-            <FlagIcon style={{ color: "#FFD700", height: "24px", width: "24px", marginRight: "8px" }} />
-            <h1 style={{ fontFamily: "Racing Sans One, cursive", color: "#FFD700", fontSize: "24px", letterSpacing: "1px" }}>
-              Votes and Wars
+    <header className="bg-black border-b border-[#FFD700]/30 sticky top-0 z-50 shadow-lg">
+      <div className="container mx-auto px-4 py-4">
+        <div className="flex justify-between items-center">
+          <Link href="/" className="flex items-center group">
+            <FlagIcon className="text-[#FFD700] h-6 w-6 mr-2 group-hover:scale-110 transition-transform" />
+            <h1 className="font-racing text-[#FFD700] text-2xl tracking-wider">
+              <span className="group-hover:text-yellow-400 transition-colors">Votes</span> and <span className="group-hover:text-yellow-400 transition-colors">Wars</span>
             </h1>
           </Link>
           
           {/* Mobile Nav Toggle */}
           <button 
-            style={{
-              display: "block",
-              borderRadius: "50%", 
-              padding: "8px",
-              color: "#FFD700",
-              background: "transparent",
-              border: "none",
-              cursor: "pointer"
-            }}
+            className="lg:hidden text-[#FFD700] hover:bg-[#FFD700]/10 rounded-full p-2 transition-colors"
             onClick={toggleMenu}
             aria-label="Toggle menu"
           >
-            {isMenuOpen ? <X style={{width: "24px", height: "24px"}} /> : <Menu style={{width: "24px", height: "24px"}} />}
+            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
           
           {/* Desktop Navigation */}
-          <nav style={{ display: "flex", alignItems: "center", gap: "32px" }} className="hidden lg:flex">
+          <nav className="hidden lg:flex items-center space-x-6">
             {navLinks.map((link) => (
               <Link 
                 key={link.href} 
                 href={link.href}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  padding: "8px 12px",
-                  borderRadius: "6px",
-                  fontFamily: "Montserrat, sans-serif",
-                  fontWeight: 500,
-                  color: link.active ? "#FFD700" : "#FFFFFF",
-                  backgroundColor: link.active ? "rgba(255, 215, 0, 0.1)" : "transparent",
-                  position: "relative",
-                  transition: "all 0.2s ease"
-                }}
+                className={`hover:text-[#FFD700] transition-all font-medium relative px-3 py-2 rounded-md flex items-center ${
+                  link.active 
+                    ? "text-[#FFD700] bg-[#FFD700]/10 shadow-sm" 
+                    : "text-white hover:bg-black/10"
+                }`}
               >
-                <span style={{ 
-                  color: link.active ? "#FFD700" : "rgba(255, 255, 255, 0.6)", 
-                  marginRight: "6px" 
-                }}>
+                <span className={link.active ? "text-[#FFD700]" : "text-gray-400"}>
                   {link.icon}
                 </span>
                 {link.label}
-                {link.active && (
-                  <span style={{
-                    position: "absolute",
-                    bottom: "-4px",
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    width: "8px",
-                    height: "8px",
-                    backgroundColor: "#FFD700",
-                    borderRadius: "50%"
-                  }}></span>
-                )}
+                {link.active && <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-[#FFD700] rounded-full"></span>}
               </Link>
             ))}
             
@@ -244,15 +166,15 @@ export default function Header() {
             {showUserProfile ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                    <Avatar className="h-10 w-10 border-2 border-primary">
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full border-2 border-[#FFD700]/20 hover:border-[#FFD700]/50 transition-colors">
+                    <Avatar className="h-9 w-9">
                       {user && (
                         <AvatarImage 
                           src={user.profileImageUrl || ""} 
                           alt={user.displayName || user.username} 
                         />
                       )}
-                      <AvatarFallback className="bg-primary/20 text-primary">
+                      <AvatarFallback className="bg-[#FFD700]/20 text-[#FFD700]">
                         {isGuest ? 'G' : getInitials(user?.displayName || user?.username || '')}
                       </AvatarFallback>
                     </Avatar>
@@ -283,11 +205,11 @@ export default function Header() {
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <div className="flex items-center cursor-pointer">
-                              <FileText className="text-primary h-4 w-4 mr-1.5" />
+                              <FileText className="text-[#FFD700] h-4 w-4 mr-1.5" />
                               <div className="text-xs">
                                 <p className="text-muted-foreground">Challenges</p>
                                 <p className="font-bold">{challengeCount}</p>
-                                <p className="text-xs text-primary">Rank: {challengeRank}</p>
+                                <p className="text-xs text-[#FFD700]">Rank: {challengeRank}</p>
                               </div>
                             </div>
                           </DropdownMenuTrigger>
@@ -303,7 +225,7 @@ export default function Header() {
                                       href={`/polls/${poll.id}`} 
                                       className="cursor-pointer flex items-center"
                                     >
-                                      <FileText className="h-4 w-4 mr-2 text-primary" />
+                                      <FileText className="h-4 w-4 mr-2 text-[#FFD700]" />
                                       <span className="truncate">{poll.question} <span className="text-xs text-muted-foreground">({createdDate})</span></span>
                                     </Link>
                                   </DropdownMenuItem>
@@ -316,14 +238,15 @@ export default function Header() {
                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>
+                        
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <div className="flex items-center cursor-pointer">
-                              <FileText className="text-primary h-4 w-4 mr-1.5 rotate-90" />
+                              <FileText className="text-[#FFD700] h-4 w-4 mr-1.5 rotate-90" />
                               <div className="text-xs">
                                 <p className="text-muted-foreground">Votes</p>
                                 <p className="font-bold">{voteCount}</p>
-                                <p className="text-xs text-primary">Rank: {voteRank}</p>
+                                <p className="text-xs text-[#FFD700]">Rank: {voteRank}</p>
                               </div>
                             </div>
                           </DropdownMenuTrigger>
@@ -340,7 +263,7 @@ export default function Header() {
                                       href={`/polls/${vote.pollId}`} 
                                       className="cursor-pointer flex items-center"
                                     >
-                                      <FileText className="h-4 w-4 mr-2 text-primary rotate-90" />
+                                      <FileText className="h-4 w-4 mr-2 text-[#FFD700] rotate-90" />
                                       <span className="truncate">{poll.question} <span className="text-xs text-muted-foreground">({voteTime})</span></span>
                                     </Link>
                                   </DropdownMenuItem>
@@ -353,14 +276,15 @@ export default function Header() {
                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>
+                        
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <div className="flex items-center cursor-pointer">
-                              <Trophy className="text-primary h-4 w-4 mr-1.5" />
+                              <Trophy className="text-[#FFD700] h-4 w-4 mr-1.5" />
                               <div className="text-xs">
                                 <p className="text-muted-foreground">Wars</p>
                                 <p className="font-bold">{warCount}</p>
-                                <p className="text-xs text-primary">Rank: {warRank}</p>
+                                <p className="text-xs text-[#FFD700]">Rank: {warRank}</p>
                               </div>
                             </div>
                           </DropdownMenuTrigger>
@@ -381,12 +305,12 @@ export default function Header() {
                                         href={`/polls/${race.pollId}`} 
                                         className="cursor-pointer flex items-center w-full"
                                       >
-                                        <Trophy className="h-4 w-4 mr-2 text-primary" />
+                                        <Trophy className="h-4 w-4 mr-2 text-[#FFD700]" />
                                         <span className="truncate">{displayTitle} <span className="text-xs text-muted-foreground">({battleTime}) - {winTime}s</span></span>
                                       </Link>
                                     ) : (
                                       <div className="flex items-center">
-                                        <Trophy className="h-4 w-4 mr-2 text-primary" />
+                                        <Trophy className="h-4 w-4 mr-2 text-[#FFD700]" />
                                         <span className="truncate">Challenge <span className="text-xs text-muted-foreground">({battleTime}) - {winTime}s</span></span>
                                       </div>
                                     )}
@@ -400,10 +324,11 @@ export default function Header() {
                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>
+                        
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <div className="flex items-center cursor-pointer">
-                              <Award className="text-primary h-4 w-4 mr-1.5" />
+                              <Award className="text-[#FFD700] h-4 w-4 mr-1.5" />
                               <div className="text-xs">
                                 <p className="text-muted-foreground">War Passes</p>
                                 <p className="font-bold">{warPassesCount}</p>
@@ -420,7 +345,7 @@ export default function Header() {
                                     href={`/polls/${poll.id}`} 
                                     className="cursor-pointer flex items-center"
                                   >
-                                    <Trophy className="h-4 w-4 mr-2 text-primary" />
+                                    <Trophy className="h-4 w-4 mr-2 text-[#FFD700]" />
                                     <span className="truncate">{poll.question}</span>
                                   </Link>
                                 </DropdownMenuItem>
@@ -433,34 +358,42 @@ export default function Header() {
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
+                      
                       <DropdownMenuSeparator />
                     </>
                   )}
                   
                   {isGuest ? (
-                    <DropdownMenuItem onClick={exitGuestMode} className="cursor-pointer">
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Sign In / Register</span>
+                    <DropdownMenuItem asChild>
+                      <Button 
+                        variant="outline" 
+                        className="w-full border-[#FFD700] text-[#FFD700] hover:bg-[#FFD700]/10"
+                        onClick={exitGuestMode}
+                      >
+                        <UserIcon className="mr-2 h-4 w-4" />
+                        Sign In / Register
+                      </Button>
                     </DropdownMenuItem>
                   ) : (
-                    <>
-                      <DropdownMenuItem asChild>
-                        <Link href="/profile" className="cursor-pointer">
-                          <User className="mr-2 h-4 w-4" />
-                          <span>Profile</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                    <DropdownMenuItem asChild>
+                      <Button 
+                        variant="outline" 
+                        className="w-full border-[#FFD700] text-[#FFD700] hover:bg-[#FFD700]/10" 
+                        onClick={handleLogout}
+                      >
                         <LogOut className="mr-2 h-4 w-4" />
-                        <span>Log out</span>
-                      </DropdownMenuItem>
-                    </>
+                        Log out
+                      </Button>
+                    </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button onClick={exitGuestMode} className="btn-gold">
+              <Button 
+                className="bg-[#FFD700] hover:bg-[#FFD700]/90 text-black font-medium shadow hover:shadow-md"
+                onClick={exitGuestMode}
+              >
+                <UserIcon className="mr-2 h-4 w-4" />
                 Sign In
               </Button>
             )}
@@ -470,21 +403,21 @@ export default function Header() {
       
       {/* Mobile Navigation Menu */}
       {isMenuOpen && (
-        <div className="lg:hidden bg-black border-t border-primary/20 shadow-lg">
+        <div className="lg:hidden bg-black border-t border-[#FFD700]/20 shadow-lg">
           <div className="container mx-auto px-4 py-4">
             <nav className="flex flex-col space-y-3">
               {navLinks.map((link) => (
                 <Link 
                   key={link.href} 
                   href={link.href}
-                  className={`py-3 px-4 font-montserrat font-medium flex items-center rounded-md ${
+                  className={`py-3 px-4 font-medium flex items-center rounded-md ${
                     link.active 
-                      ? "text-primary bg-primary/10 border-l-4 border-primary" 
-                      : "text-foreground hover:text-primary hover:bg-primary/5 transition-colors border-l-4 border-transparent"
+                      ? "text-[#FFD700] bg-[#FFD700]/10 border-l-4 border-[#FFD700]" 
+                      : "text-white hover:text-[#FFD700] hover:bg-[#FFD700]/5 transition-colors border-l-4 border-transparent"
                   }`}
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <span className={`${link.active ? "text-primary" : "text-muted-foreground"} mr-3`}>
+                  <span className={link.active ? "text-[#FFD700]" : "text-gray-400"}>
                     {link.icon}
                   </span>
                   {link.label}
@@ -497,18 +430,18 @@ export default function Header() {
               {showUserProfile ? (
                 <>
                   <div className="pt-2 flex items-center">
-                    <Avatar className="h-8 w-8 border-2 border-primary mr-2">
+                    <Avatar className="h-8 w-8 border-2 border-[#FFD700]/30 mr-2">
                       {user && (
                         <AvatarImage 
                           src={user.profileImageUrl || ""} 
                           alt={user.displayName || user.username} 
                         />
                       )}
-                      <AvatarFallback className="bg-primary/20 text-primary">
+                      <AvatarFallback className="bg-[#FFD700]/20 text-[#FFD700]">
                         {isGuest ? 'G' : getInitials(user?.displayName || user?.username || '')}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-foreground">
+                    <span className="text-white">
                       {isGuest ? 'Guest User' : (user?.displayName || user?.username)}
                     </span>
                   </div>
@@ -516,7 +449,7 @@ export default function Header() {
                   {isGuest ? (
                     <Button 
                       variant="outline" 
-                      className="border-primary text-primary hover:bg-primary/10 transition-colors shadow-md"
+                      className="border-[#FFD700] text-[#FFD700] hover:bg-[#FFD700]/10 transition-colors shadow-sm"
                       onClick={() => {
                         setIsMenuOpen(false);
                         exitGuestMode();
@@ -528,7 +461,7 @@ export default function Header() {
                   ) : (
                     <Button 
                       variant="outline" 
-                      className="border-primary text-primary hover:bg-primary/10 transition-colors shadow-md" 
+                      className="border-[#FFD700] text-[#FFD700] hover:bg-[#FFD700]/10 transition-colors shadow-sm" 
                       onClick={handleLogout}
                     >
                       <LogOut className="mr-2 h-4 w-4" />
@@ -538,7 +471,7 @@ export default function Header() {
                 </>
               ) : (
                 <Button 
-                  className="btn-gold shadow-md hover:shadow-lg transform hover:scale-105 transition-all"
+                  className="bg-[#FFD700] hover:bg-[#FFD700]/90 text-black font-medium shadow hover:shadow-md"
                   onClick={() => {
                     setIsMenuOpen(false);
                     exitGuestMode();
