@@ -150,9 +150,9 @@ export default function Header() {
       icon: <FileText className="h-4 w-4 mr-1.5" />
     },
     { 
-      href: "/battle-game", 
+      href: "/battle", 
       label: "War Game", 
-      active: location.startsWith("/battle-game"),
+      active: location.startsWith("/battle"),
       icon: <Terminal className="h-4 w-4 mr-1.5" />
     }
   ];
