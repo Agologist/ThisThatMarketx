@@ -57,7 +57,7 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
   // Check if this battle has already been completed (from localStorage)
   const [hasCompletedBattle, setHasCompletedBattle] = useState(false);
   
-  // Query for user battles
+  // Query for user battles - ONLY DECLARED ONCE
   const { data: userBattles, isLoading: battlesLoading } = useQuery<RaceRecord[]>({
     queryKey: ["/api/user/battles"],
   });
@@ -504,79 +504,64 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
       // Mark as started to prevent repeated triggering
       hasAutoStartedRef.current = true;
       
-      // Auto-start the game with countdown after a short delay
-      setTimeout(() => {
-        startCountdown();
-      }, 500);
+      // Start 3-2-1 countdown
+      startCountdown();
     }
-  }, [isExpiredChallenge, pollData, gameState, pollId, startCountdown, hasCompletedBattle]);
-
-  // Cleanup on unmount
+  }, [isExpiredChallenge, pollData, gameState, hasCompletedBattle, pollId]);
+  
+  // Clean up any timers when component unmounts
   useEffect(() => {
     return () => {
+      // Clear battle timer if it exists
       if (battleTimerRef.current) {
-        clearInterval(battleTimerRef.current);
+        window.clearInterval(battleTimerRef.current);
       }
     };
   }, []);
   
-  // Finish the battle
-  const finishBattle = (playerWon: boolean, time: number) => {
+  // Finish the battle and save results
+  const finishBattle = (userWon: boolean, finalTime: number) => {
+    // Clean up timer
     if (battleTimerRef.current) {
-      clearInterval(battleTimerRef.current);
+      window.clearInterval(battleTimerRef.current);
+      battleTimerRef.current = null;
     }
     
+    // Set game state to finished
     setGameState("finished");
-    setGameResult({ won: playerWon, time });
     
-    // Mark this game as completed
-    setHasCompletedBattle(true);
+    // Save the results
+    const result = { won: userWon, time: finalTime };
+    setGameResult(result);
     
-    // Make absolutely sure we don't auto-start
-    hasAutoStartedRef.current = true;
+    // Save battle to localStorage to prevent replaying
+    localStorage.setItem(`battleGame_poll_${pollId}`, JSON.stringify({
+      gameState: "finished",
+      gameResult: result,
+      completed: true,
+      timestamp: Date.now()
+    }));
     
-    // Save game state to localStorage to prevent replaying in the same challenge
-    if (pollId > 0) {
+    // Save to database if user is logged in and this isn't standalone mode
+    if (user && !isStandaloneMode) {
       try {
-        const saveData = {
-          gameState: "finished",
-          gameResult: { won: playerWon, time },
-          completed: true,
-          timestamp: Date.now()
-        };
-        
-        // Save data with pollId and extra details to help with debugging
-        localStorage.setItem(`battleGame_poll_${pollId}`, JSON.stringify(saveData));
-        
-        // Add a special flag for challenge 25
-        if (pollId === 25) {
-          localStorage.setItem('challenge25_completed', 'true');
-          console.log('Challenge 25 specifically marked as completed');
-        }
-        
-        console.log(`Battle game for poll ${pollId} saved to localStorage:`, saveData);
-      } catch (e) {
-        console.error("Failed to save battle state to localStorage:", e);
+        saveBattleMutation.mutate(result);
+      } catch (error) {
+        console.error("Failed to save battle to database:", error);
       }
     }
+  };
+  
+  // Format time as MM:SS.ms
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60000);
+    const seconds = Math.floor((time % 60000) / 1000);
+    const milliseconds = Math.floor((time % 1000) / 10);
     
-    // Save battle results
-    saveBattleMutation.mutate({ time, won: playerWon });
+    return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}.${milliseconds.toString().padStart(2, "0")}`;
   };
   
-  // Reset the game
-  const resetGame = () => {
-    setGameState("ready");
-    setGameResult(null);
-    setLeftPosition(0); // Match initial position from startBattle
-    setRightPosition(0); // Match initial position from startBattle
-    setLeftVotes(0);
-    setRightVotes(0);
-    setLeftExploded(false);
-    setRightExploded(false);
-  };
-  
-  // Calculate best time
+  // Stats for standalone mode
   const getBestTime = () => {
     if (!userBattles || userBattles.length === 0) return "N/A";
     
@@ -584,7 +569,6 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
     return `${(bestBattle.time / 1000).toFixed(2)}s`;
   };
   
-  // Calculate win rate
   const getWinRate = () => {
     if (!userBattles || userBattles.length === 0) return "0%";
     
@@ -592,464 +576,318 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
     return `${Math.round((wins / userBattles.length) * 100)}%`;
   };
   
-  if (battlesLoading) {
+  // Calculate base positions for cars
+  // Cars start in center and then move based on the position state
+  const getLeftCarPosition = () => {
+    // Left car starts at 40% and moves right (or left if position is negative)
+    return `calc(40% + ${leftPosition * 1}%)`;
+  };
+  
+  const getRightCarPosition = () => {
+    // Right car starts at 60% and moves right (or left if position is negative)
+    return `calc(60% + ${rightPosition * 1}%)`;
+  };
+  
+  // Display loading state while queries are in progress
+  if (pollId > 0 && !pollData && !battlesLoading) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <>
         <Header />
-        <main className="flex-grow flex items-center justify-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <main className="container mx-auto px-4 py-8 min-h-[calc(100vh-160px)]">
+          <Card className="w-full mx-auto">
+            <CardHeader>
+              <CardTitle className="text-2xl">Loading Battle...</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center justify-center h-64">
+              <Loader2 className="w-16 h-16 animate-spin text-primary" />
+              <p className="mt-4">Loading challenge data...</p>
+            </CardContent>
+          </Card>
         </main>
         <Footer />
-      </div>
+      </>
     );
   }
   
-  return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      
-      <main className="flex-grow py-8 px-4">
-        <div className="container mx-auto">
-          <Button 
-            variant="outline" 
-            onClick={() => setLocation("/")}
-            className="mb-6"
+  // When playing from a challenge, show current challenge info
+  const renderBattleHeader = () => {
+    if (isStandaloneMode) {
+      return (
+        <CardHeader>
+          <CardTitle className="text-2xl">Votes and Wars Battle</CardTitle>
+          <Badge variant="outline" className="bg-primary/10 text-primary">
+            <Trophy className="w-4 h-4 mr-1" />
+            Standalone Mode
+          </Badge>
+          <CardDescription>Select your car and battle!</CardDescription>
+        </CardHeader>
+      );
+    }
+    
+    // It's a challenge-based battle
+    return (
+      <CardHeader>
+        <div className="flex justify-between items-center mb-2">
+          <button 
+            onClick={() => setLocation(`/challenge/${pollId}`)} 
+            className="flex items-center text-muted-foreground hover:text-primary"
           >
-            <ChevronLeft className="mr-2 h-4 w-4" />
-            Back to Dashboard
-          </Button>
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            Back to Challenge
+          </button>
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-              <Card className="border-primary/30">
-                <CardHeader>
-                  <div className="flex justify-between items-center">
-                    <CardTitle className="text-2xl">Votes and Wars Battle</CardTitle>
-                    <Badge variant="outline" className="bg-primary/10 text-primary">
-                      {gameState === "battling" ? "Battling!" : gameState === "countdown" ? "Ready..." : gameState === "finished" ? "Finished" : "Select Car"}
-                    </Badge>
-                  </div>
-                  <CardDescription>
-                    {gameState === "ready" 
-                      ? "Select your car and press the Start button"
-                      : gameState === "countdown" 
-                        ? "Battle starts in..."
-                        : gameState === "battling"
-                          ? "Click the thumbs-up button to vote!"
-                          : "Battle complete! View your results below"}
-                  </CardDescription>
-                </CardHeader>
-                
-                <CardContent>
-                  {/* Car selection grid (visible in ready state) */}
-                  {gameState === "ready" && (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                      {Array.from({ length: 4 }).map((_, index) => (
-                        <div 
-                          key={index}
-                          className={`border rounded-md p-4 cursor-pointer transition-all ${selectedCar === index ? "ring-2 ring-primary border-primary" : "hover:border-primary"}`}
-                          onClick={() => setSelectedCar(index)}
-                        >
-                          <div className="aspect-square flex items-center justify-center">
-                            <div className="w-20 h-20 flex items-center justify-center">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
-                                <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
-                                <circle cx="8.5" cy="17.5" r="2.5"/>
-                                <circle cx="15.5" cy="17.5" r="2.5"/>
-                              </svg>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* Countdown display */}
-                  {gameState === "countdown" && (
-                    <div className="py-10 flex justify-center items-center">
-                      <div className="text-8xl font-racing text-primary">{countdownValue}</div>
-                    </div>
-                  )}
-                  
-                  {/* Battle arena - single line with cars facing each other */}
-                  <div className={`bg-black rounded-lg p-4 mb-4 ${gameState === "ready" ? "opacity-70" : ""}`}>
-                    {/* Vote counters */}
-                    <div className="flex justify-between mb-4">
-                      <div className="flex flex-col items-center">
-                        <div className="text-sm uppercase font-bold text-muted-foreground mb-1 truncate max-w-[120px]">
-                          {isStandaloneMode ? "Left" : (optionAText || "Left")}
-                        </div>
-                        <div className="bg-primary/30 border border-primary/50 text-primary font-racing text-xl px-4 py-1 rounded-md shadow-inner shadow-primary/10">
-                          {leftVotes}
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <div className="text-sm uppercase font-bold text-muted-foreground mb-1">Total</div>
-                        <div className="bg-muted text-foreground font-bold text-lg px-4 py-1 rounded-md shadow-inner">
-                          {leftVotes + rightVotes}
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <div className="text-sm uppercase font-bold text-muted-foreground mb-1 truncate max-w-[120px]">
-                          {isStandaloneMode ? "Right" : (optionBText || "Right")}
-                        </div>
-                        <div className="bg-destructive/30 border border-destructive/50 text-destructive font-racing text-xl px-4 py-1 rounded-md shadow-inner shadow-destructive/10">
-                          {rightVotes}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="relative h-32 rounded-lg overflow-hidden bg-gradient-to-r from-neutral-800 to-neutral-900 flex items-center">
-                      {/* Main platform in the middle */}
-                      <div className="absolute left-1/2 top-0 bottom-0 transform -translate-x-1/2 w-[60%] h-full border-x-4 border-white/70 bg-black/40">
-                        {/* Platform pattern */}
-                        <div className="absolute inset-0" style={{ 
-                          backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 20px, rgba(255, 255, 255, 0.05) 20px, rgba(255, 255, 255, 0.05) 40px)',
-                        }}></div>
-                      </div>
-                      
-                      {/* Off-ramp areas (danger zones) on each side with diagonal stripes */}
-                      <div className="absolute left-0 top-0 bottom-0 w-[20%] bg-gradient-to-r from-red-900/80 to-red-700/60 overflow-hidden">
-                        {/* Diagonal stripes for off-ramp effect - more pronounced */}
-                        <div className="absolute inset-0" style={{ 
-                          backgroundImage: 'repeating-linear-gradient(145deg, transparent, transparent 6px, rgba(255, 0, 0, 0.4) 6px, rgba(255, 0, 0, 0.4) 12px)',
-                          backgroundSize: '24px 24px'
-                        }}></div>
-                        {/* Edge marking clearly showing the boundary */}
-                        <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-red-500"></div>
-                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-red-500/90"></div>
-                        <div className="absolute top-0 left-0 right-0 h-1 bg-red-800/70"></div>
-                      </div>
-                      <div className="absolute right-0 top-0 bottom-0 w-[20%] bg-gradient-to-l from-red-900/80 to-red-700/60 overflow-hidden">
-                        {/* Diagonal stripes for off-ramp effect, mirrored - more pronounced */}
-                        <div className="absolute inset-0" style={{ 
-                          backgroundImage: 'repeating-linear-gradient(215deg, transparent, transparent 6px, rgba(255, 0, 0, 0.4) 6px, rgba(255, 0, 0, 0.4) 12px)',
-                          backgroundSize: '24px 24px'
-                        }}></div>
-                        {/* Edge marking clearly showing the boundary */}
-                        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-red-500"></div>
-                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-red-500/90"></div>
-                        <div className="absolute top-0 left-0 right-0 h-1 bg-red-800/70"></div>
-                      </div>
-                      
-                      {/* Center divider line */}
-                      <div className="absolute top-0 bottom-0 left-1/2 transform -translate-x-1/2 w-px h-full bg-primary"></div>
-                      
-                      {/* Cars positioned for sumo contest */}
-                      {/* Left car (facing right - toward center) */}
-                      <div className="absolute top-1/2 transform -translate-y-1/2" 
-                           style={{ 
-                             // Left car with nose touching center line
-                             // As leftPosition increases, car moves right (forward)
-                             right: `calc(50% - ${leftPosition}%)`, 
-                             transition: 'right 0.3s ease-out',
-                             zIndex: 10
-                           }}>
-                        {leftExploded ? (
-                          <div className="relative">
-                            <div className="h-14 w-14 flex items-center justify-center opacity-50">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
-                                <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
-                                <circle cx="8.5" cy="17.5" r="2.5"/>
-                                <circle cx="15.5" cy="17.5" r="2.5"/>
-                              </svg>
-                            </div>
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="text-destructive text-2xl">💥</div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="h-14 w-14 flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
-                              <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
-                              <circle cx="8.5" cy="17.5" r="2.5"/>
-                              <circle cx="15.5" cy="17.5" r="2.5"/>
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Right car (facing left - toward center) */}
-                      <div className="absolute top-1/2 transform -translate-y-1/2" 
-                           style={{ 
-                             // Right car with nose touching center line
-                             // As rightPosition increases, right car gets pushed right (away from center)
-                             left: `calc(50% + ${rightPosition}%)`,
-                             transition: 'left 0.3s ease-out',
-                             zIndex: 9
-                           }}>
-                        {rightExploded ? (
-                          <div className="relative">
-                            <div className="h-14 w-14 flex items-center justify-center opacity-50" style={{ transform: 'scaleX(-1)' }}>
-                              <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
-                                <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
-                                <circle cx="8.5" cy="17.5" r="2.5"/>
-                                <circle cx="15.5" cy="17.5" r="2.5"/>
-                              </svg>
-                            </div>
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="text-destructive text-2xl">💥</div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="h-14 w-14 flex items-center justify-center" style={{ transform: 'scaleX(-1)' }}>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
-                              <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
-                              <circle cx="8.5" cy="17.5" r="2.5"/>
-                              <circle cx="15.5" cy="17.5" r="2.5"/>
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Platform edges - more visible - used for explosion detection */}
-                      <div className="absolute left-[20%] top-0 bottom-0 w-1 bg-white opacity-90"></div>
-                      <div className="absolute right-[20%] top-0 bottom-0 w-1 bg-white opacity-90"></div>
-                      
-                      {/* Countdown overlay */}
-                      {gameState === "countdown" && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                          <div className="text-6xl font-racing text-primary">{countdownValue}</div>
-                        </div>
-                      )}
-                      
-                      {/* Game result overlay */}
-                      {gameState === "finished" && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                          <div className="text-center">
-                            <div className="text-3xl font-racing mb-1">
-                              {gameResult?.won ? (
-                                <span className="text-primary">You Win!</span>
-                              ) : (
-                                <span className="text-destructive">You Lose!</span>
-                              )}
-                            </div>
-                            <div className="text-lg">
-                              Time: {(gameResult?.time || 0) / 1000}s
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Battle info bar */}
-                    <div className="flex justify-between items-center mt-4">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                          {gameState === "battling" ? (
-                            <Clock className="h-5 w-5" />
-                          ) : gameState === "finished" ? (
-                            gameResult?.won ? <Trophy className="h-5 w-5" /> : <Flag className="h-5 w-5" />
-                          ) : (
-                            <Zap className="h-5 w-5" />
-                          )}
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-medium">
-                            {gameState === "battling" 
-                              ? `Time: ${(battleTime / 1000).toFixed(2)}s`
-                              : gameState === "finished"
-                                ? `Finished in ${(gameResult?.time || 0) / 1000}s`
-                                : "Poll Battle Game"}
-                          </h4>
-                          <p className="text-xs text-muted-foreground">
-                            {gameState === "battling" 
-                              ? "Click the thumbs-up button to vote!" 
-                              : gameState === "finished"
-                                ? gameResult?.won ? "Great job! You won the battle!" : "Better luck next time!"
-                                : "Vote to advance your choice!"}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="hidden md:flex items-center space-x-2">
-                        <div className="flex items-center">
-                          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                            <span className="text-xs">L</span>
-                          </div>
-                          <span className="text-xs ml-1">{isStandaloneMode ? "Left" : (optionAText || "Left")}</span>
-                        </div>
-                        <span className="text-xs text-muted-foreground">vs</span>
-                        <div className="flex items-center">
-                          <div className="w-6 h-6 rounded-full bg-destructive/20 flex items-center justify-center text-destructive">
-                            <span className="text-xs">R</span>
-                          </div>
-                          <span className="text-xs ml-1">{isStandaloneMode ? "Right" : (optionBText || "Right")}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Game controls */}
-                  <div className="flex justify-center">
-                    {gameState === "ready" && (
-                      <div className="w-full max-w-md flex flex-col items-center">
-                        <button 
-                          className="w-16 h-16 rounded-full bg-primary mb-4 flex items-center justify-center text-black hover:bg-primary/80 transition-colors"
-                          disabled={true}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 opacity-50">
-                            <path d="M7.493 18.75c-.425 0-.82-.236-.975-.632A7.48 7.48 0 0 1 6 15.375c0-1.75.599-3.358 1.602-4.634.151-.192.373-.309.6-.397.473-.183.89-.514 1.212-.924a9.042 9.042 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V2.75A.75.75 0 0 1 15 2a2.25 2.25 0 0 1 2.25 2.25c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H14.23c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23h-.777ZM2.331 10.977a11.969 11.969 0 0 0-.831 4.398 12 12 0 0 0 .52 3.507c.26.85 1.084 1.368 1.973 1.368H4.9c.445 0 .72-.498.523-.898a8.963 8.963 0 0 1-.924-3.977c0-1.708.476-3.305 1.302-4.666.245-.403-.028-.959-.5-.959H4.25c-.832 0-1.612.453-1.918 1.227Z" />
-                          </svg>
-                        </button>
-                        {/* Car selection in standalone mode */}
-                        {isStandaloneMode && (
-                          <div className="w-full mb-6">
-                            <h3 className="text-center text-lg font-medium mb-4">Select Your Car</h3>
-                            <div className="flex justify-center gap-6">
-                              <div 
-                                className={`p-4 border rounded-lg cursor-pointer transition-all ${userCarSelection === "left" ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"}`}
-                                onClick={() => setUserCarSelection("left")}
-                              >
-                                <div className="flex flex-col items-center">
-                                  <div className="mb-2 bg-background p-3 rounded-full">
-                                    <div className="w-12 h-12 flex items-center justify-center">
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
-                                        <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
-                                        <circle cx="8.5" cy="17.5" r="2.5"/>
-                                        <circle cx="15.5" cy="17.5" r="2.5"/>
-                                      </svg>
-                                    </div>
-                                  </div>
-                                  <span className="font-medium">{isStandaloneMode ? "Left Car" : optionAText || "Left Car"}</span>
-                                </div>
-                              </div>
-                              
-                              <div 
-                                className={`p-4 border rounded-lg cursor-pointer transition-all ${userCarSelection === "right" ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"}`}
-                                onClick={() => setUserCarSelection("right")}
-                              >
-                                <div className="flex flex-col items-center">
-                                  <div className="mb-2 bg-background p-3 rounded-full">
-                                    <div className="w-12 h-12 flex items-center justify-center">
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
-                                        <path d="M19 17H5m0 0v2c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2v-2m0-3V6a2 2 0 1 0-4 0v4M5 14l2-5h12c0 0 1.3 1.43 1.5 3a.5 5 0 0 1-.5 2h-3m-5 0h-7"/>
-                                        <circle cx="8.5" cy="17.5" r="2.5"/>
-                                        <circle cx="15.5" cy="17.5" r="2.5"/>
-                                      </svg>
-                                    </div>
-                                  </div>
-                                  <span className="font-medium">{isStandaloneMode ? "Right Car" : optionBText || "Right Car"}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Only show car selection instruction in standalone mode */}
-                        {isStandaloneMode && (
-                          <>
-                            <Button 
-                              className="btn-gold w-full"
-                              size="lg"
-                              onClick={startCountdown}
-                              disabled={!userCarSelection}
-                            >
-                              Start Battle
-                            </Button>
-                            
-                            {!userCarSelection && (
-                              <p className="text-sm text-muted-foreground mt-2">Select a car to start the battle</p>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    )}
-                    
-                    {gameState === "countdown" && (
-                      <div className="w-full max-w-md flex flex-col items-center">
-                        <button 
-                          className="w-16 h-16 rounded-full bg-primary mb-4 flex items-center justify-center text-black hover:bg-primary/80 transition-colors animate-pulse"
-                          disabled={true}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 opacity-70">
-                            <path d="M7.493 18.75c-.425 0-.82-.236-.975-.632A7.48 7.48 0 0 1 6 15.375c0-1.75.599-3.358 1.602-4.634.151-.192.373-.309.6-.397.473-.183.89-.514 1.212-.924a9.042 9.042 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V2.75A.75.75 0 0 1 15 2a2.25 2.25 0 0 1 2.25 2.25c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H14.23c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23h-.777ZM2.331 10.977a11.969 11.969 0 0 0-.831 4.398 12 12 0 0 0 .52 3.507c.26.85 1.084 1.368 1.973 1.368H4.9c.445 0 .72-.498.523-.898a8.963 8.963 0 0 1-.924-3.977c0-1.708.476-3.305 1.302-4.666.245-.403-.028-.959-.5-.959H4.25c-.832 0-1.612.453-1.918 1.227Z" />
-                          </svg>
-                        </button>
-                        <p className="text-sm text-muted-foreground animate-pulse">Get ready to vote...</p>
-                      </div>
-                    )}
-                    
-                    {gameState === "finished" && (
-                      <div className="w-full max-w-md flex flex-col items-center">
-                        <div className="flex flex-col items-center mb-4">
-                          <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-black mb-2">
-                            {gameResult?.won ? (
-                              <Trophy className="w-8 h-8" />
-                            ) : (
-                              <Flag className="w-8 h-8" />
-                            )}
-                          </div>
-                          <div className="text-center">
-                            <h3 className="text-xl font-bold mb-1">{gameResult?.won ? "Victory!" : "Game Over"}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              You finished in {((gameResult?.time || 0) / 1000).toFixed(2)} seconds
-                            </p>
-                          </div>
-                        </div>
-                        
-                        {/* Show Battle Again button only in standalone mode */}
-                        {isStandaloneMode && (
-                          <Button 
-                            className="btn-gold w-full"
-                            size="lg"
-                            onClick={resetGame}
-                          >
-                            Battle Again
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                    
-                    {gameState === "battling" && (
-                      <div className="w-full max-w-md flex flex-col items-center">
-                        <div className="flex justify-center space-x-8 mb-4">
-                          {/* Left car vote button - only shown if user voted for the left car */}
-                          {userCar === "left" && (
-                            <div className="flex flex-col items-center">
-                              <button 
-                                className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-black hover:bg-primary/80 transition-colors"
-                                onClick={() => handleLeftVote()}
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
-                                  <path d="M7.493 18.75c-.425 0-.82-.236-.975-.632A7.48 7.48 0 0 1 6 15.375c0-1.75.599-3.358 1.602-4.634.151-.192.373-.309.6-.397.473-.183.89-.514 1.212-.924a9.042 9.042 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V2.75A.75.75 0 0 1 15 2a2.25 2.25 0 0 1 2.25 2.25c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H14.23c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23h-.777ZM2.331 10.977a11.969 11.969 0 0 0-.831 4.398 12 12 0 0 0 .52 3.507c.26.85 1.084 1.368 1.973 1.368H4.9c.445 0 .72-.498.523-.898a8.963 8.963 0 0 1-.924-3.977c0-1.708.476-3.305 1.302-4.666.245-.403-.028-.959-.5-.959H4.25c-.832 0-1.612.453-1.918 1.227Z" />
-                                </svg>
-                              </button>
-                              <div className="mt-2 text-center">
-                                <p className="text-sm font-medium">Push {isStandaloneMode ? "Left Car" : (optionAText || "Left Car")}</p>
-                              </div>
-                            </div>
-                          )}
-                          
-                          {/* Right car vote button - only shown if user voted for the right car */}
-                          {userCar === "right" && (
-                            <div className="flex flex-col items-center">
-                              <button 
-                                className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-black hover:bg-primary/80 transition-colors"
-                                onClick={() => handleRightVote()}
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
-                                  <path d="M7.493 18.75c-.425 0-.82-.236-.975-.632A7.48 7.48 0 0 1 6 15.375c0-1.75.599-3.358 1.602-4.634.151-.192.373-.309.6-.397.473-.183.89-.514 1.212-.924a9.042 9.042 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V2.75A.75.75 0 0 1 15 2a2.25 2.25 0 0 1 2.25 2.25c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H14.23c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23h-.777ZM2.331 10.977a11.969 11.969 0 0 0-.831 4.398 12 12 0 0 0 .52 3.507c.26.85 1.084 1.368 1.973 1.368H4.9c.445 0 .72-.498.523-.898a8.963 8.963 0 0 1-.924-3.977c0-1.708.476-3.305 1.302-4.666.245-.403-.028-.959-.5-.959H4.25c-.832 0-1.612.453-1.918 1.227Z" />
-                                </svg>
-                              </button>
-                              <div className="mt-2 text-center">
-                                <p className="text-sm font-medium">Push {isStandaloneMode ? "Right Car" : (optionBText || "Right Car")}</p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+          {pollData && (
+            <Badge variant={isExpiredChallenge ? "outline" : "default"} className={isExpiredChallenge ? "bg-destructive/10 text-destructive" : ""}>
+              {isExpiredChallenge ? "Expired" : "Active"} Challenge
+            </Badge>
+          )}
+        </div>
+        
+        <CardTitle className="text-xl md:text-2xl">
+          {pollData?.question || "Battle Game"}
+        </CardTitle>
+        
+        {pollData && (
+          <CardDescription className="flex items-center gap-2 mt-1">
+            <Flag className="w-4 h-4" />
+            {userOption === "A" ? pollData.optionA : pollData.optionB} 
+            <span className="text-xs">VS</span>
+            {userOption === "A" ? pollData.optionB : pollData.optionA}
+          </CardDescription>
+        )}
+      </CardHeader>
+    );
+  };
+  
+  // Render the battle arena
+  const renderBattleArena = () => {
+    const leftCarImageIndex = 0; // Use first white car image for left car
+    const rightCarImageIndex = 1; // Use second white car image for right car
+    
+    return (
+      <div className="relative w-full bg-black h-40 rounded-lg overflow-hidden mb-4">
+        {/* Platform with gold center and edges */}
+        <div className="absolute inset-0 flex">
+          {/* Left edge area */}
+          <div className="w-[20%] h-full bg-gradient-to-r from-transparent to-orange-300/80"></div>
+          
+          {/* Middle platform area */}
+          <div className="w-[60%] h-full relative">
+            {/* Center line */}
+            <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-primary/90 transform -translate-x-1/2"></div>
+          </div>
+          
+          {/* Right edge area */}
+          <div className="w-[20%] h-full bg-gradient-to-l from-transparent to-orange-300/80"></div>
+        </div>
+        
+        {/* Left car */}
+        <div className={`absolute top-[50%] transform -translate-y-1/2 transition-all duration-150 ${leftExploded ? 'animate-bounce opacity-50' : ''}`} style={{ left: getLeftCarPosition() }}>
+          {leftExploded ? (
+            <div className="relative">
+              <img src={carImages[leftCarImageIndex]} className="w-10 h-10 rotate-[135deg]" alt="Left car" />
+              {/* Explosion effect */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-orange-500 animate-ping"></div>
+                <div className="absolute w-6 h-6 rounded-full bg-red-500 animate-pulse"></div>
+              </div>
             </div>
+          ) : (
+            <img src={carImages[leftCarImageIndex]} className="w-10 h-10 transform scale-x-1" alt="Left car" />
+          )}
+        </div>
+        
+        {/* Right car */}
+        <div className={`absolute top-[50%] transform -translate-y-1/2 transition-all duration-150 ${rightExploded ? 'animate-bounce opacity-50' : ''}`} style={{ left: getRightCarPosition() }}>
+          {rightExploded ? (
+            <div className="relative">
+              <img src={carImages[rightCarImageIndex]} className="w-10 h-10 rotate-[225deg]" alt="Right car" />
+              {/* Explosion effect */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-orange-500 animate-ping"></div>
+                <div className="absolute w-6 h-6 rounded-full bg-red-500 animate-pulse"></div>
+              </div>
+            </div>
+          ) : (
+            <img src={carImages[rightCarImageIndex]} className="w-10 h-10 transform scale-x-[-1]" alt="Right car" />
+          )}
+        </div>
+        
+        {/* Battle metrics */}
+        <div className="absolute bottom-2 left-2 right-2 flex justify-between items-center text-white text-xs">
+          <div className="bg-black/50 px-2 py-1 rounded flex items-center">
+            <span className="text-orange-300 mr-1">A:</span> {leftVotes}
+          </div>
+          
+          {gameState === "battling" && (
+            <div className="bg-black/50 px-2 py-1 rounded flex items-center">
+              <Clock className="w-3 h-3 mr-1" />
+              {formatTime(battleTime)}
+            </div>
+          )}
+          
+          <div className="bg-black/50 px-2 py-1 rounded flex items-center">
+            <span className="text-orange-300 mr-1">B:</span> {rightVotes}
           </div>
         </div>
+        
+        {/* Countdown overlay */}
+        {gameState === "countdown" && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+            <div className="text-6xl font-bold text-primary animate-pulse">{countdownValue}</div>
+          </div>
+        )}
+        
+        {/* Finished overlay */}
+        {gameState === "finished" && gameResult && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80">
+            <div className={`text-2xl font-bold mb-2 ${gameResult.won ? 'text-green-500' : 'text-red-500'}`}>
+              {gameResult.won ? 'VICTORY!' : 'GAME OVER'}
+            </div>
+            <div className="text-sm text-white">
+              Time: {formatTime(gameResult.time)}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+  
+  return (
+    <>
+      <Header />
+      <main className="container mx-auto px-4 py-8 min-h-[calc(100vh-160px)]">
+        <Card className="w-full mx-auto max-w-3xl">
+          {renderBattleHeader()}
+          
+          <CardContent>
+            {/* Controls for standalone mode */}
+            {isStandaloneMode && gameState === "ready" && (
+              <div className="mb-6">
+                <h3 className="text-lg font-medium mb-4">Select Your Car:</h3>
+                <div className="flex gap-4 mb-4">
+                  <Button
+                    onClick={() => setUserCarSelection("left")}
+                    variant={userCarSelection === "left" ? "default" : "outline"}
+                    className={`flex-1 ${userCarSelection === "left" ? "border-2 border-primary" : ""}`}
+                  >
+                    <img src={carImages[0]} className="w-5 h-5 mr-2" alt="Left car" />
+                    Left Car
+                  </Button>
+                  
+                  <Button
+                    onClick={() => setUserCarSelection("right")}
+                    variant={userCarSelection === "right" ? "default" : "outline"}
+                    className={`flex-1 ${userCarSelection === "right" ? "border-2 border-primary" : ""}`}
+                  >
+                    <img src={carImages[1]} className="w-5 h-5 mr-2" alt="Right car" />
+                    Right Car
+                  </Button>
+                </div>
+                
+                <Button 
+                  className="w-full" 
+                  disabled={userCarSelection === ""}
+                  onClick={startCountdown}
+                >
+                  Start Battle
+                </Button>
+                
+                {/* Stats section for standalone mode */}
+                {user && (
+                  <div className="mt-4 border rounded-md p-4">
+                    <h3 className="font-medium mb-2 text-center">Your Battle Stats</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center">
+                        <div className="font-bold">{getBestTime()}</div>
+                        <div className="text-xs text-muted-foreground">Best Time</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-bold">{getWinRate()}</div>
+                        <div className="text-xs text-muted-foreground">Win Rate</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Battle arena */}
+            {renderBattleArena()}
+            
+            {/* Game controls */}
+            <div className="mt-4">
+              {/* Battle controls for when game is active */}
+              {gameState === "battling" && (
+                <div className="grid grid-cols-2 gap-4">
+                  <Button 
+                    variant="outline" 
+                    className={`h-20 ${userCar === "left" ? "border-2 border-primary" : "opacity-50"}`}
+                    onClick={handleLeftVote}
+                    disabled={userCar !== "left"}
+                  >
+                    <div className="flex flex-col items-center">
+                      <span className="mb-2">Push (A)</span>
+                      <div className="flex items-center">
+                        <img src={carImages[0]} className="w-6 h-6 mr-2" alt="Left car" />
+                        {optionAText || "Option A"}
+                      </div>
+                    </div>
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    className={`h-20 ${userCar === "right" ? "border-2 border-primary" : "opacity-50"}`} 
+                    onClick={handleRightVote}
+                    disabled={userCar !== "right"}
+                  >
+                    <div className="flex flex-col items-center">
+                      <span className="mb-2">Push (D)</span>
+                      <div className="flex items-center">
+                        <img src={carImages[1]} className="w-6 h-6 mr-2" alt="Right car" />
+                        {optionBText || "Option B"}
+                      </div>
+                    </div>
+                  </Button>
+                </div>
+              )}
+              
+              {/* Game finished state */}
+              {gameState === "finished" && (
+                <div className="text-center">
+                  {isStandaloneMode ? (
+                    <Button onClick={() => {
+                      setHasCompletedBattle(false);
+                      setGameState("ready");
+                      setLeftExploded(false);
+                      setRightExploded(false);
+                    }} className="mt-4">
+                      Play Again
+                    </Button>
+                  ) : (
+                    <Button onClick={() => setLocation(`/challenge/${pollId}`)} className="mt-4">
+                      Back to Challenge
+                    </Button>
+                  )}
+                </div>
+              )}
+              
+              {/* Help text */}
+              <div className="text-xs text-muted-foreground mt-6">
+                <p className="mb-2">
+                  <span className="font-bold">How to play:</span> Use the buttons 
+                  (or keyboard keys A/D or Arrow keys) to push your car. 
+                  First car to push the other off the platform wins!
+                </p>
+                <p>
+                  <span className="font-bold">Note:</span> You can only control the car you voted for.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </main>
-      
       <Footer />
-    </div>
+    </>
   );
 }
