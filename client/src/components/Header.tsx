@@ -431,21 +431,17 @@ export default function Header() {
       
       {/* Mobile Navigation Menu */}
       {isMenuOpen && (
-        <div className="lg:hidden bg-black border-t border-primary/20 shadow-lg">
+        <div className="mobile-menu fixed top-[68px] left-0 w-full h-[calc(100vh-68px)] z-40 p-4 overflow-auto">
           <div className="container mx-auto px-4 py-4">
             <nav className="flex flex-col space-y-3">
               {navLinks.map((link) => (
                 <Link 
                   key={link.href} 
                   href={link.href}
-                  className={`py-3 px-4 font-montserrat font-medium flex items-center rounded-md ${
-                    link.active 
-                      ? "text-primary bg-primary/10 border-l-4 border-primary" 
-                      : "text-foreground hover:text-primary hover:bg-primary/5 transition-colors border-l-4 border-transparent"
-                  }`}
+                  className={`mobile-nav-link ${link.active ? 'mobile-nav-link-active' : 'mobile-nav-link-inactive'}`}
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <span className={`${link.active ? "text-primary" : "text-muted-foreground"} mr-3`}>
+                  <span className={`nav-icon ${link.active ? 'nav-icon-active' : 'nav-icon-inactive'}`}>
                     {link.icon}
                   </span>
                   {link.label}
@@ -477,7 +473,7 @@ export default function Header() {
                   {isGuest ? (
                     <Button 
                       variant="outline" 
-                      className="border-primary text-primary hover:bg-primary/10 transition-colors shadow-md"
+                      className="user-button"
                       onClick={() => {
                         setIsMenuOpen(false);
                         exitGuestMode();
@@ -489,7 +485,7 @@ export default function Header() {
                   ) : (
                     <Button 
                       variant="outline" 
-                      className="border-primary text-primary hover:bg-primary/10 transition-colors shadow-md" 
+                      className="user-button" 
                       onClick={handleLogout}
                     >
                       <LogOut className="mr-2 h-4 w-4" />
@@ -499,14 +495,14 @@ export default function Header() {
                 </>
               ) : (
                 <Button 
-                  className="btn-gold shadow-md hover:shadow-lg transform hover:scale-105 transition-all"
+                  className="btn-gold shadow-md hover:shadow-lg transform hover:scale-105 transition-all font-bold"
                   onClick={() => {
                     setIsMenuOpen(false);
                     exitGuestMode();
                   }}
                 >
                   <UserIcon className="mr-2 h-4 w-4" />
-                  Sign In
+                  Sign In / Register
                 </Button>
               )}
             </nav>
