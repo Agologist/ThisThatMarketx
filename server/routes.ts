@@ -680,21 +680,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const warPasses = [];
       const now = new Date();
       
-      // For each vote, check if it's for a war poll
+      // For each vote, check if it's for an ACTIVE war poll
       for (const vote of userVotes) {
         const poll = await storage.getPoll(vote.pollId);
-        if (poll && poll.isWar) {
-          // Include both active and completed war polls where the user has voted
+        // Only include polls that:
+        // 1. Exist
+        // 2. Are War mode enabled
+        // 3. Are still active (end time is in the future)
+        if (poll && poll.isWar && new Date(poll.endTime) > now) {
           warPasses.push({
             ...poll,
             userVote: vote,
-            isActive: new Date(poll.endTime) > now
+            isActive: true
           });
         }
       }
       
       // Log for debugging
-      console.log(`Found ${warPasses.length} war passes for user ${req.user.id}`);
+      console.log(`Found ${warPasses.length} active war passes for user ${req.user.id}`);
       
       res.json(warPasses);
     } catch (error) {
