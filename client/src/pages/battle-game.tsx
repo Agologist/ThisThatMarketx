@@ -57,18 +57,48 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
   // Check if this battle has already been completed (from localStorage)
   const [hasCompletedBattle, setHasCompletedBattle] = useState(false);
   
-  // Load saved battle data from localStorage on initial render
+  // Load saved battle data from localStorage and check DB for completed battles
   useEffect(() => {
     if (pollId > 0) {
       try {
+        // First check if there is a record of this battle in localStorage
         const savedBattle = localStorage.getItem(`battleGame_poll_${pollId}`);
         const hasLocalStorage = !!savedBattle;
         
+        // Also check if we have userBattles loaded from the database
+        const hasCompletedBattleInDB = userBattles?.some(battle => 
+          battle.pollId === pollId
+        );
+        
         console.log("DEBUG: Checking saved battle for poll " + pollId + ":", { 
+          oldFormatFound: false,
+          newFormatFound: hasLocalStorage,
           savedBattle,
-          hasLocalStorage
+          hasLocalStorage,
+          specialFlag: hasCompletedBattleInDB ? "completed_in_db" : null
         });
         
+        // If battle is already completed in the database, always show completed state
+        if (hasCompletedBattleInDB) {
+          console.log(`Found completed battle in database for poll ${pollId} - preventing restart`);
+          
+          // Find the actual battle record to get the result
+          const completedBattle = userBattles?.find(battle => battle.pollId === pollId);
+          
+          // Set the game state to finished and prevent auto-start
+          setHasCompletedBattle(true);
+          setGameState("finished");
+          setGameResult({
+            won: completedBattle?.won || false,
+            time: completedBattle?.time || 10000
+          });
+          
+          // Make absolutely sure we don't auto-start
+          hasAutoStartedRef.current = true;
+          return;
+        }
+        
+        // If not found in DB, then check localStorage for a saved battle
         if (savedBattle) {
           try {
             const parsedBattle = JSON.parse(savedBattle);
@@ -108,7 +138,7 @@ export default function BattleGame({ races, pollId: propPollId, optionAText, opt
         console.error("Failed to load saved battle state:", e);
       }
     }
-  }, [pollId]);
+  }, [pollId, userBattles]);
   
   // Game state
   const [gameState, setGameState] = useState<"ready" | "countdown" | "battling" | "finished">("ready");
