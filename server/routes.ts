@@ -340,7 +340,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const poll = await storage.getPoll(pollId);
         if (poll) {
-          const optionText = option === 'A' ? poll.optionA : poll.optionB;
+          const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
           const userWallet = 'demo_wallet_' + userId; // Mock wallet for demo
           
           const coinResult = await coinService.createMemeCoin({
@@ -772,6 +772,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching won battles:', error);
       res.status(500).json({ message: "Failed to fetch won battles" });
+    }
+  });
+
+  // Coin-related API endpoints
+  app.get("/api/user/coins", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const coins = await storage.getUserGeneratedCoins(req.user.id);
+      res.json(coins);
+    } catch (error) {
+      console.error('Error fetching user coins:', error);
+      res.status(500).json({ message: "Failed to fetch user coins" });
+    }
+  });
+
+  app.get("/api/polls/:id/coins", async (req, res) => {
+    try {
+      const pollId = parseInt(req.params.id);
+      const coins = await storage.getPollGeneratedCoins(pollId);
+      res.json(coins);
+    } catch (error) {
+      console.error('Error fetching poll coins:', error);
+      res.status(500).json({ message: "Failed to fetch poll coins" });
     }
   });
 
