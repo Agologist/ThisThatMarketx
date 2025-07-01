@@ -174,7 +174,7 @@ export default function Header() {
             <img 
               src={logoImage} 
               alt="ThisThat.Market Logo" 
-              className="h-10 w-10 mr-3 group-hover:scale-110 transition-transform" 
+              className="h-12 w-12 mr-3 group-hover:scale-110 transition-transform" 
             />
             <h1 className="font-racing text-primary text-2xl tracking-wider">
               <span className="group-hover:text-yellow-400 transition-colors">ThisThat</span>.<span className="group-hover:text-yellow-400 transition-colors">Market</span>

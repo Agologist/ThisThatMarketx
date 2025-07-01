@@ -308,11 +308,11 @@ export default function AuthPage() {
         <Card className="w-full max-w-md bg-card border-primary/30">
           <CardContent className="pt-6 pb-6">
             <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center mb-4">
+              <div className="inline-flex items-center justify-center mb-6">
                 <img 
                   src={logoImage} 
                   alt="ThisThat.Market Logo" 
-                  className="w-16 h-16" 
+                  className="w-24 h-24" 
                 />
               </div>
               <h2 className="font-racing text-primary text-3xl">ThisThat.Market</h2>
