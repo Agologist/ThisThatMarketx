@@ -13,7 +13,7 @@ export default function Footer() {
             <img 
               src={logoImage} 
               alt="ThisThat.Market Logo" 
-              className="h-6 w-6 mr-2" 
+              className="h-8 w-8 mr-3" 
             />
             <Link href="/">
               <h2 className="font-racing text-primary text-xl hover:text-primary/80 cursor-pointer transition-colors">ThisThat.Market</h2>

@@ -31,6 +31,8 @@ A dynamic "This or That" polling application with interactive battle game mechan
 - Focus on battle game mechanics and user experience
 - Keep the premium gold and black aesthetic
 - Ensure real-time features work smoothly
+- Logo should be prominent without circular background containers
+- Prefer larger, more visible logo sizes throughout the application
 
 ## Development Notes
 - Special handling for problematic challenges (25, 29, 30) to prevent replay issues
