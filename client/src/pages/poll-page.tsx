@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { Poll } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import WalletConnect from "@/components/wallet/WalletConnect";
 
 export default function ChallengePage() {
   const { id } = useParams<{ id: string }>();
@@ -119,9 +120,14 @@ export default function ChallengePage() {
     try {
       console.log("Submitting vote:", { pollId: id, option: selectedOption });
       
-      // Send the vote request regardless of whether user has already voted
-      // The server will return an error if the user has already voted
-      const response = await apiRequest("POST", `/api/polls/${id}/vote`, { option: selectedOption });
+      // Get user's Solana wallet address for coin generation
+      const walletAddress = localStorage.getItem("solana_wallet");
+      
+      // Send the vote request with wallet address for coin generation
+      const response = await apiRequest("POST", `/api/polls/${id}/vote`, { 
+        option: selectedOption,
+        walletAddress: walletAddress || undefined
+      });
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -450,6 +456,11 @@ export default function ChallengePage() {
                 </div>
               )}
               
+              {/* Wallet Connection Section */}
+              <div className="mt-6">
+                <WalletConnect />
+              </div>
+
               <div className="mt-6">
                 <Separator className="my-4" />
                 <div className="text-center">

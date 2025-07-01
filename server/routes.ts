@@ -336,12 +336,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update poll vote count
       await storage.incrementPollVote(pollId, option);
       
-      // Generate meme coin for the user's vote (demo mode)
+      // Generate meme coin for the user's vote
       try {
         const poll = await storage.getPoll(pollId);
         if (poll) {
           const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
-          const userWallet = 'demo_wallet_' + userId; // Mock wallet for demo
+          
+          // Check if user has provided a Solana wallet address
+          // This could come from user profile or be passed in the request
+          let userWallet = req.body.walletAddress || 'demo_wallet_' + userId;
+          
+          // If it's still a demo wallet, we're in demo mode
+          const isDemoMode = userWallet.startsWith('demo_wallet_');
           
           const coinResult = await coinService.createMemeCoin({
             userId,
@@ -351,7 +357,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             userWallet
           });
           
-          console.log('Meme coin generated:', coinResult);
+          console.log(`Meme coin generated (${isDemoMode ? 'DEMO' : 'REAL'} mode):`, coinResult);
         }
       } catch (coinError) {
         console.error('Failed to generate coin, but vote still recorded:', coinError);
