@@ -8,7 +8,10 @@ A dynamic "This or That" polling application with interactive battle game mechan
   - Updated all UI references including headers, footers, auth pages, and battle game titles
   - Replaced flag icons with custom scales of justice logo throughout the application
   - Updated Header, Footer, and Authentication page logos
-  - Maintained all existing functionality during rename and logo updates
+  - Optimized logo visibility by removing circular containers and increasing sizes
+  - Restricted battle game access: removed standalone navigation links from header and footer
+  - Battle games now only accessible through polls with War Mode enabled
+  - Maintained all existing functionality during updates
 
 ## Project Architecture
 - **Frontend**: React.js with TypeScript, Tailwind CSS, shadcn/ui components

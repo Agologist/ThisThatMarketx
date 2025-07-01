@@ -150,12 +150,6 @@ export default function Header() {
       label: "Challenges", 
       active: location.startsWith("/challenges") || location.startsWith("/polls"),
       icon: <FileText className="h-4 w-4 mr-1.5" />
-    },
-    { 
-      href: "/battle", 
-      label: "War Game", 
-      active: location.startsWith("/battle"),
-      icon: <Terminal className="h-4 w-4 mr-1.5" />
     }
   ];
   

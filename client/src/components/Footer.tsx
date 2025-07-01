@@ -27,9 +27,6 @@ export default function Footer() {
             <Link href="/challenges" className="text-muted-foreground hover:text-primary transition-colors text-sm">
               Challenges
             </Link>
-            <Link href="/battle" className="text-muted-foreground hover:text-primary transition-colors text-sm">
-              Battle Game
-            </Link>
           </div>
         </div>
         
