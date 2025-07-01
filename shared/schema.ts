@@ -14,6 +14,7 @@ export const users = pgTable("users", {
   firebaseUid: text("firebase_uid").unique(),
   photoURL: text("photo_url"),
   replitId: text("replit_id").unique(),
+  solanaWallet: text("solana_wallet"),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -26,6 +27,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   firebaseUid: true,
   photoURL: true,
   replitId: true,
+  solanaWallet: true,
 });
 
 // Poll model
@@ -139,3 +141,33 @@ export type UserAchievement = typeof userAchievements.$inferSelect;
 
 export type InsertRaceRecord = z.infer<typeof insertRaceRecordSchema>;
 export type RaceRecord = typeof raceRecords.$inferSelect;
+
+// Generated Coins model - tracks coins created for user votes
+export const generatedCoins = pgTable("generated_coins", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  pollId: integer("poll_id").notNull(),
+  option: text("option").notNull(), // 'A' or 'B'
+  coinName: text("coin_name").notNull(),
+  coinSymbol: text("coin_symbol").notNull(),
+  coinAddress: text("coin_address").notNull(),
+  userWallet: text("user_wallet").notNull(),
+  transactionHash: text("transaction_hash"),
+  createdAt: timestamp("created_at").defaultNow(),
+  status: text("status").default("pending"), // pending, created, failed
+});
+
+export const insertGeneratedCoinSchema = createInsertSchema(generatedCoins).pick({
+  userId: true,
+  pollId: true,
+  option: true,
+  coinName: true,
+  coinSymbol: true,
+  coinAddress: true,
+  userWallet: true,
+  transactionHash: true,
+  status: true,
+});
+
+export type InsertGeneratedCoin = z.infer<typeof insertGeneratedCoinSchema>;
+export type GeneratedCoin = typeof generatedCoins.$inferSelect;
