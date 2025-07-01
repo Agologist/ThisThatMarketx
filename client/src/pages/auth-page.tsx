@@ -3,7 +3,8 @@ import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FlagIcon, CheckIcon, TerminalIcon } from "lucide-react";
+import { CheckIcon, TerminalIcon } from "lucide-react";
+import logoImage from "@assets/Contemporary_Emblem_Logo_for_ThisThat.Market-removebg-preview_1751386189685.png";
 import { Separator } from "@/components/ui/separator";
 import { signInWithGoogle, signInWithX, handleRedirectResult } from "@/lib/firebase";
 import { loginWithReplit } from "@/hooks/use-replit-auth";
@@ -308,7 +309,11 @@ export default function AuthPage() {
           <CardContent className="pt-6 pb-6">
             <div className="text-center mb-8">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 text-primary mb-4">
-                <FlagIcon className="w-8 h-8" />
+                <img 
+                  src={logoImage} 
+                  alt="ThisThat.Market Logo" 
+                  className="w-8 h-8" 
+                />
               </div>
               <h2 className="font-racing text-primary text-3xl">ThisThat.Market</h2>
               <p className="text-muted-foreground mt-2">Your creative poll and battle platform</p>

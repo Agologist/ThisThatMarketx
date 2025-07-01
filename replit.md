@@ -6,7 +6,9 @@ A dynamic "This or That" polling application with interactive battle game mechan
 ## Recent Changes
 - **January 2025**: Application name changed from "Votes and Wars" to "ThisThat.Market"
   - Updated all UI references including headers, footers, auth pages, and battle game titles
-  - Maintained all existing functionality during rename
+  - Replaced flag icons with custom scales of justice logo throughout the application
+  - Updated Header, Footer, and Authentication page logos
+  - Maintained all existing functionality during rename and logo updates
 
 ## Project Architecture
 - **Frontend**: React.js with TypeScript, Tailwind CSS, shadcn/ui components

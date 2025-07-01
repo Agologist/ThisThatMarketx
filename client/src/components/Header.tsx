@@ -6,7 +6,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { FlagIcon, User, LogOut, Menu, X, UserIcon, Trophy, Award, FileText, Terminal } from "lucide-react";
+import { User, LogOut, Menu, X, UserIcon, Trophy, Award, FileText, Terminal } from "lucide-react";
+import logoImage from "@assets/Contemporary_Emblem_Logo_for_ThisThat.Market-removebg-preview_1751386189685.png";
 import UserStatCards from "@/components/dashboard/UserStatCards";
 
 export default function Header() {
@@ -170,9 +171,13 @@ export default function Header() {
       <div className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           <Link href="/" className="flex items-center group">
-            <FlagIcon className="text-primary h-6 w-6 mr-2 group-hover:scale-110 transition-transform" />
+            <img 
+              src={logoImage} 
+              alt="ThisThat.Market Logo" 
+              className="h-8 w-8 mr-2 group-hover:scale-110 transition-transform" 
+            />
             <h1 className="font-racing text-primary text-2xl tracking-wider">
-              <span className="group-hover:text-yellow-400 transition-colors">Votes</span> and <span className="group-hover:text-yellow-400 transition-colors">Wars</span>
+              <span className="group-hover:text-yellow-400 transition-colors">ThisThat</span>.<span className="group-hover:text-yellow-400 transition-colors">Market</span>
             </h1>
           </Link>
           

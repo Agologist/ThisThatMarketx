@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "wouter";
-import { FlagIcon } from "lucide-react";
+import logoImage from "@assets/Contemporary_Emblem_Logo_for_ThisThat.Market-removebg-preview_1751386189685.png";
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -10,7 +10,11 @@ export default function Footer() {
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="flex items-center mb-4 md:mb-0">
-            <FlagIcon className="text-primary h-5 w-5 mr-2" />
+            <img 
+              src={logoImage} 
+              alt="ThisThat.Market Logo" 
+              className="h-6 w-6 mr-2" 
+            />
             <Link href="/">
               <h2 className="font-racing text-primary text-xl hover:text-primary/80 cursor-pointer transition-colors">ThisThat.Market</h2>
             </Link>
