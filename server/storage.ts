@@ -77,6 +77,7 @@ export class MemStorage implements IStorage {
   private achievements: Map<number, Achievement>;
   private userAchievements: Map<number, UserAchievement>;
   private generatedCoins: Map<number, GeneratedCoin>;
+  private memeCoinPackages: Map<number, MemeCoinPackage>;
   
   sessionStore: any; // Using any to avoid type conflicts with session store
   currentId: { [key: string]: number };
@@ -89,6 +90,7 @@ export class MemStorage implements IStorage {
     this.achievements = new Map();
     this.userAchievements = new Map();
     this.generatedCoins = new Map();
+    this.memeCoinPackages = new Map();
     
     this.currentId = {
       users: 1,
@@ -97,7 +99,8 @@ export class MemStorage implements IStorage {
       raceRecords: 1,
       achievements: 1,
       userAchievements: 1,
-      generatedCoins: 1
+      generatedCoins: 1,
+      memeCoinPackages: 1
     };
     
     this.sessionStore = new MemoryStore({
@@ -793,6 +796,73 @@ export class DatabaseStorage implements IStorage {
     return await db.select()
       .from(generatedCoins)
       .where(eq(generatedCoins.coinName, name));
+  }
+
+  // MemeCoin Package methods
+  async createMemeCoinPackage(packageData: InsertMemeCoinPackage): Promise<MemeCoinPackage> {
+    const [packageRecord] = await db.insert(memeCoinPackages).values({
+      ...packageData,
+      purchasedAt: new Date()
+    }).returning();
+    return packageRecord;
+  }
+
+  async getUserActivePackage(userId: number): Promise<MemeCoinPackage | undefined> {
+    const [packageRecord] = await db.select()
+      .from(memeCoinPackages)
+      .where(and(
+        eq(memeCoinPackages.userId, userId),
+        eq(memeCoinPackages.status, 'active')
+      ))
+      .orderBy(desc(memeCoinPackages.purchasedAt))
+      .limit(1);
+    
+    // Check if package still has remaining polls
+    if (packageRecord && packageRecord.remainingPolls > 0) {
+      return packageRecord;
+    }
+    
+    return undefined;
+  }
+
+  async getUserPackages(userId: number): Promise<MemeCoinPackage[]> {
+    return await db.select()
+      .from(memeCoinPackages)
+      .where(eq(memeCoinPackages.userId, userId))
+      .orderBy(desc(memeCoinPackages.purchasedAt));
+  }
+
+  async consumePackageUsage(packageId: number): Promise<void> {
+    const [packageRecord] = await db.select()
+      .from(memeCoinPackages)
+      .where(eq(memeCoinPackages.id, packageId));
+
+    if (packageRecord) {
+      const newUsedPolls = packageRecord.usedPolls + 1;
+      const newRemainingPolls = packageRecord.remainingPolls - 1;
+      const newStatus = newRemainingPolls <= 0 ? 'used_up' : 'active';
+
+      await db.update(memeCoinPackages)
+        .set({
+          usedPolls: newUsedPolls,
+          remainingPolls: newRemainingPolls,
+          status: newStatus
+        })
+        .where(eq(memeCoinPackages.id, packageId));
+    }
+  }
+
+  async getPackageByTxHash(txHash: string): Promise<MemeCoinPackage | undefined> {
+    const [packageRecord] = await db.select()
+      .from(memeCoinPackages)
+      .where(eq(memeCoinPackages.paymentTxHash, txHash));
+    return packageRecord;
+  }
+
+  async updatePackageStatus(packageId: number, status: string): Promise<void> {
+    await db.update(memeCoinPackages)
+      .set({ status })
+      .where(eq(memeCoinPackages.id, packageId));
   }
   
   // Seed achievements if the table is empty

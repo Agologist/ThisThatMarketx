@@ -74,25 +74,39 @@ export class CoinService {
         };
       }
 
+      // Check if user has active package for real coin mode
+      const activePackage = await storage.getUserActivePackage(params.userId);
+      const shouldCreateRealCoin = activePackage && activePackage.remainingPolls > 0;
+      
+      console.log(`User ${params.userId} has active package: ${!!activePackage}, should create real coin: ${shouldCreateRealCoin}`);
+
       // Generate unique coin name and symbol
       const coinName = await this.generateCoinName(params.optionText, params.pollId);
       const coinSymbol = this.generateSymbol(coinName);
       
-      // Create mint keypair (this represents the new token)
-      const mintKeypair = Keypair.generate();
+      let coinAddress: string;
+      let transactionHash: string;
+      let status: string;
       
-      // For demo mode, generate a valid wallet address
-      let userPublicKey: PublicKey;
-      if (params.userWallet.startsWith('demo_wallet_')) {
-        // Generate a deterministic keypair for demo wallets
-        userPublicKey = Keypair.generate().publicKey;
+      if (shouldCreateRealCoin) {
+        // Create real Solana token (devnet for now)
+        const result = await this.createRealSolanaToken(coinName, coinSymbol, params.userWallet);
+        coinAddress = result.coinAddress;
+        transactionHash = result.transactionHash;
+        status = 'created';
+        
+        // Consume package usage
+        await storage.consumePackageUsage(activePackage.id);
+        console.log(`Consumed package usage for user ${params.userId}, remaining: ${activePackage.remainingPolls - 1}`);
       } else {
-        userPublicKey = new PublicKey(params.userWallet);
+        // Create demo token
+        const mintKeypair = Keypair.generate();
+        coinAddress = mintKeypair.publicKey.toBase58();
+        transactionHash = `demo_tx_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        status = 'demo';
+        
+        console.log('Created demo coin - user has no active package');
       }
-      
-      // For demo purposes, we'll create a mock transaction
-      // In production, this would create an actual Solana token
-      const mockSignature = `demo_tx_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       
       // Store in database
       const coinData: InsertGeneratedCoin = {
@@ -101,17 +115,17 @@ export class CoinService {
         option: params.option,
         coinName,
         coinSymbol,
-        coinAddress: mintKeypair.publicKey.toBase58(),
+        coinAddress,
         userWallet: params.userWallet,
-        transactionHash: mockSignature,
-        status: 'created'
+        transactionHash,
+        status
       };
       
       await storage.createGeneratedCoin(coinData);
       
       return {
-        coinAddress: mintKeypair.publicKey.toBase58(),
-        transactionHash: mockSignature,
+        coinAddress,
+        transactionHash,
         coinName,
         coinSymbol
       };
@@ -119,6 +133,90 @@ export class CoinService {
     } catch (error) {
       console.error('Failed to create meme coin:', error);
       throw new Error('Coin creation failed');
+    }
+  }
+
+  private async createRealSolanaToken(coinName: string, coinSymbol: string, userWallet: string): Promise<{
+    coinAddress: string;
+    transactionHash: string;
+  }> {
+    try {
+      // Create mint keypair
+      const mintKeypair = Keypair.generate();
+      const userPublicKey = new PublicKey(userWallet);
+      
+      // Get minimum balance for rent exemption
+      const mintRent = await getMinimumBalanceForRentExemptMint(this.connection);
+      
+      // Create transaction
+      const transaction = new Transaction();
+      
+      // Create mint account
+      transaction.add(
+        SystemProgram.createAccount({
+          fromPubkey: this.payerKeypair.publicKey,
+          newAccountPubkey: mintKeypair.publicKey,
+          space: MINT_SIZE,
+          lamports: mintRent,
+          programId: TOKEN_PROGRAM_ID,
+        })
+      );
+      
+      // Initialize mint
+      transaction.add(
+        createInitializeMintInstruction(
+          mintKeypair.publicKey,
+          6, // decimals
+          this.payerKeypair.publicKey, // mint authority
+          this.payerKeypair.publicKey  // freeze authority
+        )
+      );
+      
+      // Get associated token account address
+      const associatedTokenAccount = await getAssociatedTokenAddress(
+        mintKeypair.publicKey,
+        userPublicKey
+      );
+      
+      // Create associated token account
+      transaction.add(
+        createAssociatedTokenAccountInstruction(
+          this.payerKeypair.publicKey,
+          associatedTokenAccount,
+          userPublicKey,
+          mintKeypair.publicKey
+        )
+      );
+      
+      // Mint tokens to user
+      const mintAmount = 1000000 * Math.pow(10, 6); // 1 million tokens with 6 decimals
+      transaction.add(
+        createMintToInstruction(
+          mintKeypair.publicKey,
+          associatedTokenAccount,
+          this.payerKeypair.publicKey,
+          mintAmount
+        )
+      );
+      
+      // Sign and send transaction
+      const signature = await this.connection.sendTransaction(
+        transaction,
+        [this.payerKeypair, mintKeypair],
+        { commitment: 'confirmed' }
+      );
+      
+      console.log(`Real Solana token created: ${coinName} (${coinSymbol}) - TX: ${signature}`);
+      
+      return {
+        coinAddress: mintKeypair.publicKey.toBase58(),
+        transactionHash: signature
+      };
+      
+    } catch (error) {
+      console.error('Failed to create real Solana token:', error);
+      // Fallback to demo mode if real transaction fails
+      throw error;
     }
   }
 
