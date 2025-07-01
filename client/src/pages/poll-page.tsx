@@ -461,12 +461,7 @@ export default function ChallengePage() {
                 </div>
               </div>
               
-              {/* Wallet Connection Section - Show for active polls */}
-              {isPollActive && (
-                <div className="mt-6">
-                  <WalletConnect />
-                </div>
-              )}
+
 
               {isPollActive && (
                 <div className="mt-6 flex flex-col items-center">
@@ -541,6 +536,23 @@ export default function ChallengePage() {
       </main>
       
       <Footer />
+      
+      {/* Coin Delivery Modal */}
+      {pendingVoteData && (
+        <CoinDeliveryModal
+          isOpen={showCoinModal}
+          onClose={() => {
+            setShowCoinModal(false);
+            setPendingVoteData(null);
+            setIsVoting(false);
+          }}
+          coinName={pendingVoteData.coinName}
+          coinSymbol={pendingVoteData.coinSymbol}
+          option={pendingVoteData.optionText}
+          pollId={pendingVoteData.pollId}
+          onDeliveryChoice={handleCoinDelivery}
+        />
+      )}
     </div>
   );
 }
