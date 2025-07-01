@@ -1,8 +1,8 @@
 import { 
   User, InsertUser, Poll, InsertPoll, Vote, InsertVote, 
   Achievement, UserAchievement, InsertUserAchievement, RaceRecord, InsertRaceRecord,
-  GeneratedCoin, InsertGeneratedCoin,
-  users, polls, votes, achievements, userAchievements, raceRecords, generatedCoins
+  GeneratedCoin, InsertGeneratedCoin, MemeCoinPackage, InsertMemeCoinPackage,
+  users, polls, votes, achievements, userAchievements, raceRecords, generatedCoins, memeCoinPackages
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -56,6 +56,14 @@ export interface IStorage {
   getPollGeneratedCoins(pollId: number): Promise<GeneratedCoin[]>;
   getUserCoinForPoll(userId: number, pollId: number, option: string): Promise<GeneratedCoin | undefined>;
   getGeneratedCoinsByName(name: string): Promise<GeneratedCoin[]>;
+  
+  // MemeCoin Package methods
+  createMemeCoinPackage(packageData: InsertMemeCoinPackage): Promise<MemeCoinPackage>;
+  getUserActivePackage(userId: number): Promise<MemeCoinPackage | undefined>;
+  getUserPackages(userId: number): Promise<MemeCoinPackage[]>;
+  consumePackageUsage(packageId: number): Promise<void>;
+  getPackageByTxHash(txHash: string): Promise<MemeCoinPackage | undefined>;
+  updatePackageStatus(packageId: number, status: string): Promise<void>;
   
   // Session store
   sessionStore: any; // Using any to avoid type conflicts with session store

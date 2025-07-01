@@ -175,3 +175,37 @@ export const insertGeneratedCoinSchema = createInsertSchema(generatedCoins).pick
 
 export type InsertGeneratedCoin = z.infer<typeof insertGeneratedCoinSchema>;
 export type GeneratedCoin = typeof generatedCoins.$inferSelect;
+
+// MemeCoin Package model for USDT payments
+export const memeCoinPackages = pgTable("meme_coin_packages", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  packageType: text("package_type").notNull().default("3_polls"), // "3_polls", "10_polls", etc.
+  totalPolls: integer("total_polls").notNull().default(3),
+  usedPolls: integer("used_polls").notNull().default(0),
+  remainingPolls: integer("remaining_polls").notNull().default(3),
+  paymentTxHash: text("payment_tx_hash").notNull(), // USDT transaction hash on Polygon
+  paymentAmount: text("payment_amount").notNull(), // Amount in USDT
+  paymentToken: text("payment_token").notNull().default("USDT"), // Payment token used
+  paymentChain: text("payment_chain").notNull().default("polygon"), // blockchain used for payment
+  status: text("status").notNull().default("active"), // active, expired, used_up
+  purchasedAt: timestamp("purchased_at").defaultNow(),
+  expiresAt: timestamp("expires_at"), // optional expiration
+});
+
+export const insertMemeCoinPackageSchema = createInsertSchema(memeCoinPackages).pick({
+  userId: true,
+  packageType: true,
+  totalPolls: true,
+  usedPolls: true,
+  remainingPolls: true,
+  paymentTxHash: true,
+  paymentAmount: true,
+  paymentToken: true,
+  paymentChain: true,
+  status: true,
+  expiresAt: true,
+});
+
+export type InsertMemeCoinPackage = z.infer<typeof insertMemeCoinPackageSchema>;
+export type MemeCoinPackage = typeof memeCoinPackages.$inferSelect;
