@@ -80,7 +80,15 @@ export class CoinService {
       
       // Create mint keypair (this represents the new token)
       const mintKeypair = Keypair.generate();
-      const userPublicKey = new PublicKey(params.userWallet);
+      
+      // For demo mode, generate a valid wallet address
+      let userPublicKey: PublicKey;
+      if (params.userWallet.startsWith('demo_wallet_')) {
+        // Generate a deterministic keypair for demo wallets
+        userPublicKey = Keypair.generate().publicKey;
+      } else {
+        userPublicKey = new PublicKey(params.userWallet);
+      }
       
       // For demo purposes, we'll create a mock transaction
       // In production, this would create an actual Solana token
