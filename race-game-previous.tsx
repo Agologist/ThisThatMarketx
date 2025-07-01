@@ -422,7 +422,7 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
               <Card className="border-primary/30">
                 <CardHeader>
                   <div className="flex justify-between items-center">
-                    <CardTitle className="text-2xl">Votes and Wars Race</CardTitle>
+                    <CardTitle className="text-2xl">ThisThat.Market Race</CardTitle>
                     <Badge variant="outline" className="bg-primary/10 text-primary">
                       {gameState === "racing" ? "Racing!" : gameState === "countdown" ? "Ready..." : gameState === "finished" ? "Finished" : "Select Car"}
                     </Badge>
