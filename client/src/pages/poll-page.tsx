@@ -427,6 +427,13 @@ export default function ChallengePage() {
                 </div>
               </div>
               
+              {/* Wallet Connection Section - Show for active polls */}
+              {isPollActive && (
+                <div className="mt-6">
+                  <WalletConnect />
+                </div>
+              )}
+
               {isPollActive && (
                 <div className="mt-6 flex flex-col items-center">
                   <Button 
@@ -456,11 +463,6 @@ export default function ChallengePage() {
                 </div>
               )}
               
-              {/* Wallet Connection Section */}
-              <div className="mt-6">
-                <WalletConnect />
-              </div>
-
               <div className="mt-6">
                 <Separator className="my-4" />
                 <div className="text-center">
