@@ -123,28 +123,77 @@ export default function ChallengePage() {
   const handleVote = async () => {
     if (!selectedOption || !isPollActive || !poll) return;
     
-    // FORCE CACHE REFRESH - NEW MODAL FLOW v3.0 - TIMESTAMP: ${Date.now()}
-    console.log("🚀 NEW MODAL FLOW EXECUTING - TIMESTAMP:", Date.now());
-    alert(`🚀 CACHE BUSTED! NEW MODAL FLOW v3.0 - ${new Date().toLocaleTimeString()}`);
+    setIsVoting(true);
     
-    // Prepare coin data for the modal
-    const optionText = selectedOption === "A" ? poll.optionAText : poll.optionBText;
-    const coinName = optionText;
-    const coinSymbol = optionText.slice(0, 6).toUpperCase().replace(/[^A-Z]/g, '');
-    
-    console.log("🎯 Setting up pending vote data:", { optionText, coinName, coinSymbol });
-    
-    // Set up the pending vote data and show the modal
-    setPendingVoteData({
-      option: selectedOption,
-      pollId: parseInt(id!),
-      optionText,
-      coinName,
-      coinSymbol
-    });
-    
-    console.log("🎯 Showing coin modal");
-    setShowCoinModal(true);
+    try {
+      // First, try to submit vote without wallet address (this will trigger backend to ask for wallet preference)
+      const response = await apiRequest("POST", `/api/polls/${id}/vote`, { 
+        option: selectedOption
+        // No walletAddress provided - this triggers the modal flow
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        
+        // NEW: Check if backend is asking for wallet choice
+        if (errorData.requiresWalletChoice && errorData.coinPreview) {
+          console.log("Backend requesting wallet choice, showing modal with:", errorData.coinPreview);
+          
+          // Set up the pending vote data from backend response
+          setPendingVoteData({
+            option: errorData.coinPreview.option,
+            pollId: errorData.coinPreview.pollId,
+            optionText: errorData.coinPreview.optionText,
+            coinName: errorData.coinPreview.coinName,
+            coinSymbol: errorData.coinPreview.coinSymbol
+          });
+          
+          setIsVoting(false);
+          setShowCoinModal(true);
+          return;
+        }
+        
+        throw new Error(errorData.message || "Failed to record vote");
+      }
+      
+      // OLD FLOW: If vote was processed directly (shouldn't happen anymore)
+      const result = await response.json();
+      console.log("Vote processed directly:", result);
+      
+      // Update queries and show success
+      if (result.poll) {
+        queryClient.setQueryData([`/api/polls/${id}`], result.poll);
+      }
+      
+      if (result.vote) {
+        queryClient.setQueryData([`/api/polls/${id}/vote`], {
+          hasVoted: true,
+          poll: result.poll,
+          userId: user?.id,
+          pollId: parseInt(id!),
+          option: result.vote.option
+        });
+      }
+      
+      queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}/vote`] });
+      setForceRefresh(prev => prev + 1);
+      
+      toast({
+        title: "Vote Recorded!",
+        description: `You voted for ${selectedOption === "A" ? poll.optionAText : poll.optionBText}`,
+      });
+      
+    } catch (error) {
+      console.error("Vote submission error:", error);
+      toast({
+        title: "Vote Failed",
+        description: error instanceof Error ? error.message : "Failed to record vote",
+        variant: "destructive"
+      });
+    } finally {
+      setIsVoting(false);
+    }
   };
 
   const handleCoinDelivery = async (walletAddress: string | null) => {

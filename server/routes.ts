@@ -298,10 +298,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const pollId = parseInt(req.params.id);
-      const { option } = req.body;
+      const { option, walletAddress } = req.body;
       const userId = req.user.id;
       
-      console.log(`Processing vote for user ${userId} on poll ${pollId}, option ${option}`);
+      console.log(`Processing vote for user ${userId} on poll ${pollId}, option ${option}, wallet: ${walletAddress || 'not provided'}`);
       
       // Validate option
       if (option !== "A" && option !== "B") {
@@ -317,6 +317,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ 
           message: "You have already voted on this challenge", 
           existingVote
+        });
+      }
+      
+      // NEW MODAL FLOW: If no wallet address provided, return special response asking for wallet preference
+      if (walletAddress === undefined) {
+        console.log("🚀 NEW MODAL FLOW: Vote received without wallet preference - returning wallet request");
+        
+        const poll = await storage.getPoll(pollId);
+        if (!poll) {
+          return res.status(404).json({ message: "Poll not found" });
+        }
+        
+        const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
+        const coinName = optionText;
+        const coinSymbol = optionText.slice(0, 6).toUpperCase().replace(/[^A-Z]/g, '');
+        
+        return res.status(200).json({
+          requiresWalletChoice: true,
+          coinPreview: {
+            option,
+            optionText,
+            coinName,
+            coinSymbol,
+            pollId
+          },
+          message: "Please provide wallet address or choose demo mode"
         });
       }
       
