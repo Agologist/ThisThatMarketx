@@ -29,6 +29,8 @@ export default function CoinDeliveryModal({
   const [isValidating, setIsValidating] = useState(false);
   const { toast } = useToast();
 
+  console.log("🔄 CoinDeliveryModal render:", { isOpen, coinName, coinSymbol, option, pollId });
+
   const validateSolanaAddress = (address: string): boolean => {
     // Basic Solana address validation - should be 32-44 characters, alphanumeric + specific chars
     const solanaAddressRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
