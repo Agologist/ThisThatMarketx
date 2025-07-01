@@ -45,6 +45,8 @@ export const polls = pgTable("polls", {
   endTime: timestamp("end_time").notNull(),
   isPublic: boolean("is_public").default(true),
   isWar: boolean("is_war").default(false),
+  memeCoinMode: boolean("meme_coin_mode").default(false),
+  creatorWallet: text("creator_wallet"),
 });
 
 export const insertPollSchema = createInsertSchema(polls)
@@ -58,6 +60,8 @@ export const insertPollSchema = createInsertSchema(polls)
     endTime: true,
     isPublic: true,
     isWar: true,
+    memeCoinMode: true,
+    creatorWallet: true,
   })
   .extend({
     // Allow endTime to be a string (ISO format) or Date object

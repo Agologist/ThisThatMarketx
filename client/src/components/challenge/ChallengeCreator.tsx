@@ -26,6 +26,8 @@ const challengeFormSchema = z.object({
   customHours: z.coerce.number().min(0).max(72).optional(),
   customMinutes: z.coerce.number().min(0).max(59).optional(),
   isWar: z.boolean().default(false),
+  memeCoinMode: z.boolean().default(false),
+  creatorWallet: z.string().optional(),
 });
 
 type ChallengeFormValues = z.infer<typeof challengeFormSchema>;
@@ -71,6 +73,8 @@ export default function ChallengeCreator() {
       customHours: 1,
       customMinutes: 0,
       isWar: false,
+      memeCoinMode: false,
+      creatorWallet: "",
     },
   });
   
