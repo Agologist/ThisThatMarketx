@@ -1,7 +1,8 @@
 import { 
   User, InsertUser, Poll, InsertPoll, Vote, InsertVote, 
   Achievement, UserAchievement, InsertUserAchievement, RaceRecord, InsertRaceRecord,
-  users, polls, votes, achievements, userAchievements, raceRecords
+  GeneratedCoin, InsertGeneratedCoin,
+  users, polls, votes, achievements, userAchievements, raceRecords, generatedCoins
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -49,6 +50,13 @@ export interface IStorage {
   createUserAchievement(userAchievement: InsertUserAchievement): Promise<UserAchievement>;
   updateUserAchievement(id: number, data: Partial<UserAchievement>): Promise<UserAchievement>;
   
+  // Generated Coin methods
+  createGeneratedCoin(coin: InsertGeneratedCoin): Promise<GeneratedCoin>;
+  getUserGeneratedCoins(userId: number): Promise<GeneratedCoin[]>;
+  getPollGeneratedCoins(pollId: number): Promise<GeneratedCoin[]>;
+  getUserCoinForPoll(userId: number, pollId: number, option: string): Promise<GeneratedCoin | undefined>;
+  getGeneratedCoinsByName(name: string): Promise<GeneratedCoin[]>;
+  
   // Session store
   sessionStore: any; // Using any to avoid type conflicts with session store
 }
@@ -60,6 +68,7 @@ export class MemStorage implements IStorage {
   private raceRecords: Map<number, RaceRecord>;
   private achievements: Map<number, Achievement>;
   private userAchievements: Map<number, UserAchievement>;
+  private generatedCoins: Map<number, GeneratedCoin>;
   
   sessionStore: any; // Using any to avoid type conflicts with session store
   currentId: { [key: string]: number };
