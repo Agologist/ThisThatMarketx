@@ -123,13 +123,16 @@ export default function ChallengePage() {
   const handleVote = async () => {
     if (!selectedOption || !isPollActive || !poll) return;
     
-    // FORCE CACHE REFRESH - NEW MODAL FLOW v2.0
-    alert("NEW MODAL FLOW: About to show coin delivery modal!");
+    // FORCE CACHE REFRESH - NEW MODAL FLOW v3.0 - TIMESTAMP: ${Date.now()}
+    console.log("🚀 NEW MODAL FLOW EXECUTING - TIMESTAMP:", Date.now());
+    alert(`🚀 CACHE BUSTED! NEW MODAL FLOW v3.0 - ${new Date().toLocaleTimeString()}`);
     
     // Prepare coin data for the modal
     const optionText = selectedOption === "A" ? poll.optionAText : poll.optionBText;
     const coinName = optionText;
     const coinSymbol = optionText.slice(0, 6).toUpperCase().replace(/[^A-Z]/g, '');
+    
+    console.log("🎯 Setting up pending vote data:", { optionText, coinName, coinSymbol });
     
     // Set up the pending vote data and show the modal
     setPendingVoteData({
@@ -140,6 +143,7 @@ export default function ChallengePage() {
       coinSymbol
     });
     
+    console.log("🎯 Showing coin modal");
     setShowCoinModal(true);
   };
 
