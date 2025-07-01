@@ -18,6 +18,17 @@ const firebaseUserSchema = z.object({
   provider: z.enum(['google', 'twitter', 'x', 'twitter.com']).default('google'),
 });
 
+// Platform wallet configuration for receiving payments
+const PLATFORM_CONFIG = {
+  // Polygon network wallet for receiving USDT payments
+  polygonWallet: process.env.PLATFORM_POLYGON_WALLET || '0x742d35Cc6636C0532925a3b6F45bb678E9E9cD81', // Demo wallet
+  // Solana wallet for gas fee coverage (devnet for testing)
+  solanaWallet: process.env.PLATFORM_SOLANA_WALLET || 'A1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q7R8S9T0U1V2W3X4Y5Z6', // Demo wallet
+  // Package pricing
+  packagePrice: '1.00', // $1 USDT
+  packagePolls: 3, // 3 polls per package
+};
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
   setupAuth(app);
@@ -838,6 +849,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get payment information endpoint
+  app.get("/api/packages/payment-info", async (req, res) => {
+    res.json({
+      polygonWallet: PLATFORM_CONFIG.polygonWallet,
+      packagePrice: PLATFORM_CONFIG.packagePrice,
+      packagePolls: PLATFORM_CONFIG.packagePolls,
+      paymentToken: 'USDT',
+      paymentChain: 'polygon',
+      instructions: [
+        `Send exactly ${PLATFORM_CONFIG.packagePrice} USDT on Polygon network to:`,
+        PLATFORM_CONFIG.polygonWallet,
+        'After payment, use the transaction hash to purchase your package.',
+        'You will receive 3 poll credits for creating real meme coins.'
+      ]
+    });
+  });
+
   // Package Management API endpoints
   app.post("/api/packages/purchase", async (req, res) => {
     if (!req.isAuthenticated()) {
@@ -845,27 +873,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
+      // Validate required payment information
+      const { paymentTxHash, paymentAmount } = req.body;
+      
+      if (!paymentTxHash || !paymentAmount) {
+        return res.status(400).json({ 
+          message: "Payment transaction hash and amount are required" 
+        });
+      }
+
+      // Check if this transaction hash has already been used
+      const existingPackage = await storage.getPackageByTxHash(paymentTxHash);
+      if (existingPackage) {
+        return res.status(400).json({ 
+          message: "This transaction has already been used for a package purchase" 
+        });
+      }
+
       const packageData = insertMemeCoinPackageSchema.parse({
-        ...req.body,
         userId: req.user.id,
         status: 'pending',
         packageType: 'basic',
-        totalPolls: 3,
+        totalPolls: PLATFORM_CONFIG.packagePolls,
         usedPolls: 0,
-        remainingPolls: 3,
+        remainingPolls: PLATFORM_CONFIG.packagePolls,
+        paymentTxHash,
+        paymentAmount,
         paymentToken: 'USDT',
         paymentChain: 'polygon'
       });
 
       const newPackage = await storage.createMemeCoinPackage(packageData);
       
-      // In a real implementation, we would:
-      // 1. Verify the payment transaction on Polygon
-      // 2. Update package status to 'active' when payment is confirmed
-      // For now, we'll simulate this by setting to active immediately
+      // In production, verify the transaction on Polygon blockchain:
+      // 1. Check transaction exists and is confirmed
+      // 2. Verify amount matches expected price
+      // 3. Verify recipient address matches platform wallet
+      // 4. Verify sender has sufficient balance
+      
+      // For demo/development, automatically activate packages
+      console.log(`Package created for user ${req.user.id} with tx: ${paymentTxHash}`);
       await storage.updatePackageStatus(newPackage.id, 'active');
       
-      res.json({ ...newPackage, status: 'active' });
+      res.json({ 
+        ...newPackage, 
+        status: 'active',
+        message: 'Package activated successfully! You now have 3 poll credits for real meme coins.'
+      });
     } catch (error) {
       console.error('Error creating package:', error);
       res.status(500).json({ message: "Failed to create package" });
