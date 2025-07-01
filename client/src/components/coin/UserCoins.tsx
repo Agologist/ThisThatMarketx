@@ -74,10 +74,13 @@ export default function UserCoins() {
                   </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Address: {coin.coinAddress.slice(0, 8)}...{coin.coinAddress.slice(-8)}
+                  Coin Address: {coin.coinAddress.slice(0, 8)}...{coin.coinAddress.slice(-8)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Created: {new Date(coin.createdAt).toLocaleDateString()}
+                  Your Wallet: {coin.userWallet ? coin.userWallet.slice(0, 8) + '...' + coin.userWallet.slice(-8) : 'Demo Mode'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Created: {coin.createdAt ? new Date(coin.createdAt).toLocaleDateString() : 'Unknown'}
                 </p>
               </div>
               <div className="flex items-center gap-2">
