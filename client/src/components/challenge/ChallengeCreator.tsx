@@ -452,7 +452,7 @@ export default function ChallengeCreator() {
                   name="optionAText"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Challenger 1</FormLabel>
+                      <FormLabel>This</FormLabel>
                       <div className="bg-black border border-primary/30 rounded overflow-hidden">
                         <div 
                           className="h-32 bg-black flex items-center justify-center relative"
@@ -463,7 +463,7 @@ export default function ChallengeCreator() {
                               <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary/50">
                                 <img 
                                   src={optionAImage} 
-                                  alt="Challenger 1" 
+                                  alt="This" 
                                   className="w-full h-full object-cover" 
                                 />
                               </div>
@@ -544,7 +544,7 @@ export default function ChallengeCreator() {
                   name="optionBText"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Challenger 2</FormLabel>
+                      <FormLabel>That</FormLabel>
                       <div className="bg-black border border-primary/30 rounded overflow-hidden">
                         <div 
                           className="h-32 bg-black flex items-center justify-center relative"
@@ -555,7 +555,7 @@ export default function ChallengeCreator() {
                               <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary/50">
                                 <img 
                                   src={optionBImage} 
-                                  alt="Challenger 2" 
+                                  alt="That" 
                                   className="w-full h-full object-cover" 
                                 />
                               </div>

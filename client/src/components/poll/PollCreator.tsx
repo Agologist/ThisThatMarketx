@@ -353,7 +353,7 @@ export default function PollCreator() {
     if (!searchText) {
       toast({
         title: "Input Required",
-        description: `Please enter text for Challenger ${option} first`,
+        description: `Please enter text for ${option === "A" ? "This" : "That"} first`,
         variant: "destructive",
       });
       return;
@@ -453,7 +453,7 @@ export default function PollCreator() {
                   name="optionAText"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Challenger 1</FormLabel>
+                      <FormLabel>This</FormLabel>
                       <div className="bg-black border border-primary/30 rounded overflow-hidden">
                         <div 
                           className="h-32 bg-black flex items-center justify-center relative"
@@ -462,7 +462,7 @@ export default function PollCreator() {
                           {optionAImage ? (
                             <img 
                               src={optionAImage} 
-                              alt="Challenger 1" 
+                              alt="This" 
                               className="w-full h-full object-cover" 
                             />
                           ) : (
@@ -497,7 +497,7 @@ export default function PollCreator() {
                         <div className="p-3">
                           <FormControl>
                             <Input 
-                              placeholder="Challenger 1 title"
+                              placeholder="This title"
                               className="bg-black border-0"
                               {...field}
                               onChange={(e) => {
@@ -520,7 +520,7 @@ export default function PollCreator() {
                   name="optionBText"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Challenger 2</FormLabel>
+                      <FormLabel>That</FormLabel>
                       <div className="bg-black border border-primary/30 rounded overflow-hidden">
                         <div 
                           className="h-32 bg-black flex items-center justify-center relative"
@@ -529,7 +529,7 @@ export default function PollCreator() {
                           {optionBImage ? (
                             <img 
                               src={optionBImage} 
-                              alt="Challenger 2" 
+                              alt="That" 
                               className="w-full h-full object-cover" 
                             />
                           ) : (
@@ -564,7 +564,7 @@ export default function PollCreator() {
                         <div className="p-3">
                           <FormControl>
                             <Input 
-                              placeholder="Challenger 2 title"
+                              placeholder="That title"
                               className="bg-black border-0"
                               {...field}
                               onChange={(e) => {
