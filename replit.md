@@ -4,12 +4,16 @@
 A dynamic "This or That" polling application with interactive battle game mechanics. Users create time-limited challenges with two options, each with image avatars. The key feature is an interactive car battle game where voting impacts car movement in real-time sumo-style contests.
 
 ## Recent Changes
-- **July 2025**: Implemented automatic Solana meme coin generation feature
+- **July 2025**: Implemented "MemeCoin Mode" toggle solution for poll creators
+  - RESOLVED: Critical browser caching issue preventing post-vote modal from appearing
+  - Added MemeCoin Mode toggle to poll creation form - creators decide coin generation at creation time
+  - Updated database schema with memeCoinMode boolean and creatorWallet fields for polls table
+  - Modified backend voting logic to only generate coins when MemeCoin Mode is enabled on specific polls
+  - Added optional creator wallet address field for real coin delivery vs demo mode
+  - Implemented automatic Solana meme coin generation feature
   - Added database schema for tracking generated coins (coin name, symbol, address, wallet)
   - Created coin service for automatic token creation when users vote
-  - Integrated coin generation into voting workflow - one coin per vote per user
   - Added API endpoints for viewing user coins (/api/user/coins) and poll coins (/api/polls/:id/coins)
-  - Set up demo mode with mock Solana wallets for testing
   - Coins are named after the option users vote for (e.g., "DogeCoin" → "DOGECO")
   - Successfully tested: coin generation, storage, and retrieval functionality
 - **January 2025**: Application name changed from "Votes and Wars" to "ThisThat.Market"

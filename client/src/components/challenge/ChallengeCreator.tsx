@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ImageIcon, HelpCircle, Upload, Camera, Sword } from "lucide-react";
+import { Loader2, ImageIcon, HelpCircle, Upload, Camera, Sword, Coins } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { searchImages, getFallbackImage, compressImageDataUrl } from "@/utils/imageSearch";
 import { useLocation } from "wouter";
@@ -160,6 +160,8 @@ export default function ChallengeCreator() {
         endTime: endTime.toISOString(),
         isPublic: values.audience === "public" ? true : false,
         isWar: values.isWar,
+        memeCoinMode: values.memeCoinMode,
+        creatorWallet: values.creatorWallet || null,
       };
       
       console.log("Submitting challenge data:", challengeData);
@@ -773,6 +775,54 @@ export default function ChallengeCreator() {
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="memeCoinMode"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between space-y-0 rounded-lg border border-primary/30 p-4 bg-black/20">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base flex items-center">
+                      <Coins className="w-5 h-5 mr-2 text-primary" />
+                      Enable MemeCoin Mode
+                    </FormLabel>
+                    <FormDescription>
+                      Voters automatically receive custom meme coins in their wallets when they vote
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      className="data-[state=checked]:bg-primary"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            {form.watch("memeCoinMode") && (
+              <FormField
+                control={form.control}
+                name="creatorWallet"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Creator Wallet Address (Optional)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Enter your Solana wallet address" 
+                        className="bg-black border-primary/30"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Leave empty to use demo mode. Provide your Solana wallet to receive real coins.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             
             <div className="pt-4">
               <Button 
