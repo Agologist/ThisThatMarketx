@@ -184,6 +184,16 @@ export default function ChallengePage() {
         title: "Vote recorded!",
         description: `You voted for ${selectedOption === "A" ? poll.optionAText : poll.optionBText}`,
       });
+      
+      // Show coin generation notification
+      setTimeout(() => {
+        const optionText = selectedOption === "A" ? poll.optionAText : poll.optionBText;
+        const coinSymbol = optionText.slice(0, 6).toUpperCase().replace(/[^A-Z]/g, '');
+        toast({
+          title: "🪙 Meme Coin Generated!",
+          description: `You received ${optionText} (${coinSymbol}) in your Solana wallet`,
+        });
+      }, 1500);
     } catch (error) {
       console.error("Voting error:", error);
       toast({
