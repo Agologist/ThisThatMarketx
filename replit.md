@@ -11,6 +11,7 @@ A dynamic "This or That" polling application with interactive battle game mechan
   - Optimized logo visibility by removing circular containers and increasing sizes
   - Restricted battle game access: removed standalone navigation links from header and footer
   - Battle games now only accessible through polls with War Mode enabled
+  - Updated challenger labels from "Challenger 1" and "Challenger 2" to "This" and "That" throughout the application
   - Maintained all existing functionality during updates
 
 ## Project Architecture

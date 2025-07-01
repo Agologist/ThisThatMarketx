@@ -494,7 +494,7 @@ export default function ChallengeCreator() {
                         <div className="p-2">
                           <FormControl>
                             <Input 
-                              placeholder="Name your challenger" 
+                              placeholder="Name for This" 
                               className="bg-black border-primary/30"
                               {...field} 
                               onChange={(e) => {
@@ -586,7 +586,7 @@ export default function ChallengeCreator() {
                         <div className="p-2">
                           <FormControl>
                             <Input 
-                              placeholder="Name your challenger" 
+                              placeholder="Name for That" 
                               className="bg-black border-primary/30"
                               {...field} 
                               onChange={(e) => {
