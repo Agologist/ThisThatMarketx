@@ -321,7 +321,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // NEW MODAL FLOW: If no wallet address provided, return special response asking for wallet preference
-      if (walletAddress === undefined) {
+      console.log(`🔍 Wallet address check: walletAddress=${walletAddress}, type=${typeof walletAddress}, undefined=${walletAddress === undefined}, null=${walletAddress === null}, empty=${walletAddress === ''}`);
+      
+      if (walletAddress === undefined || walletAddress === null || walletAddress === '') {
         console.log("🚀 NEW MODAL FLOW: Vote received without wallet preference - returning wallet request");
         
         const poll = await storage.getPoll(pollId);
