@@ -3,8 +3,9 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { setupReplitAuth } from "./replitAuth";
+import { coinService } from "./coinService";
 import { z } from "zod";
-import { insertPollSchema, insertVoteSchema, insertRaceRecordSchema, insertUserAchievementSchema } from "@shared/schema";
+import { insertPollSchema, insertVoteSchema, insertRaceRecordSchema, insertUserAchievementSchema, insertGeneratedCoinSchema } from "@shared/schema";
 import axios from "axios";
 
 // Schema for Firebase user data
@@ -334,6 +335,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Update poll vote count
       await storage.incrementPollVote(pollId, option);
+      
+      // Generate meme coin for the user's vote (demo mode)
+      try {
+        const poll = await storage.getPoll(pollId);
+        if (poll) {
+          const optionText = option === 'A' ? poll.optionA : poll.optionB;
+          const userWallet = 'demo_wallet_' + userId; // Mock wallet for demo
+          
+          const coinResult = await coinService.createMemeCoin({
+            userId,
+            pollId,
+            option,
+            optionText,
+            userWallet
+          });
+          
+          console.log('Meme coin generated:', coinResult);
+        }
+      } catch (coinError) {
+        console.error('Failed to generate coin, but vote still recorded:', coinError);
+        // Don't fail the vote if coin generation fails
+      }
       
       // Get updated poll - make sure to wait for the latest data
       const updatedPoll = await storage.getPoll(pollId);

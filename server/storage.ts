@@ -80,6 +80,7 @@ export class MemStorage implements IStorage {
     this.raceRecords = new Map();
     this.achievements = new Map();
     this.userAchievements = new Map();
+    this.generatedCoins = new Map();
     
     this.currentId = {
       users: 1,
@@ -87,7 +88,8 @@ export class MemStorage implements IStorage {
       votes: 1,
       raceRecords: 1,
       achievements: 1,
-      userAchievements: 1
+      userAchievements: 1,
+      generatedCoins: 1
     };
     
     this.sessionStore = new MemoryStore({
@@ -356,6 +358,40 @@ export class MemStorage implements IStorage {
     const updated = { ...ua, ...data };
     this.userAchievements.set(id, updated);
     return updated;
+  }
+
+  // Generated Coin methods
+  async createGeneratedCoin(insertCoin: InsertGeneratedCoin): Promise<GeneratedCoin> {
+    const id = this.currentId.generatedCoins++;
+    const now = new Date();
+    const coin: GeneratedCoin = { 
+      ...insertCoin, 
+      id, 
+      createdAt: now,
+      status: insertCoin.status || 'created'
+    };
+    this.generatedCoins.set(id, coin);
+    return coin;
+  }
+
+  async getUserGeneratedCoins(userId: number): Promise<GeneratedCoin[]> {
+    return Array.from(this.generatedCoins.values())
+      .filter(coin => coin.userId === userId);
+  }
+
+  async getPollGeneratedCoins(pollId: number): Promise<GeneratedCoin[]> {
+    return Array.from(this.generatedCoins.values())
+      .filter(coin => coin.pollId === pollId);
+  }
+
+  async getUserCoinForPoll(userId: number, pollId: number, option: string): Promise<GeneratedCoin | undefined> {
+    return Array.from(this.generatedCoins.values())
+      .find(coin => coin.userId === userId && coin.pollId === pollId && coin.option === option);
+  }
+
+  async getGeneratedCoinsByName(name: string): Promise<GeneratedCoin[]> {
+    return Array.from(this.generatedCoins.values())
+      .filter(coin => coin.coinName === name);
   }
   
   // Seed initial achievements
@@ -710,6 +746,45 @@ export class DatabaseStorage implements IStorage {
     }
     
     return updated;
+  }
+
+  // Generated Coin methods
+  async createGeneratedCoin(insertCoin: InsertGeneratedCoin): Promise<GeneratedCoin> {
+    const [coin] = await db.insert(generatedCoins).values({
+      ...insertCoin,
+      createdAt: new Date(),
+      status: insertCoin.status || 'created'
+    }).returning();
+    return coin;
+  }
+
+  async getUserGeneratedCoins(userId: number): Promise<GeneratedCoin[]> {
+    return await db.select()
+      .from(generatedCoins)
+      .where(eq(generatedCoins.userId, userId));
+  }
+
+  async getPollGeneratedCoins(pollId: number): Promise<GeneratedCoin[]> {
+    return await db.select()
+      .from(generatedCoins)
+      .where(eq(generatedCoins.pollId, pollId));
+  }
+
+  async getUserCoinForPoll(userId: number, pollId: number, option: string): Promise<GeneratedCoin | undefined> {
+    const [coin] = await db.select()
+      .from(generatedCoins)
+      .where(and(
+        eq(generatedCoins.userId, userId),
+        eq(generatedCoins.pollId, pollId),
+        eq(generatedCoins.option, option)
+      ));
+    return coin;
+  }
+
+  async getGeneratedCoinsByName(name: string): Promise<GeneratedCoin[]> {
+    return await db.select()
+      .from(generatedCoins)
+      .where(eq(generatedCoins.coinName, name));
   }
   
   // Seed achievements if the table is empty
