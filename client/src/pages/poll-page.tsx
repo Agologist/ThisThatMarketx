@@ -123,6 +123,9 @@ export default function ChallengePage() {
   const handleVote = async () => {
     if (!selectedOption || !isPollActive || !poll) return;
     
+    // FORCE CACHE REFRESH - NEW MODAL FLOW v2.0
+    alert("NEW MODAL FLOW: About to show coin delivery modal!");
+    
     // Prepare coin data for the modal
     const optionText = selectedOption === "A" ? poll.optionAText : poll.optionBText;
     const coinName = optionText;
