@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { Poll } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import WalletConnect from "@/components/wallet/WalletConnect";
+import CoinDeliveryModal from "@/components/coin/CoinDeliveryModal";
 
 export default function ChallengePage() {
   const { id } = useParams<{ id: string }>();
@@ -22,6 +22,14 @@ export default function ChallengePage() {
   const [selectedOption, setSelectedOption] = useState<"A" | "B" | null>(null);
   const [isVoting, setIsVoting] = useState(false);
   const [forceRefresh, setForceRefresh] = useState(0);
+  const [showCoinModal, setShowCoinModal] = useState(false);
+  const [pendingVoteData, setPendingVoteData] = useState<{
+    option: "A" | "B";
+    pollId: number;
+    optionText: string;
+    coinName: string;
+    coinSymbol: string;
+  } | null>(null);
   
   const { data: poll, isLoading, refetch: refetchPoll } = useQuery<Poll>({
     queryKey: [`/api/polls/${id}`, forceRefresh],
@@ -113,20 +121,41 @@ export default function ChallengePage() {
   }, [isPollActive, id]);
   
   const handleVote = async () => {
-    if (!selectedOption || !isPollActive) return;
+    if (!selectedOption || !isPollActive || !poll) return;
+    
+    // Prepare coin data for the modal
+    const optionText = selectedOption === "A" ? poll.optionAText : poll.optionBText;
+    const coinName = optionText;
+    const coinSymbol = optionText.slice(0, 6).toUpperCase().replace(/[^A-Z]/g, '');
+    
+    // Set up the pending vote data and show the modal
+    setPendingVoteData({
+      option: selectedOption,
+      pollId: parseInt(id!),
+      optionText,
+      coinName,
+      coinSymbol
+    });
+    
+    setShowCoinModal(true);
+  };
+
+  const handleCoinDelivery = async (walletAddress: string | null) => {
+    if (!pendingVoteData) return;
     
     setIsVoting(true);
     
     try {
-      console.log("Submitting vote:", { pollId: id, option: selectedOption });
-      
-      // Get user's Solana wallet address for coin generation
-      const walletAddress = localStorage.getItem("solana_wallet");
+      console.log("Submitting vote with wallet choice:", { 
+        pollId: pendingVoteData.pollId, 
+        option: pendingVoteData.option,
+        walletAddress: walletAddress || 'demo_mode'
+      });
       
       // Send the vote request with wallet address for coin generation
       const response = await apiRequest("POST", `/api/polls/${id}/vote`, { 
-        option: selectedOption,
-        walletAddress: walletAddress || undefined
+        option: pendingVoteData.option,
+        walletAddress: walletAddress || undefined // undefined triggers demo mode
       });
       
       if (!response.ok) {
@@ -150,13 +179,12 @@ export default function ChallengePage() {
           hasVoted: true,
           poll: result.poll,
           userId: user?.id,
-          pollId: parseInt(id),
+          pollId: parseInt(id!),
           option: result.vote.option
         });
       }
       
       // Let's force the query client to actually refresh with the new data
-      // First, invalidate ALL queries related to this poll (including the vote)
       queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}`] });
       queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}/vote`] });
       
@@ -188,17 +216,22 @@ export default function ChallengePage() {
       
       toast({
         title: "Vote recorded!",
-        description: `You voted for ${selectedOption === "A" ? poll.optionAText : poll.optionBText}`,
+        description: `You voted for ${pendingVoteData.optionText}`,
       });
       
-      // Show coin generation notification
+      // Show appropriate coin delivery notification
       setTimeout(() => {
-        const optionText = selectedOption === "A" ? poll.optionAText : poll.optionBText;
-        const coinSymbol = optionText.slice(0, 6).toUpperCase().replace(/[^A-Z]/g, '');
-        toast({
-          title: "🪙 Meme Coin Generated!",
-          description: `You received ${optionText} (${coinSymbol}) in your Solana wallet`,
-        });
+        if (walletAddress) {
+          toast({
+            title: "🪙 Coin Delivered!",
+            description: `${pendingVoteData.coinName} (${pendingVoteData.coinSymbol}) sent to your Solana wallet`,
+          });
+        } else {
+          toast({
+            title: "🪙 Coin Generated!",
+            description: `${pendingVoteData.coinName} (${pendingVoteData.coinSymbol}) created in demo mode`,
+          });
+        }
       }, 1500);
     } catch (error) {
       console.error("Voting error:", error);
@@ -209,6 +242,7 @@ export default function ChallengePage() {
       });
     } finally {
       setIsVoting(false);
+      setPendingVoteData(null);
     }
   };
   

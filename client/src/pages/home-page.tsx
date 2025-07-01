@@ -4,8 +4,7 @@ import Footer from "@/components/Footer";
 import ChallengeCreator from "@/components/challenge/ChallengeCreator";
 import HomePageChallenges from "@/components/challenge/HomePageChallenges";
 import UserStatCards from "@/components/dashboard/UserStatCards";
-import UserCoins from "@/components/coin/UserCoins";
-import WalletConnect from "@/components/wallet/WalletConnect";
+
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, InfoIcon } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -117,20 +116,6 @@ export default function HomePage() {
           </div>
           
           {/* User Stats Cards Section - Moved to hamburger menu */}
-          
-          {/* Wallet Connection and Coins Section */}
-          {!isGuest && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-              <div>
-                <h3 className="font-medium mb-4 text-lg">🔗 Connect Your Solana Wallet</h3>
-                <WalletConnect />
-              </div>
-              <div>
-                <h3 className="font-medium mb-4 text-lg">🪙 Your Generated Coins</h3>
-                <UserCoins />
-              </div>
-            </div>
-          )}
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {!isGuest && <div id="challenge-creator"><ChallengeCreator /></div>}
