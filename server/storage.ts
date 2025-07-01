@@ -404,6 +404,62 @@ export class MemStorage implements IStorage {
     return Array.from(this.generatedCoins.values())
       .filter(coin => coin.coinName === name);
   }
+
+  // MemeCoin Package methods
+  async createMemeCoinPackage(packageData: InsertMemeCoinPackage): Promise<MemeCoinPackage> {
+    const id = this.currentId.memeCoinPackages++;
+    const packageRecord: MemeCoinPackage = {
+      ...packageData,
+      id,
+      purchasedAt: new Date()
+    };
+    this.memeCoinPackages.set(id, packageRecord);
+    return packageRecord;
+  }
+
+  async getUserActivePackage(userId: number): Promise<MemeCoinPackage | undefined> {
+    const userPackages = Array.from(this.memeCoinPackages.values())
+      .filter(pkg => pkg.userId === userId && pkg.status === 'active')
+      .sort((a, b) => b.purchasedAt.getTime() - a.purchasedAt.getTime());
+    
+    // Find package with remaining polls
+    const activePackage = userPackages.find(pkg => pkg.remainingPolls > 0);
+    return activePackage;
+  }
+
+  async getUserPackages(userId: number): Promise<MemeCoinPackage[]> {
+    return Array.from(this.memeCoinPackages.values())
+      .filter(pkg => pkg.userId === userId)
+      .sort((a, b) => b.purchasedAt.getTime() - a.purchasedAt.getTime());
+  }
+
+  async consumePackageUsage(packageId: number): Promise<void> {
+    const packageRecord = this.memeCoinPackages.get(packageId);
+    if (packageRecord) {
+      const newUsedPolls = packageRecord.usedPolls + 1;
+      const newRemainingPolls = packageRecord.remainingPolls - 1;
+      const newStatus = newRemainingPolls <= 0 ? 'used_up' : 'active';
+
+      this.memeCoinPackages.set(packageId, {
+        ...packageRecord,
+        usedPolls: newUsedPolls,
+        remainingPolls: newRemainingPolls,
+        status: newStatus
+      });
+    }
+  }
+
+  async getPackageByTxHash(txHash: string): Promise<MemeCoinPackage | undefined> {
+    return Array.from(this.memeCoinPackages.values())
+      .find(pkg => pkg.paymentTxHash === txHash);
+  }
+
+  async updatePackageStatus(packageId: number, status: string): Promise<void> {
+    const packageRecord = this.memeCoinPackages.get(packageId);
+    if (packageRecord) {
+      this.memeCoinPackages.set(packageId, { ...packageRecord, status });
+    }
+  }
   
   // Seed initial achievements
   private seedAchievements() {

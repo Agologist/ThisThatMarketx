@@ -4,10 +4,16 @@
 A dynamic "This or That" polling application with interactive battle game mechanics. Users create time-limited challenges with two options, each with image avatars. The key feature is an interactive car battle game where voting impacts car movement in real-time sumo-style contests.
 
 ## Recent Changes
-- **July 2025**: Implemented "MemeCoin Mode" toggle solution for poll creators
+- **July 2025**: Implemented subscription-based MemeCoin system with cross-chain architecture
   - RESOLVED: Critical browser caching issue preventing post-vote modal from appearing
   - Added MemeCoin Mode toggle to poll creation form - creators decide coin generation at creation time
   - Updated database schema with memeCoinMode boolean and creatorWallet fields for polls table
+  - **NEW**: Implemented meme_coin_packages table for subscription tracking ($1 USDT = 3 polls)
+  - **NEW**: Enhanced coin service to check user packages before creating real vs demo coins
+  - **NEW**: Added cross-chain architecture - USDT payments on Polygon, real SPL tokens on Solana
+  - **NEW**: Automatic package consumption when users with active subscriptions vote
+  - **NEW**: Complete package management API (/api/packages/purchase, /api/user/packages, etc.)
+  - **NEW**: Real Solana token creation for paying subscribers vs demo mode for others
   - Modified backend voting logic to only generate coins when MemeCoin Mode is enabled on specific polls
   - Added optional creator wallet address field for real coin delivery vs demo mode
   - Implemented automatic Solana meme coin generation feature

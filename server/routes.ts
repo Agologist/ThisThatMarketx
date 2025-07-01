@@ -5,7 +5,7 @@ import { setupAuth } from "./auth";
 import { setupReplitAuth } from "./replitAuth";
 import { coinService } from "./coinService";
 import { z } from "zod";
-import { insertPollSchema, insertVoteSchema, insertRaceRecordSchema, insertUserAchievementSchema, insertGeneratedCoinSchema } from "@shared/schema";
+import { insertPollSchema, insertVoteSchema, insertRaceRecordSchema, insertUserAchievementSchema, insertGeneratedCoinSchema, insertMemeCoinPackageSchema } from "@shared/schema";
 import axios from "axios";
 
 // Schema for Firebase user data
@@ -835,6 +835,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching poll coins:', error);
       res.status(500).json({ message: "Failed to fetch poll coins" });
+    }
+  });
+
+  // Package Management API endpoints
+  app.post("/api/packages/purchase", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const packageData = insertMemeCoinPackageSchema.parse({
+        ...req.body,
+        userId: req.user.id,
+        status: 'pending',
+        packageType: 'basic',
+        totalPolls: 3,
+        usedPolls: 0,
+        remainingPolls: 3,
+        paymentToken: 'USDT',
+        paymentChain: 'polygon'
+      });
+
+      const newPackage = await storage.createMemeCoinPackage(packageData);
+      
+      // In a real implementation, we would:
+      // 1. Verify the payment transaction on Polygon
+      // 2. Update package status to 'active' when payment is confirmed
+      // For now, we'll simulate this by setting to active immediately
+      await storage.updatePackageStatus(newPackage.id, 'active');
+      
+      res.json({ ...newPackage, status: 'active' });
+    } catch (error) {
+      console.error('Error creating package:', error);
+      res.status(500).json({ message: "Failed to create package" });
+    }
+  });
+
+  app.get("/api/user/packages", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const packages = await storage.getUserPackages(req.user.id);
+      res.json(packages);
+    } catch (error) {
+      console.error('Error fetching user packages:', error);
+      res.status(500).json({ message: "Failed to fetch user packages" });
+    }
+  });
+
+  app.get("/api/user/packages/active", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const activePackage = await storage.getUserActivePackage(req.user.id);
+      if (activePackage) {
+        res.json(activePackage);
+      } else {
+        res.status(404).json({ message: "No active package found" });
+      }
+    } catch (error) {
+      console.error('Error fetching active package:', error);
+      res.status(500).json({ message: "Failed to fetch active package" });
+    }
+  });
+
+  app.post("/api/packages/:id/consume", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const packageId = parseInt(req.params.id);
+      
+      // Verify the package belongs to the user
+      const userPackages = await storage.getUserPackages(req.user.id);
+      const packageExists = userPackages.find(pkg => pkg.id === packageId);
+      
+      if (!packageExists) {
+        return res.status(404).json({ message: "Package not found" });
+      }
+
+      await storage.consumePackageUsage(packageId);
+      res.json({ message: "Package usage consumed successfully" });
+    } catch (error) {
+      console.error('Error consuming package usage:', error);
+      res.status(500).json({ message: "Failed to consume package usage" });
     }
   });
 
