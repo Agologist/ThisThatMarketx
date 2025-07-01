@@ -118,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.setQueryData(["/api/user"], user);
       toast({
         title: "Registration successful",
-        description: `Welcome to Votes and Wars, ${user.displayName || user.username}!`,
+        description: `Welcome to ThisThat.Market, ${user.displayName || user.username}!`,
       });
       setLocation("/"); // Redirect to home page after registration
     },

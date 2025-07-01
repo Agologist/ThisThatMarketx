@@ -117,7 +117,7 @@ export default function BattleGame({ races, pollId, optionAText, optionBText, op
     <Card className="bg-card border-primary/30">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <CardTitle className="text-xl font-montserrat font-bold">Votes and Wars Battle</CardTitle>
+          <CardTitle className="text-xl font-montserrat font-bold">ThisThat.Market Battle</CardTitle>
           <Button
             asChild
             size="sm"

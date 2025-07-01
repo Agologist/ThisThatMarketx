@@ -123,7 +123,7 @@ export default function HomePage() {
             </div>
           </div>
           
-          {/* Votes and Wars Race section removed */}
+          {/* ThisThat.Market Battle section removed */}
         </div>
       </main>
       

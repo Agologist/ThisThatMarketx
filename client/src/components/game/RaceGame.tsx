@@ -114,7 +114,7 @@ export default function RaceGame({ races, pollId }: RaceGameProps) {
     <Card className="bg-card border-primary/30">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <CardTitle className="text-xl font-montserrat font-bold">Votes and Wars Race</CardTitle>
+          <CardTitle className="text-xl font-montserrat font-bold">ThisThat.Market Battle</CardTitle>
           <Button
             asChild
             size="sm"
