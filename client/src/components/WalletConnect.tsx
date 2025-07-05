@@ -22,6 +22,7 @@ export default function WalletConnect({ onPaymentComplete }: WalletConnectProps)
   const [isConnecting, setIsConnecting] = useState(false);
   const [networkId, setNetworkId] = useState<string | null>(null);
   const [paymentInfo, setPaymentInfo] = useState<any>(null);
+  const [isPaymentPending, setIsPaymentPending] = useState(false);
   const { toast } = useToast();
 
   // Polygon network configuration
@@ -165,24 +166,33 @@ export default function WalletConnect({ onPaymentComplete }: WalletConnectProps)
   const payWithUSDT = async () => {
     if (!account || !paymentInfo) return;
 
+    setIsPaymentPending(true);
+    
     try {
+      // Ensure MetaMask is active and ready
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+      
       // Amount in USDT (1.00 USDT with 6 decimals)
       const amount = BigInt(1000000); // 1.00 USDT
-      const amountHex = '0x' + amount.toString(16);
-
-      // USDT transfer function signature
+      
+      // USDT transfer function signature: transfer(address,uint256)
       const transferFunction = '0xa9059cbb';
       const paddedRecipient = paymentInfo.polygonWallet.slice(2).padStart(64, '0');
       const paddedAmount = amount.toString(16).padStart(64, '0');
       const data = transferFunction + paddedRecipient + paddedAmount;
 
+      // Enhanced transaction parameters for better MetaMask popup
       const txParams = {
         from: account,
         to: USDT_CONTRACT,
         data: data,
-        value: '0x0', // No ETH value for ERC-20 transfer
+        value: '0x0',
+        gas: '0x186A0', // 100000 gas limit
       };
 
+      console.log('Initiating USDT payment...');
+
+      // This should trigger MetaMask popup automatically
       const txHash = await window.ethereum.request({
         method: 'eth_sendTransaction',
         params: [txParams],
@@ -197,11 +207,29 @@ export default function WalletConnect({ onPaymentComplete }: WalletConnectProps)
       purchasePackage.mutate(txHash);
 
     } catch (error: any) {
-      toast({
-        title: "Payment Failed",
-        description: error.message || "Failed to send payment",
-        variant: "destructive",
-      });
+      console.error('Payment error:', error);
+      
+      if (error.code === 4001) {
+        toast({
+          title: "Payment Cancelled",
+          description: "Transaction was cancelled by user",
+          variant: "destructive",
+        });
+      } else if (error.code === -32603) {
+        toast({
+          title: "Transaction Failed",
+          description: "Please check your USDT balance and try again",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Payment Failed",
+          description: error.message || "Failed to send payment",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setIsPaymentPending(false);
     }
   };
 
@@ -272,10 +300,12 @@ export default function WalletConnect({ onPaymentComplete }: WalletConnectProps)
             ) : (
               <Button
                 onClick={payWithUSDT}
-                disabled={purchasePackage.isPending}
+                disabled={isPaymentPending || purchasePackage.isPending}
                 className="w-full bg-yellow-400 text-black hover:bg-yellow-500"
               >
-                {purchasePackage.isPending ? "Processing..." : "Pay 1.00 USDT"}
+                {isPaymentPending ? "Opening MetaMask..." : 
+                 purchasePackage.isPending ? "Activating Package..." : 
+                 "Pay 1.00 USDT"}
               </Button>
             )}
           </div>
