@@ -84,20 +84,13 @@ export default function WalletConnect({ onPaymentComplete }: WalletConnectProps)
 
     setIsConnecting(true);
     try {
-      // Check if already connected first
-      const existingAccounts = await window.ethereum.request({ 
-        method: 'eth_accounts' 
-      });
+      // Force window focus to help with popup
+      window.focus();
       
-      let accounts;
-      if (existingAccounts.length > 0) {
-        accounts = existingAccounts;
-      } else {
-        // This triggers MetaMask popup for permission
-        accounts = await window.ethereum.request({ 
-          method: 'eth_requestAccounts' 
-        });
-      }
+      // Direct connection request - this should trigger popup
+      const accounts = await window.ethereum.request({ 
+        method: 'eth_requestAccounts' 
+      });
       
       if (accounts.length === 0) {
         throw new Error('No accounts found. Please unlock MetaMask.');
@@ -118,19 +111,19 @@ export default function WalletConnect({ onPaymentComplete }: WalletConnectProps)
       if (error.code === 4001) {
         toast({
           title: "Connection Cancelled",
-          description: "Wallet connection was cancelled by user",
+          description: "Please try again and approve the connection in MetaMask",
           variant: "destructive",
         });
       } else if (error.code === -32002) {
         toast({
           title: "Connection Pending",
-          description: "MetaMask is already processing a connection request. Please check MetaMask.",
+          description: "Check your MetaMask extension - a connection request is waiting",
           variant: "destructive",
         });
       } else {
         toast({
-          title: "Connection Failed",
-          description: error.message || "Failed to connect wallet. Please try clicking the MetaMask extension icon.",
+          title: "MetaMask Not Responding",
+          description: "Please click your MetaMask extension icon and try again",
           variant: "destructive",
         });
       }
@@ -304,8 +297,10 @@ export default function WalletConnect({ onPaymentComplete }: WalletConnectProps)
             >
               {isConnecting ? "Connecting..." : "Connect Wallet"}
             </Button>
-            <div className="text-xs text-gray-400 text-center">
-              If MetaMask doesn't open automatically, click the MetaMask extension icon in your browser
+            <div className="text-xs text-gray-400 text-center space-y-1">
+              <div>If MetaMask doesn't open automatically:</div>
+              <div>1. Click the MetaMask extension icon in your browser</div>
+              <div>2. Or manually open MetaMask and connect to this site</div>
             </div>
           </div>
         ) : (
