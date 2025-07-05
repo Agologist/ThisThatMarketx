@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { User, LogOut, Menu, X, UserIcon, Trophy, Award, FileText, Terminal } from "lucide-react";
+import { User, LogOut, Menu, X, UserIcon, Trophy, Award, FileText, Terminal, Package } from "lucide-react";
 import logoImage from "@assets/Contemporary_Emblem_Logo_for_ThisThat.Market-removebg-preview_1751386189685.png";
 import UserStatCards from "@/components/dashboard/UserStatCards";
 
@@ -150,6 +150,12 @@ export default function Header() {
       label: "Challenges", 
       active: location.startsWith("/challenges") || location.startsWith("/polls"),
       icon: <FileText className="h-4 w-4 mr-1.5" />
+    },
+    { 
+      href: "/packages", 
+      label: "Packages", 
+      active: location === "/packages",
+      icon: <Package className="h-4 w-4 mr-1.5" />
     }
   ];
   

@@ -15,6 +15,8 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { searchImages, getFallbackImage, compressImageDataUrl } from "@/utils/imageSearch";
 import { useLocation } from "wouter";
 import { Switch } from "@/components/ui/switch";
+import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 
 const challengeFormSchema = z.object({
   question: z.string().min(5, "Challenge title must be at least 5 characters"),
@@ -32,6 +34,13 @@ const challengeFormSchema = z.object({
 
 type ChallengeFormValues = z.infer<typeof challengeFormSchema>;
 
+interface Package {
+  id: number;
+  status: string;
+  remainingPolls: number;
+  totalPolls: number;
+}
+
 export default function ChallengeCreator() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -43,6 +52,13 @@ export default function ChallengeCreator() {
   const [showCustomDuration, setShowCustomDuration] = useState(false);
   const [typingTimeoutA, setTypingTimeoutA] = useState<NodeJS.Timeout | null>(null);
   const [typingTimeoutB, setTypingTimeoutB] = useState<NodeJS.Timeout | null>(null);
+
+  // Check user's active package for MemeCoin mode
+  const { data: activePackage } = useQuery<Package>({
+    queryKey: ["/api/user/packages/active"],
+    enabled: !!user,
+    retry: false,
+  });
   
   // Refs for file inputs
   const fileInputA = useRef<HTMLInputElement>(null);
@@ -780,23 +796,53 @@ export default function ChallengeCreator() {
               control={form.control}
               name="memeCoinMode"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between space-y-0 rounded-lg border border-primary/30 p-4 bg-black/20">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base flex items-center">
-                      <Coins className="w-5 h-5 mr-2 text-primary" />
-                      Enable MemeCoin Mode
-                    </FormLabel>
-                    <FormDescription>
-                      Voters automatically receive custom meme coins in their wallets when they vote
-                    </FormDescription>
+                <FormItem className="space-y-3 rounded-lg border border-primary/30 p-4 bg-black/20">
+                  <div className="flex flex-row items-center justify-between space-y-0">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base flex items-center">
+                        <Coins className="w-5 h-5 mr-2 text-primary" />
+                        Enable MemeCoin Mode
+                      </FormLabel>
+                      <FormDescription>
+                        Voters automatically receive real Solana meme coins when they vote
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        className="data-[state=checked]:bg-primary"
+                      />
+                    </FormControl>
                   </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      className="data-[state=checked]:bg-primary"
-                    />
-                  </FormControl>
+                  
+                  {field.value && (
+                    <div className="border-t border-primary/20 pt-3">
+                      {activePackage ? (
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="text-green-400">Package Active</span>
+                          </div>
+                          <div className="text-primary font-medium">
+                            {activePackage.remainingPolls} credits remaining
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-sm">
+                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                            <span className="text-red-400">No active package - Real coins require payment</span>
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            <Link href="/packages" className="text-primary hover:underline">
+                              Purchase a package ($1 = 3 polls)
+                            </Link> to enable real Solana coin generation
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </FormItem>
               )}
             />
