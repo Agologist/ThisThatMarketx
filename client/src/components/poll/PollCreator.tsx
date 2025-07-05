@@ -156,7 +156,7 @@ export default function PollCreator() {
       
       console.log("Submitting poll data:", pollData);
       
-      const res = await apiRequest("POST", "/api/polls", pollData);
+      const res = await apiRequest("/api/polls", "POST", pollData);
       return await res.json();
     },
     onSuccess: (data) => {

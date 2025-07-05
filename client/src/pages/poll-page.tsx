@@ -127,7 +127,7 @@ export default function ChallengePage() {
     
     try {
       // First, try to submit vote without wallet address (this will trigger backend to ask for wallet preference)
-      const response = await apiRequest("POST", `/api/polls/${id}/vote`, { 
+      const response = await apiRequest(`/api/polls/${id}/vote`, "POST", { 
         option: selectedOption
         // No walletAddress provided - this triggers the modal flow
       });
@@ -209,7 +209,7 @@ export default function ChallengePage() {
       });
       
       // Send the vote request with wallet address for coin generation
-      const response = await apiRequest("POST", `/api/polls/${id}/vote`, { 
+      const response = await apiRequest(`/api/polls/${id}/vote`, "POST", { 
         option: pendingVoteData.option,
         walletAddress: walletAddress || undefined // undefined triggers demo mode
       });

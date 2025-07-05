@@ -136,7 +136,7 @@ export default function ChallengePage() {
     
     try {
       // Send the vote request
-      const response = await apiRequest("POST", `/api/polls/${id}/vote`, { option: selectedOption });
+      const response = await apiRequest(`/api/polls/${id}/vote`, "POST", { option: selectedOption });
       
       if (!response.ok) {
         const errorData = await response.json();

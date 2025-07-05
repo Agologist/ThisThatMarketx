@@ -182,7 +182,7 @@ export default function ChallengeCreator() {
       
       console.log("Submitting challenge data:", challengeData);
       
-      const res = await apiRequest("POST", "/api/polls", challengeData);
+      const res = await apiRequest("/api/polls", "POST", challengeData);
       return await res.json();
     },
     onSuccess: (data) => {
