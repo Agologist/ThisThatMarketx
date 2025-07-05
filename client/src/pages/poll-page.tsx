@@ -155,12 +155,12 @@ export default function ChallengePage() {
     
     try {
       console.log("🚀 Making vote request to:", `/api/polls/${id}/vote`);
-      console.log("🚀 Vote payload:", { option: selectedOption });
+      console.log("🚀 Vote payload:", { option: selectedOption, walletAddress: "demo" });
       
-      // First, try to submit vote without wallet address (this will trigger backend to ask for wallet preference)
+      // Submit vote with demo wallet address to ensure vote gets recorded
       const response = await apiRequest(`/api/polls/${id}/vote`, "POST", { 
-        option: selectedOption
-        // No walletAddress provided - this triggers the modal flow
+        option: selectedOption,
+        walletAddress: "demo" // Default to demo mode so vote gets recorded immediately
       });
       
       console.log("🚀 Vote response status:", response.status);
@@ -478,7 +478,14 @@ export default function ChallengePage() {
                     ${selectedOption === "A" ? "ring-2 ring-primary" : ""} 
                     ${!isPollActive || hasVoted ? "pointer-events-none" : "cursor-pointer"}
                     ${hasVoted && userVoteOption === "A" ? "bg-primary/10" : ""}`}
-                  onClick={() => isPollActive && !hasVoted && setSelectedOption("A")}
+                  onClick={() => {
+                    console.log("🎯 Option A card clicked!");
+                    console.log("🎯 isPollActive:", isPollActive, "hasVoted:", hasVoted);
+                    if (isPollActive && !hasVoted) {
+                      console.log("🎯 Setting selectedOption to A");
+                      setSelectedOption("A");
+                    }
+                  }}
                 >
                   {poll.optionAImage ? (
                     <div className="h-48 bg-muted flex items-center justify-center">
