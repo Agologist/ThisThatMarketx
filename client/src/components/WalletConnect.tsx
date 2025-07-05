@@ -84,12 +84,6 @@ export default function WalletConnect({ onPaymentComplete }: WalletConnectProps)
 
     setIsConnecting(true);
     try {
-      // Focus MetaMask window if it exists
-      if (window.ethereum.isMetaMask) {
-        // Ensure MetaMask is ready and focused
-        await window.ethereum._metamask?.requestBatch?.() || Promise.resolve();
-      }
-
       // This should automatically trigger MetaMask popup
       const accounts = await window.ethereum.request({ 
         method: 'eth_requestAccounts' 
