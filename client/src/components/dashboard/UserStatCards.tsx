@@ -1,6 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { 
   FolderPlus, 
+  Trophy, 
+  Award, 
   CheckSquare
 } from "lucide-react";
 import { Link } from "wouter";
@@ -14,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { Poll, Vote } from "@shared/schema";
+import { Poll, RaceRecord, Vote } from "@shared/schema";
 
 export default function UserStatCards() {
   const { user, isGuest } = useAuth();
@@ -30,15 +32,35 @@ export default function UserStatCards() {
     enabled: !isGuest && !!user
   });
   
+  const { data: userRaces = [] } = useQuery<RaceRecord[]>({
+    queryKey: ["/api/user/races"],
+    enabled: !isGuest && !!user
+  });
 
+  // Get active war polls (challenges with isWar=true and user has voted)
+  const { data: activeWarPolls = [] } = useQuery<Poll[]>({
+    queryKey: ["/api/user/warpasses"],
+    enabled: !isGuest && !!user
+  });
 
-
+  // Get user's won battles
+  const { data: userWonBattles = [] } = useQuery<RaceRecord[]>({
+    queryKey: ["/api/user/battles/won"],
+    enabled: !!user && !isGuest
+  });
   
-
+  // Fetch all polls for reference when displaying battle results
+  const { data: allPolls = [] } = useQuery<Poll[]>({
+    queryKey: ["/api/polls"],
+    enabled: !!user && !isGuest
+  });
   
   // Calculate stats
   const challengeCount = userPolls.length;
   const voteCount = (user?.id && !isGuest) ? userVotes.length : 0;
+  // Count all battles won by the user for display
+  const warCount = userWonBattles.length;
+  const warPassesCount = activeWarPolls.length;
   
   // Calculate ranks based on count and remaining to next rank
   const getRankInfo = (count: number): { rank: string, remaining: number, nextRank: string } => {
@@ -52,6 +74,8 @@ export default function UserStatCards() {
   
   const challengeRankInfo = getRankInfo(challengeCount);
   const voteRankInfo = getRankInfo(voteCount);
+  const warRankInfo = getRankInfo(warCount);
+  const warPassRankInfo = getRankInfo(warPassesCount);
   
   const stats = [
     {
@@ -96,6 +120,58 @@ export default function UserStatCards() {
       )
     },
     {
+      title: "Wars",
+      value: warCount,
+      rank: warRankInfo.rank,
+      remaining: warRankInfo.remaining,
+      nextRank: warRankInfo.nextRank,
+      icon: <Trophy className="text-primary" />,
+      dropdown: (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div className="cursor-pointer w-full h-full absolute inset-0 flex items-center justify-center opacity-0">
+              <span>Open menu</span>
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-72">
+            <DropdownMenuLabel>Wars You've Won</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {userWonBattles.length > 0 ? (
+              userWonBattles.map((race: any) => {
+                const battleTime = race.racedAt ? new Date(race.racedAt).toLocaleDateString() : '';
+                
+                const displayTitle = race.title || "Unnamed Challenge";
+                const winTime = (race.time / 1000).toFixed(1); // Format time to 1 decimal place
+                
+                return (
+                  <DropdownMenuItem key={race.id}>
+                    {race.pollId ? (
+                      <Link 
+                        href={`/polls/${race.pollId}`} 
+                        className="cursor-pointer flex items-center w-full"
+                      >
+                        <Trophy className="h-4 w-4 mr-2 text-primary" />
+                        <span className="truncate">{displayTitle} <span className="text-xs text-muted-foreground">({battleTime}) - {winTime}s</span></span>
+                      </Link>
+                    ) : (
+                      <div className="flex items-center">
+                        <Trophy className="h-4 w-4 mr-2 text-primary" />
+                        <span className="truncate">Challenge <span className="text-xs text-muted-foreground">({battleTime}) - {winTime}s</span></span>
+                      </div>
+                    )}
+                  </DropdownMenuItem>
+                );
+              })
+            ) : (
+              <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                You haven't won any battles yet
+              </div>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )
+    },
+    {
       title: "Votes",
       value: voteCount,
       rank: voteRankInfo.rank,
@@ -131,6 +207,44 @@ export default function UserStatCards() {
             ) : (
               <div className="px-2 py-1.5 text-xs text-muted-foreground">
                 You haven't voted in any challenges yet
+              </div>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )
+    },
+    {
+      title: "War Passes",
+      value: warPassesCount,
+      rank: warPassRankInfo.rank,
+      remaining: warPassRankInfo.remaining,
+      nextRank: warPassRankInfo.nextRank,
+      icon: <Award className="text-primary" />,
+      dropdown: (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div className="cursor-pointer w-full h-full absolute inset-0 flex items-center justify-center opacity-0">
+              <span>Open menu</span>
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-72">
+            <DropdownMenuLabel>Available War Passes</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {activeWarPolls.length > 0 ? (
+              activeWarPolls.map((poll: any) => (
+                <DropdownMenuItem key={poll.id} asChild>
+                  <Link 
+                    href={`/polls/${poll.id}`} 
+                    className="cursor-pointer flex items-center"
+                  >
+                    <Award className="h-4 w-4 mr-2 text-primary" />
+                    <span className="truncate">{poll.question}</span>
+                  </Link>
+                </DropdownMenuItem>
+              ))
+            ) : (
+              <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                No active War passes available
               </div>
             )}
           </DropdownMenuContent>
