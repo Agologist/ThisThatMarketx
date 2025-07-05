@@ -124,6 +124,16 @@ export default function ChallengePage() {
   }, [isPollActive, id]);
   
   const handleVote = async () => {
+    console.log("🚀🚀🚀 VOTE BUTTON CLICKED! handleVote function called");
+    console.log("🚀🚀🚀 Current states:", {
+      selectedOption,
+      isVoting,
+      hasVoted,
+      votingInProgress: votingInProgressRef.current,
+      isPollActive,
+      pollExists: !!poll
+    });
+    
     // CRITICAL: Check ref first to prevent any race conditions
     if (votingInProgressRef.current) {
       console.log("Vote blocked - already in progress (ref check)");
@@ -209,13 +219,20 @@ export default function ChallengePage() {
       });
       
     } catch (error) {
-      console.error("Vote submission error:", error);
+      console.error("🚨 CRITICAL: Vote submission error:", error);
+      console.error("🚨 Error details:", {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        error
+      });
+      
       toast({
         title: "Vote Failed",
         description: error instanceof Error ? error.message : "Failed to record vote",
         variant: "destructive"
       });
     } finally {
+      console.log("🔄 Vote attempt completed, resetting states");
       // CRITICAL: Reset both state and ref to allow future voting
       setIsVoting(false);
       votingInProgressRef.current = false;
