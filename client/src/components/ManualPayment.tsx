@@ -34,8 +34,10 @@ export default function ManualPayment({ onPaymentComplete }: ManualPaymentProps)
 
   // Purchase package mutation
   const purchasePackage = useMutation({
-    mutationFn: async (data: { paymentTxHash: string; paymentAmount: string }) =>
-      apiRequest("/api/packages/purchase", "POST", data),
+    mutationFn: async (data: { paymentTxHash: string; paymentAmount: string }) => {
+      const response = await apiRequest("/api/packages/purchase", "POST", data);
+      return await response.json();
+    },
     onSuccess: () => {
       toast({
         title: "Package Activated!",

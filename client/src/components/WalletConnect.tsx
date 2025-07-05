@@ -174,11 +174,13 @@ export default function WalletConnect({ onPaymentComplete }: WalletConnectProps)
   };
 
   const purchasePackage = useMutation({
-    mutationFn: async (txHash: string) =>
-      apiRequest("/api/packages/purchase", "POST", {
+    mutationFn: async (txHash: string) => {
+      const response = await apiRequest("/api/packages/purchase", "POST", {
         paymentTxHash: txHash,
         paymentAmount: "1.00"
-      }),
+      });
+      return await response.json();
+    },
     onSuccess: () => {
       toast({
         title: "Package Activated!",
