@@ -150,32 +150,32 @@ export default function ChallengePage() {
         // No walletAddress provided - this triggers the modal flow
       });
       
+      const responseData = await response.json();
+      
+      // NEW: Check if backend is asking for wallet choice (status 200 with requiresWalletChoice)
+      if (responseData.requiresWalletChoice && responseData.coinPreview) {
+        console.log("Backend requesting wallet choice, showing modal with:", responseData.coinPreview);
+        
+        // Set up the pending vote data from backend response
+        setPendingVoteData({
+          option: responseData.coinPreview.option,
+          pollId: responseData.coinPreview.pollId,
+          optionText: responseData.coinPreview.optionText,
+          coinName: responseData.coinPreview.coinName,
+          coinSymbol: responseData.coinPreview.coinSymbol
+        });
+        
+        setIsVoting(false);
+        setShowCoinModal(true);
+        return;
+      }
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        
-        // NEW: Check if backend is asking for wallet choice
-        if (errorData.requiresWalletChoice && errorData.coinPreview) {
-          console.log("Backend requesting wallet choice, showing modal with:", errorData.coinPreview);
-          
-          // Set up the pending vote data from backend response
-          setPendingVoteData({
-            option: errorData.coinPreview.option,
-            pollId: errorData.coinPreview.pollId,
-            optionText: errorData.coinPreview.optionText,
-            coinName: errorData.coinPreview.coinName,
-            coinSymbol: errorData.coinPreview.coinSymbol
-          });
-          
-          setIsVoting(false);
-          setShowCoinModal(true);
-          return;
-        }
-        
-        throw new Error(errorData.message || "Failed to record vote");
+        throw new Error(responseData.message || "Failed to record vote");
       }
       
       // OLD FLOW: If vote was processed directly (shouldn't happen anymore)
-      const result = await response.json();
+      const result = responseData;
       console.log("Vote processed directly:", result);
       
       // Update queries and show success
