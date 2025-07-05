@@ -303,14 +303,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/polls/:id/vote", async (req, res) => {
-    console.log("🔍 VOTE REQUEST DEBUG:");
-    console.log("  - isAuthenticated():", req.isAuthenticated());
-    console.log("  - req.user:", req.user);
-    console.log("  - session:", req.session);
-    console.log("  - headers:", req.headers);
-    
     if (!req.isAuthenticated()) {
-      console.log("❌ Authentication failed - returning 401");
       return res.status(401).json({ message: "Unauthorized" });
     }
 
