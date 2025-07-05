@@ -144,11 +144,17 @@ export default function ChallengePage() {
     console.log("Vote initiated for option:", selectedOption);
     
     try {
+      console.log("🚀 Making vote request to:", `/api/polls/${id}/vote`);
+      console.log("🚀 Vote payload:", { option: selectedOption });
+      
       // First, try to submit vote without wallet address (this will trigger backend to ask for wallet preference)
       const response = await apiRequest(`/api/polls/${id}/vote`, "POST", { 
         option: selectedOption
         // No walletAddress provided - this triggers the modal flow
       });
+      
+      console.log("🚀 Vote response status:", response.status);
+      console.log("🚀 Vote response headers:", response.headers);
       
       const responseData = await response.json();
       
