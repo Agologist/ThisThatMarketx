@@ -579,8 +579,10 @@ export default function ChallengePage() {
                       </>
                     ) : hasVoted ? (
                       "You have already voted"
+                    ) : selectedOption ? (
+                      `Vote for ${poll[selectedOption === "A" ? "optionAText" : "optionBText"]}`
                     ) : (
-                      `Vote for ${selectedOption ? poll[selectedOption === "A" ? "optionAText" : "optionBText"] : ""}`
+                      "Select an option above to vote"
                     )}
                   </Button>
                   
