@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Loader2, Share2, ChevronLeft, CheckIcon, XIcon } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { Poll } from "@shared/schema";
@@ -30,9 +30,6 @@ export default function ChallengePage() {
     coinName: string;
     coinSymbol: string;
   } | null>(null);
-  
-  // Use ref to prevent duplicate voting requests - stronger than state
-  const votingInProgressRef = useRef(false);
   
   const { data: poll, isLoading, refetch: refetchPoll } = useQuery<Poll>({
     queryKey: [`/api/polls/${id}`, forceRefresh],
@@ -124,24 +121,9 @@ export default function ChallengePage() {
   }, [isPollActive, id]);
   
   const handleVote = async () => {
-    // CRITICAL: Check ref first to prevent any race conditions
-    if (votingInProgressRef.current) {
-      console.log("Vote blocked - already in progress (ref check)");
-      return;
-    }
+    if (!selectedOption || !isPollActive || !poll) return;
     
-    // Multiple protection layers to prevent duplicate voting
-    if (!selectedOption || !isPollActive || !poll || isVoting || hasVoted) {
-      console.log("Vote blocked - conditions not met:", { selectedOption, isPollActive, poll: !!poll, isVoting, hasVoted });
-      return;
-    }
-    
-    // CRITICAL: Set ref immediately to prevent duplicate requests
-    votingInProgressRef.current = true;
-    
-    // Also set voting state to prevent rapid clicking
     setIsVoting(true);
-    console.log("Vote initiated for option:", selectedOption);
     
     try {
       // First, try to submit vote without wallet address (this will trigger backend to ask for wallet preference)
@@ -150,32 +132,32 @@ export default function ChallengePage() {
         // No walletAddress provided - this triggers the modal flow
       });
       
-      const responseData = await response.json();
-      
-      // NEW: Check if backend is asking for wallet choice (status 200 with requiresWalletChoice)
-      if (responseData.requiresWalletChoice && responseData.coinPreview) {
-        console.log("Backend requesting wallet choice, showing modal with:", responseData.coinPreview);
-        
-        // Set up the pending vote data from backend response
-        setPendingVoteData({
-          option: responseData.coinPreview.option,
-          pollId: responseData.coinPreview.pollId,
-          optionText: responseData.coinPreview.optionText,
-          coinName: responseData.coinPreview.coinName,
-          coinSymbol: responseData.coinPreview.coinSymbol
-        });
-        
-        setIsVoting(false);
-        setShowCoinModal(true);
-        return;
-      }
-      
       if (!response.ok) {
-        throw new Error(responseData.message || "Failed to record vote");
+        const errorData = await response.json();
+        
+        // NEW: Check if backend is asking for wallet choice
+        if (errorData.requiresWalletChoice && errorData.coinPreview) {
+          console.log("Backend requesting wallet choice, showing modal with:", errorData.coinPreview);
+          
+          // Set up the pending vote data from backend response
+          setPendingVoteData({
+            option: errorData.coinPreview.option,
+            pollId: errorData.coinPreview.pollId,
+            optionText: errorData.coinPreview.optionText,
+            coinName: errorData.coinPreview.coinName,
+            coinSymbol: errorData.coinPreview.coinSymbol
+          });
+          
+          setIsVoting(false);
+          setShowCoinModal(true);
+          return;
+        }
+        
+        throw new Error(errorData.message || "Failed to record vote");
       }
       
       // OLD FLOW: If vote was processed directly (shouldn't happen anymore)
-      const result = responseData;
+      const result = await response.json();
       console.log("Vote processed directly:", result);
       
       // Update queries and show success
@@ -210,9 +192,7 @@ export default function ChallengePage() {
         variant: "destructive"
       });
     } finally {
-      // CRITICAL: Reset both state and ref to allow future voting
       setIsVoting(false);
-      votingInProgressRef.current = false;
     }
   };
 
@@ -317,10 +297,8 @@ export default function ChallengePage() {
         variant: "destructive",
       });
     } finally {
-      // CRITICAL: Reset both state and ref to allow future voting
       setIsVoting(false);
       setPendingVoteData(null);
-      votingInProgressRef.current = false;
     }
   };
   

@@ -665,54 +665,11 @@ export class DatabaseStorage implements IStorage {
   
   // Vote methods
   async createVote(insertVote: InsertVote): Promise<Vote> {
-    console.log(`DB: Creating vote with data:`, insertVote);
-    try {
-      const voteToInsert = {
-        ...insertVote,
-        votedAt: new Date()
-      };
-      console.log(`DB: Vote data to insert:`, voteToInsert);
-      
-      // CRITICAL: Use transaction to prevent duplicate votes atomically
-      const result = await db.transaction(async (tx) => {
-        // Check for existing vote within transaction
-        const existingVote = await tx.select()
-          .from(votes)
-          .where(and(
-            eq(votes.userId, insertVote.userId),
-            eq(votes.pollId, insertVote.pollId)
-          ))
-          .limit(1);
-        
-        if (existingVote.length > 0) {
-          console.log(`DB: Vote already exists in transaction, rejecting duplicate`);
-          throw new Error("DUPLICATE_VOTE");
-        }
-        
-        // Insert vote within transaction with conflict handling
-        try {
-          const [vote] = await tx.insert(votes).values(voteToInsert).returning();
-          console.log(`DB: Vote successfully inserted in transaction:`, vote);
-          return vote;
-        } catch (insertError: any) {
-          // Handle database constraint violations
-          if (insertError.code === '23505') { // unique_violation
-            console.log(`DB: Unique constraint violation prevented duplicate vote`);
-            throw new Error("DUPLICATE_VOTE");
-          }
-          throw insertError;
-        }
-      });
-      
-      return result;
-    } catch (error) {
-      if (error instanceof Error && error.message === "DUPLICATE_VOTE") {
-        console.error("DB: Duplicate vote prevented by transaction");
-        throw new Error("You have already voted on this challenge");
-      }
-      console.error("DB: Error creating vote:", error);
-      throw error;
-    }
+    const [vote] = await db.insert(votes).values({
+      ...insertVote,
+      votedAt: new Date()
+    }).returning();
+    return vote;
   }
   
   async getUserVoteForPoll(userId: number, pollId: number): Promise<Vote | undefined> {
@@ -733,9 +690,6 @@ export class DatabaseStorage implements IStorage {
       // Get all votes for this poll
       const pollVotes = await db.select().from(votes).where(eq(votes.pollId, pollId));
       console.log(`DB: Votes for this poll: ${pollVotes.length}`);
-      if (pollVotes.length > 0) {
-        console.log("DB: Found poll votes:", pollVotes.map(v => `ID:${v.id}, UserID:${v.userId}, PollID:${v.pollId}, Option:${v.option}`));
-      }
       
       // Find the specific vote
       const [vote] = await db.select().from(votes)
