@@ -1,3 +1,5 @@
+console.log("POLL PAGE FILE LOADING");
+
 import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
@@ -317,15 +319,11 @@ export default function ChallengePage() {
     );
   }
   
-  // Debug state values on every render
-  console.log("🔍 POLL PAGE STATE DEBUG:", {
-    isPollActive,
-    hasVoted,
-    selectedOption,
-    isVoting,
-    userVoteOption,
-    poll: poll ? { id: poll.id, question: poll.question } : 'null'
-  });
+  // Simple debug on every render
+  console.log("PAGE LOADED - BASIC DEBUG");
+  console.log("Poll exists:", !!poll);
+  console.log("Has voted:", hasVoted);
+  console.log("Selected option:", selectedOption);
 
   return (
     <div className="min-h-screen flex flex-col">
