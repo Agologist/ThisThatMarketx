@@ -84,12 +84,20 @@ export default function WalletConnect({ onPaymentComplete }: WalletConnectProps)
 
     setIsConnecting(true);
     try {
-      // Force window focus to help with popup
-      window.focus();
+      // Multiple approaches to trigger MetaMask popup
+      console.log('Attempting wallet connection...');
       
-      // Direct connection request - this should trigger popup
+      // Approach 1: Direct request with user gesture
       const accounts = await window.ethereum.request({ 
         method: 'eth_requestAccounts' 
+      }).catch(async (error: any) => {
+        console.log('First attempt failed, trying alternative approach...');
+        
+        // Approach 2: Try enabling ethereum if available
+        if (window.ethereum.enable) {
+          return await window.ethereum.enable();
+        }
+        throw error;
       });
       
       if (accounts.length === 0) {
@@ -111,19 +119,19 @@ export default function WalletConnect({ onPaymentComplete }: WalletConnectProps)
       if (error.code === 4001) {
         toast({
           title: "Connection Cancelled",
-          description: "Please try again and approve the connection in MetaMask",
+          description: "Please approve the connection in MetaMask",
           variant: "destructive",
         });
       } else if (error.code === -32002) {
         toast({
           title: "Connection Pending",
-          description: "Check your MetaMask extension - a connection request is waiting",
+          description: "Open MetaMask extension - there's a pending request",
           variant: "destructive",
         });
       } else {
         toast({
-          title: "MetaMask Not Responding",
-          description: "Please click your MetaMask extension icon and try again",
+          title: "Connection Issue",
+          description: "Please open MetaMask manually and connect to this site",
           variant: "destructive",
         });
       }
@@ -194,8 +202,7 @@ export default function WalletConnect({ onPaymentComplete }: WalletConnectProps)
     setIsPaymentPending(true);
     
     try {
-      // Ensure MetaMask is active and ready
-      await window.ethereum.request({ method: 'eth_requestAccounts' });
+      console.log('Starting USDT payment process...');
       
       // Amount in USDT (1.00 USDT with 6 decimals)
       const amount = BigInt(1000000); // 1.00 USDT
@@ -206,7 +213,7 @@ export default function WalletConnect({ onPaymentComplete }: WalletConnectProps)
       const paddedAmount = amount.toString(16).padStart(64, '0');
       const data = transferFunction + paddedRecipient + paddedAmount;
 
-      // Enhanced transaction parameters for better MetaMask popup
+      // Transaction parameters
       const txParams = {
         from: account,
         to: USDT_CONTRACT,
@@ -215,12 +222,18 @@ export default function WalletConnect({ onPaymentComplete }: WalletConnectProps)
         gas: '0x186A0', // 100000 gas limit
       };
 
-      console.log('Initiating USDT payment...');
+      console.log('Sending transaction request to MetaMask...');
 
-      // This should trigger MetaMask popup automatically
+      // Direct transaction request with user gesture
       const txHash = await window.ethereum.request({
         method: 'eth_sendTransaction',
         params: [txParams],
+      }).catch((error: any) => {
+        // If transaction fails, provide specific guidance
+        if (error.code === -32603) {
+          throw new Error('Insufficient USDT balance or MATIC for gas fees');
+        }
+        throw error;
       });
 
       toast({
@@ -237,19 +250,25 @@ export default function WalletConnect({ onPaymentComplete }: WalletConnectProps)
       if (error.code === 4001) {
         toast({
           title: "Payment Cancelled",
-          description: "Transaction was cancelled by user",
+          description: "Please approve the transaction in MetaMask to complete payment",
           variant: "destructive",
         });
-      } else if (error.code === -32603) {
+      } else if (error.code === -32002) {
         toast({
-          title: "Transaction Failed",
-          description: "Please check your USDT balance and try again",
+          title: "Transaction Pending",
+          description: "Check MetaMask - there's a pending transaction to approve",
+          variant: "destructive",
+        });
+      } else if (error.message?.includes('Insufficient')) {
+        toast({
+          title: "Insufficient Funds",
+          description: "You need both USDT (for payment) and MATIC (for gas fees)",
           variant: "destructive",
         });
       } else {
         toast({
-          title: "Payment Failed",
-          description: error.message || "Failed to send payment",
+          title: "Payment Issue",
+          description: "Please open MetaMask and try the payment again",
           variant: "destructive",
         });
       }
@@ -291,16 +310,38 @@ export default function WalletConnect({ onPaymentComplete }: WalletConnectProps)
         {!account ? (
           <div className="space-y-3">
             <Button
-              onClick={connectWallet}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // Immediate execution within user gesture
+                connectWallet();
+              }}
               disabled={isConnecting}
               className="w-full bg-blue-600 hover:bg-blue-700"
             >
               {isConnecting ? "Connecting..." : "Connect Wallet"}
             </Button>
-            <div className="text-xs text-gray-400 text-center space-y-1">
+            <div className="text-xs text-gray-400 text-center space-y-2">
               <div>If MetaMask doesn't open automatically:</div>
               <div>1. Click the MetaMask extension icon in your browser</div>
               <div>2. Or manually open MetaMask and connect to this site</div>
+              <Button
+                onClick={async () => {
+                  if (window.ethereum) {
+                    try {
+                      // Alternative direct approach
+                      await window.ethereum.request({ method: 'wallet_requestPermissions', params: [{ eth_accounts: {} }] });
+                    } catch (error) {
+                      console.log('Alternative connection attempt:', error);
+                    }
+                  }
+                }}
+                variant="outline"
+                size="sm"
+                className="mt-2 text-xs border-gray-600 text-gray-400 hover:text-white"
+              >
+                Force MetaMask Connection
+              </Button>
             </div>
           </div>
         ) : (
@@ -331,7 +372,12 @@ export default function WalletConnect({ onPaymentComplete }: WalletConnectProps)
               </div>
             ) : (
               <Button
-                onClick={payWithUSDT}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  // Immediate execution within user gesture
+                  payWithUSDT();
+                }}
                 disabled={isPaymentPending || purchasePackage.isPending}
                 className="w-full bg-yellow-400 text-black hover:bg-yellow-500"
               >
