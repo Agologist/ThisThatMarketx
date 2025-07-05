@@ -14,6 +14,8 @@ A dynamic "This or That" polling application with interactive battle game mechan
   - **NEW**: Automatic package consumption when users with active subscriptions vote
   - **NEW**: Complete package management API (/api/packages/purchase, /api/user/packages, etc.)
   - **NEW**: Real Solana token creation for paying subscribers vs demo mode for others
+  - **NEW**: Wallet integration with MetaMask for seamless USDT payments on Polygon
+  - **NEW**: Dual payment options: wallet connect (one-click) and manual payment (copy/paste)
   - Modified backend voting logic to only generate coins when MemeCoin Mode is enabled on specific polls
   - Added optional creator wallet address field for real coin delivery vs demo mode
   - Implemented automatic Solana meme coin generation feature

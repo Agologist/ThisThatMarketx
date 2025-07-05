@@ -12,6 +12,9 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import WalletConnect from "@/components/WalletConnect";
+import ManualPayment from "@/components/ManualPayment";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface PaymentInfo {
   polygonWallet: string;
@@ -41,64 +44,12 @@ interface Package {
 export default function PackagesPage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [txHash, setTxHash] = useState("");
-  const [amount, setAmount] = useState("1.00");
-
-  // Fetch payment information
-  const { data: paymentInfo, isLoading: paymentLoading } = useQuery<PaymentInfo>({
-    queryKey: ["/api/packages/payment-info"],
-  });
 
   // Fetch user packages
   const { data: packages, isLoading: packagesLoading } = useQuery<Package[]>({
     queryKey: ["/api/user/packages"],
     enabled: !!user,
   });
-
-  // Purchase package mutation
-  const purchasePackage = useMutation({
-    mutationFn: async (data: { paymentTxHash: string; paymentAmount: string }) =>
-      apiRequest("/api/packages/purchase", "POST", data),
-    onSuccess: () => {
-      toast({
-        title: "Package Purchased!",
-        description: "Your package has been activated successfully. You now have 3 poll credits.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/user/packages"] });
-      setTxHash("");
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Purchase Failed",
-        description: error.message || "Failed to purchase package. Please check your transaction hash.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast({
-      title: "Copied!",
-      description: "Address copied to clipboard",
-    });
-  };
-
-  const handlePurchase = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!txHash.trim()) {
-      toast({
-        title: "Transaction Hash Required",
-        description: "Please enter your payment transaction hash",
-        variant: "destructive",
-      });
-      return;
-    }
-    purchasePackage.mutate({
-      paymentTxHash: txHash.trim(),
-      paymentAmount: amount,
-    });
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -136,93 +87,27 @@ export default function PackagesPage() {
         </div>
 
         <div className="grid gap-8 md:grid-cols-2">
-          {/* Purchase Package */}
-          <Card className="bg-gray-900 border-yellow-400/20">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-yellow-400">
-                <CreditCard className="h-5 w-5" />
-                Purchase Package
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {paymentLoading ? (
-                <div className="text-center py-4">Loading payment info...</div>
-              ) : paymentInfo ? (
-                <>
-                  <div className="space-y-4">
-                    <div className="p-4 bg-yellow-400/10 rounded-lg border border-yellow-400/20">
-                      <div className="text-sm text-yellow-400 font-medium mb-2">Package Details</div>
-                      <div className="space-y-1 text-sm">
-                        <div>Price: <span className="font-bold">${paymentInfo.packagePrice} {paymentInfo.paymentToken}</span></div>
-                        <div>Credits: <span className="font-bold">{paymentInfo.packagePolls} polls</span></div>
-                        <div>Network: <span className="font-bold capitalize">{paymentInfo.paymentChain}</span></div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Payment Address</Label>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          value={paymentInfo.polygonWallet}
-                          readOnly
-                          className="font-mono text-xs"
-                        />
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => copyToClipboard(paymentInfo.polygonWallet)}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-red-400">Instructions</Label>
-                      <div className="text-xs space-y-1 text-gray-300">
-                        {paymentInfo.instructions.map((instruction, index) => (
-                          <div key={index}>• {instruction}</div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <form onSubmit={handlePurchase} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="txHash">Transaction Hash</Label>
-                      <Input
-                        id="txHash"
-                        placeholder="0x..."
-                        value={txHash}
-                        onChange={(e) => setTxHash(e.target.value)}
-                        className="font-mono"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="amount">Amount (USDT)</Label>
-                      <Input
-                        id="amount"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        readOnly
-                      />
-                    </div>
-                    <Button
-                      type="submit"
-                      className="w-full bg-yellow-400 text-black hover:bg-yellow-500"
-                      disabled={purchasePackage.isPending}
-                    >
-                      {purchasePackage.isPending ? "Processing..." : "Activate Package"}
-                    </Button>
-                  </form>
-                </>
-              ) : (
-                <div className="text-center py-4 text-red-400">Failed to load payment information</div>
-              )}
-            </CardContent>
-          </Card>
+          {/* Purchase Package Options */}
+          <Tabs defaultValue="wallet" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 bg-gray-800">
+              <TabsTrigger value="wallet" className="data-[state=active]:bg-yellow-400 data-[state=active]:text-black">
+                Wallet Connect
+              </TabsTrigger>
+              <TabsTrigger value="manual" className="data-[state=active]:bg-yellow-400 data-[state=active]:text-black">
+                Manual Payment
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="wallet" className="mt-6">
+              <WalletConnect onPaymentComplete={() => {
+                queryClient.invalidateQueries({ queryKey: ["/api/user/packages"] });
+              }} />
+            </TabsContent>
+            <TabsContent value="manual" className="mt-6">
+              <ManualPayment onPaymentComplete={() => {
+                queryClient.invalidateQueries({ queryKey: ["/api/user/packages"] });
+              }} />
+            </TabsContent>
+          </Tabs>
 
           {/* Package Status */}
           <Card className="bg-gray-900 border-yellow-400/20">
