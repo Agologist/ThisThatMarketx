@@ -124,118 +124,27 @@ export default function ChallengePage() {
   }, [isPollActive, id]);
   
   const handleVote = async () => {
-    console.log("🚀🚀🚀 VOTE BUTTON CLICKED! handleVote function called");
-    console.log("🚀🚀🚀 Current states:", {
-      selectedOption,
-      isVoting,
-      hasVoted,
-      votingInProgress: votingInProgressRef.current,
-      isPollActive,
-      pollExists: !!poll
-    });
-    
-    // CRITICAL: Check ref first to prevent any race conditions
-    if (votingInProgressRef.current) {
-      console.log("Vote blocked - already in progress (ref check)");
-      return;
-    }
-    
-    // Multiple protection layers to prevent duplicate voting
-    if (!selectedOption || !isPollActive || !poll || isVoting || hasVoted) {
-      console.log("Vote blocked - conditions not met:", { selectedOption, isPollActive, poll: !!poll, isVoting, hasVoted });
-      return;
-    }
-    
-    // CRITICAL: Set ref immediately to prevent duplicate requests
-    votingInProgressRef.current = true;
-    
-    // Also set voting state to prevent rapid clicking
-    setIsVoting(true);
-    console.log("Vote initiated for option:", selectedOption);
+    if (!selectedOption) return;
     
     try {
-      console.log("🚀 Making vote request to:", `/api/polls/${id}/vote`);
-      console.log("🚀 Vote payload:", { option: selectedOption, walletAddress: "demo" });
-      
-      // Submit vote with demo wallet address to ensure vote gets recorded
-      const response = await apiRequest(`/api/polls/${id}/vote`, "POST", { 
-        option: selectedOption,
-        walletAddress: "demo" // Default to demo mode so vote gets recorded immediately
+      const response = await fetch(`/api/polls/${id}/vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ option: selectedOption, walletAddress: "demo" })
       });
       
-      console.log("🚀 Vote response status:", response.status);
-      console.log("🚀 Vote response headers:", response.headers);
+      const result = await response.json();
       
-      const responseData = await response.json();
-      
-      // NEW: Check if backend is asking for wallet choice (status 200 with requiresWalletChoice)
-      if (responseData.requiresWalletChoice && responseData.coinPreview) {
-        console.log("Backend requesting wallet choice, showing modal with:", responseData.coinPreview);
-        
-        // Set up the pending vote data from backend response
-        setPendingVoteData({
-          option: responseData.coinPreview.option,
-          pollId: responseData.coinPreview.pollId,
-          optionText: responseData.coinPreview.optionText,
-          coinName: responseData.coinPreview.coinName,
-          coinSymbol: responseData.coinPreview.coinSymbol
-        });
-        
-        setIsVoting(false);
+      if (result.requiresWalletChoice) {
+        setPendingVoteData(result.coinPreview);
         setShowCoinModal(true);
         return;
       }
       
-      if (!response.ok) {
-        throw new Error(responseData.message || "Failed to record vote");
-      }
-      
-      // OLD FLOW: If vote was processed directly (shouldn't happen anymore)
-      const result = responseData;
-      console.log("Vote processed directly:", result);
-      
-      // Update queries and show success
-      if (result.poll) {
-        queryClient.setQueryData([`/api/polls/${id}`], result.poll);
-      }
-      
-      if (result.vote) {
-        queryClient.setQueryData([`/api/polls/${id}/vote`], {
-          hasVoted: true,
-          poll: result.poll,
-          userId: user?.id,
-          pollId: parseInt(id!),
-          option: result.vote.option
-        });
-      }
-      
-      queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}/vote`] });
-      setForceRefresh(prev => prev + 1);
-      
-      toast({
-        title: "Vote Recorded!",
-        description: `You voted for ${selectedOption === "A" ? poll.optionAText : poll.optionBText}`,
-      });
-      
+      window.location.reload();
     } catch (error) {
-      console.error("🚨 CRITICAL: Vote submission error:", error);
-      console.error("🚨 Error details:", {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        error
-      });
-      
-      toast({
-        title: "Vote Failed",
-        description: error instanceof Error ? error.message : "Failed to record vote",
-        variant: "destructive"
-      });
-    } finally {
-      console.log("🔄 Vote attempt completed, resetting states");
-      // CRITICAL: Reset both state and ref to allow future voting
-      setIsVoting(false);
-      votingInProgressRef.current = false;
+      alert('Vote failed: ' + (error as Error).message);
     }
   };
 
@@ -484,23 +393,12 @@ export default function ChallengePage() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div 
-                  className={`border rounded-md overflow-hidden transition-all 
+                  className={`border rounded-md overflow-hidden transition-all cursor-pointer
                     ${selectedOption === "A" ? "ring-2 ring-primary" : ""} 
-                    ${!isPollActive || hasVoted ? "pointer-events-none" : "cursor-pointer"}
                     ${hasVoted && userVoteOption === "A" ? "bg-primary/10" : ""}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log("🎯🎯🎯 OPTION A CARD CLICKED! Event triggered");
-                    console.log("🎯🎯🎯 isPollActive:", isPollActive, "hasVoted:", hasVoted);
-                    console.log("🎯🎯🎯 Current selectedOption:", selectedOption);
-                    if (isPollActive && !hasVoted) {
-                      console.log("🎯🎯🎯 Setting selectedOption to A");
-                      setSelectedOption("A");
-                      console.log("🎯🎯🎯 selectedOption set to A");
-                    } else {
-                      console.log("🎯🎯🎯 Cannot select - isPollActive:", isPollActive, "hasVoted:", hasVoted);
-                    }
+                  onClick={() => {
+                    console.log("CLICKED OPTION A");
+                    setSelectedOption("A");
                   }}
                 >
                   {poll.optionAImage ? (
@@ -540,11 +438,13 @@ export default function ChallengePage() {
                 </div>
                 
                 <div 
-                  className={`border rounded-md overflow-hidden transition-all 
+                  className={`border rounded-md overflow-hidden transition-all cursor-pointer
                     ${selectedOption === "B" ? "ring-2 ring-primary" : ""} 
-                    ${!isPollActive || hasVoted ? "pointer-events-none" : "cursor-pointer"}
                     ${hasVoted && userVoteOption === "B" ? "bg-primary/10" : ""}`}
-                  onClick={() => isPollActive && !hasVoted && setSelectedOption("B")}
+                  onClick={() => {
+                    console.log("CLICKED OPTION B");
+                    setSelectedOption("B");
+                  }}
                 >
                   {poll.optionBImage ? (
                     <div className="h-48 bg-muted flex items-center justify-center">
@@ -594,8 +494,7 @@ export default function ChallengePage() {
                     size="lg"
                     disabled={!selectedOption || isVoting || hasVoted}
                     onClick={() => {
-                      console.log("🔴 BUTTON CLICKED! Immediate debug");
-                      console.log("🔴 Button states:", { selectedOption, isVoting, hasVoted, isPollActive });
+                      console.log("VOTE BUTTON CLICKED");
                       handleVote();
                     }}
                   >
