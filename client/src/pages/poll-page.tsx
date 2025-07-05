@@ -408,6 +408,16 @@ export default function ChallengePage() {
     );
   }
   
+  // Debug state values on every render
+  console.log("🔍 POLL PAGE STATE DEBUG:", {
+    isPollActive,
+    hasVoted,
+    selectedOption,
+    isVoting,
+    userVoteOption,
+    poll: poll ? { id: poll.id, question: poll.question } : 'null'
+  });
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -478,12 +488,18 @@ export default function ChallengePage() {
                     ${selectedOption === "A" ? "ring-2 ring-primary" : ""} 
                     ${!isPollActive || hasVoted ? "pointer-events-none" : "cursor-pointer"}
                     ${hasVoted && userVoteOption === "A" ? "bg-primary/10" : ""}`}
-                  onClick={() => {
-                    console.log("🎯 Option A card clicked!");
-                    console.log("🎯 isPollActive:", isPollActive, "hasVoted:", hasVoted);
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log("🎯🎯🎯 OPTION A CARD CLICKED! Event triggered");
+                    console.log("🎯🎯🎯 isPollActive:", isPollActive, "hasVoted:", hasVoted);
+                    console.log("🎯🎯🎯 Current selectedOption:", selectedOption);
                     if (isPollActive && !hasVoted) {
-                      console.log("🎯 Setting selectedOption to A");
+                      console.log("🎯🎯🎯 Setting selectedOption to A");
                       setSelectedOption("A");
+                      console.log("🎯🎯🎯 selectedOption set to A");
+                    } else {
+                      console.log("🎯🎯🎯 Cannot select - isPollActive:", isPollActive, "hasVoted:", hasVoted);
                     }
                   }}
                 >
