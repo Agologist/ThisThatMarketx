@@ -383,25 +383,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
           
-          // Check if user has an active package
-          const activePackage = await storage.getUserActivePackage(userId);
-          let isDemoMode = true;
-          let userWallet = `demo_wallet_${userId}`;
+          // Use creator's wallet or default to demo mode
+          let userWallet = poll.creatorWallet || `demo_wallet_${userId}`;
           
-          if (activePackage && activePackage.remainingPolls > 0) {
-            // User has an active package - use provided wallet or demo
-            isDemoMode = walletAddress === 'demo';
-            userWallet = isDemoMode ? `demo_wallet_${userId}` : walletAddress;
-            
-            // Consume one credit from the package
-            await storage.consumePackageUsage(activePackage.id);
-            console.log(`📦 Consumed 1 credit from package ${activePackage.id}. Remaining: ${activePackage.remainingPolls - 1}`);
-          } else {
-            // No active package - force demo mode
-            console.log(`📦 No active package found for user ${userId}, using demo mode`);
-            isDemoMode = true;
-            userWallet = `demo_wallet_${userId}`;
-          }
+          // If it's still a demo wallet, we're in demo mode
+          const isDemoMode = userWallet.startsWith('demo_wallet_');
           
           const coinResult = await coinService.createMemeCoin({
             userId,

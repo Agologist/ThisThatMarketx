@@ -5,11 +5,6 @@ A dynamic "This or That" polling application with interactive battle game mechan
 
 ## Recent Changes
 - **July 2025**: Implemented subscription-based MemeCoin system with cross-chain architecture
-  - **FIXED**: Package consumption bug - credits now properly deducted when voting with active packages
-  - **FIXED**: Real coin generation logic - now correctly uses voter's wallet instead of creator's wallet
-  - **FIXED**: Double package consumption issue - removed duplicate credit deduction in coin service
-  - **REMOVED**: War Mode functionality completely disabled from challenge creation and navigation
-  - **REMOVED**: Wars and War Passes statistics removed from dashboard and hamburger menu
   - RESOLVED: Critical browser caching issue preventing post-vote modal from appearing
   - Added MemeCoin Mode toggle to poll creation form - creators decide coin generation at creation time
   - Updated database schema with memeCoinMode boolean and creatorWallet fields for polls table
