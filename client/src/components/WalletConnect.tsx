@@ -371,20 +371,27 @@ export default function WalletConnect({ onPaymentComplete }: WalletConnectProps)
                 </Button>
               </div>
             ) : (
-              <Button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  // Immediate execution within user gesture
-                  payWithUSDT();
-                }}
-                disabled={isPaymentPending || purchasePackage.isPending}
-                className="w-full bg-yellow-400 text-black hover:bg-yellow-500"
-              >
-                {isPaymentPending ? "Opening MetaMask..." : 
-                 purchasePackage.isPending ? "Activating Package..." : 
-                 "Pay 1.00 USDT"}
-              </Button>
+              <div className="space-y-3">
+                <Button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Immediate execution within user gesture
+                    payWithUSDT();
+                  }}
+                  disabled={isPaymentPending || purchasePackage.isPending}
+                  className="w-full bg-yellow-400 text-black hover:bg-yellow-500"
+                >
+                  {isPaymentPending ? "Opening MetaMask..." : 
+                   purchasePackage.isPending ? "Activating Package..." : 
+                   "Pay 1.00 USDT"}
+                </Button>
+                <div className="text-xs text-gray-400 text-center space-y-1">
+                  <div>If MetaMask doesn't open automatically:</div>
+                  <div>1. Click the MetaMask extension icon in your browser</div>
+                  <div>2. Or manually open MetaMask and connect to this site</div>
+                </div>
+              </div>
             )}
           </div>
         )}
