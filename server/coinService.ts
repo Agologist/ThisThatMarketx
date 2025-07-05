@@ -74,11 +74,11 @@ export class CoinService {
         };
       }
 
-      // Check if user has active package for real coin mode
-      const activePackage = await storage.getUserActivePackage(params.userId);
-      const shouldCreateRealCoin = activePackage && activePackage.remainingPolls > 0;
+      // Determine if this should be a real coin based on wallet address
+      // If wallet starts with demo_ or is a demo string, it's demo mode
+      const shouldCreateRealCoin = !params.userWallet.startsWith('demo_') && params.userWallet !== 'demo';
       
-      console.log(`User ${params.userId} has active package: ${!!activePackage}, should create real coin: ${shouldCreateRealCoin}`);
+      console.log(`User ${params.userId} wallet: ${params.userWallet}, should create real coin: ${shouldCreateRealCoin}`);
 
       // Generate unique coin name and symbol
       const coinName = await this.generateCoinName(params.optionText, params.pollId);
@@ -95,9 +95,7 @@ export class CoinService {
         transactionHash = result.transactionHash;
         status = 'created';
         
-        // Consume package usage
-        await storage.consumePackageUsage(activePackage.id);
-        console.log(`Consumed package usage for user ${params.userId}, remaining: ${activePackage.remainingPolls - 1}`);
+        console.log(`Created real Solana token for user ${params.userId}`);
       } else {
         // Create demo token
         const mintKeypair = Keypair.generate();
