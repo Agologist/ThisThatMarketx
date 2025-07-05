@@ -121,7 +121,7 @@ export default function ChallengePage() {
   }, [isPollActive, id]);
   
   const handleVote = async () => {
-    if (!selectedOption || !isPollActive || !poll) return;
+    if (!selectedOption || !isPollActive || !poll || isVoting || hasVoted) return;
     
     setIsVoting(true);
     
