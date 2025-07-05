@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Loader2, Share2, ChevronLeft, CheckIcon, XIcon } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { Poll } from "@shared/schema";
@@ -30,6 +30,9 @@ export default function ChallengePage() {
     coinName: string;
     coinSymbol: string;
   } | null>(null);
+  
+  // Use ref to prevent duplicate voting requests - stronger than state
+  const votingInProgressRef = useRef(false);
   
   const { data: poll, isLoading, refetch: refetchPoll } = useQuery<Poll>({
     queryKey: [`/api/polls/${id}`, forceRefresh],
@@ -121,9 +124,24 @@ export default function ChallengePage() {
   }, [isPollActive, id]);
   
   const handleVote = async () => {
-    if (!selectedOption || !isPollActive || !poll || isVoting || hasVoted) return;
+    // CRITICAL: Check ref first to prevent any race conditions
+    if (votingInProgressRef.current) {
+      console.log("Vote blocked - already in progress (ref check)");
+      return;
+    }
     
+    // Multiple protection layers to prevent duplicate voting
+    if (!selectedOption || !isPollActive || !poll || isVoting || hasVoted) {
+      console.log("Vote blocked - conditions not met:", { selectedOption, isPollActive, poll: !!poll, isVoting, hasVoted });
+      return;
+    }
+    
+    // CRITICAL: Set ref immediately to prevent duplicate requests
+    votingInProgressRef.current = true;
+    
+    // Also set voting state to prevent rapid clicking
     setIsVoting(true);
+    console.log("Vote initiated for option:", selectedOption);
     
     try {
       // First, try to submit vote without wallet address (this will trigger backend to ask for wallet preference)
@@ -192,7 +210,9 @@ export default function ChallengePage() {
         variant: "destructive"
       });
     } finally {
+      // CRITICAL: Reset both state and ref to allow future voting
       setIsVoting(false);
+      votingInProgressRef.current = false;
     }
   };
 
@@ -297,8 +317,10 @@ export default function ChallengePage() {
         variant: "destructive",
       });
     } finally {
+      // CRITICAL: Reset both state and ref to allow future voting
       setIsVoting(false);
       setPendingVoteData(null);
+      votingInProgressRef.current = false;
     }
   };
   
