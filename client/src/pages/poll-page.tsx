@@ -577,7 +577,11 @@ export default function ChallengePage() {
                     className="btn-gold w-full max-w-md" 
                     size="lg"
                     disabled={!selectedOption || isVoting || hasVoted}
-                    onClick={handleVote}
+                    onClick={() => {
+                      console.log("🔴 BUTTON CLICKED! Immediate debug");
+                      console.log("🔴 Button states:", { selectedOption, isVoting, hasVoted, isPollActive });
+                      handleVote();
+                    }}
                   >
                     {isVoting ? (
                       <>
