@@ -84,9 +84,21 @@ export default function WalletConnect({ onPaymentComplete }: WalletConnectProps)
 
     setIsConnecting(true);
     try {
+      // Focus MetaMask window if it exists
+      if (window.ethereum.isMetaMask) {
+        // Ensure MetaMask is ready and focused
+        await window.ethereum._metamask?.requestBatch?.() || Promise.resolve();
+      }
+
+      // This should automatically trigger MetaMask popup
       const accounts = await window.ethereum.request({ 
         method: 'eth_requestAccounts' 
       });
+      
+      if (accounts.length === 0) {
+        throw new Error('No accounts found. Please unlock MetaMask.');
+      }
+
       setAccount(accounts[0]);
       
       const chainId = await window.ethereum.request({ method: 'eth_chainId' });
@@ -97,11 +109,27 @@ export default function WalletConnect({ onPaymentComplete }: WalletConnectProps)
         description: `Connected to ${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`,
       });
     } catch (error: any) {
-      toast({
-        title: "Connection Failed",
-        description: error.message || "Failed to connect wallet",
-        variant: "destructive",
-      });
+      console.error('Wallet connection error:', error);
+      
+      if (error.code === 4001) {
+        toast({
+          title: "Connection Cancelled",
+          description: "Wallet connection was cancelled by user",
+          variant: "destructive",
+        });
+      } else if (error.code === -32002) {
+        toast({
+          title: "Connection Pending",
+          description: "MetaMask is already processing a connection request",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Connection Failed",
+          description: error.message || "Failed to connect wallet",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsConnecting(false);
     }
