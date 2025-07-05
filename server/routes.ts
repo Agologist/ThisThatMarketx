@@ -313,6 +313,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       
       console.log(`Processing vote for user ${userId} on poll ${pollId}, option ${option}, wallet: ${walletAddress || 'not provided'}`);
+      console.log(`User object:`, req.user);
+      console.log(`User ID type:`, typeof userId, `Poll ID type:`, typeof pollId);
       
       // Validate option
       if (option !== "A" && option !== "B") {
@@ -369,8 +371,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Debug log to see how vote data is being created
       console.log("Creating new vote with data:", JSON.stringify(voteData));
       
-      const vote = await storage.createVote(voteData);
-      console.log("Vote created:", vote);
+      let vote;
+      try {
+        vote = await storage.createVote(voteData);
+        console.log("Vote created successfully:", vote);
+      } catch (voteError) {
+        console.error("🚨 CRITICAL ERROR: Vote creation failed:", voteError);
+        
+        // Check if this is a duplicate vote constraint violation
+        if (voteError instanceof Error && voteError.message.includes('unique_user_poll_vote')) {
+          return res.status(400).json({ 
+            message: "You have already voted on this challenge"
+          });
+        }
+        
+        return res.status(500).json({ 
+          message: "Failed to create vote", 
+          error: voteError instanceof Error ? voteError.message : 'Unknown error'
+        });
+      }
+      
+      // Immediately verify the vote was saved by trying to retrieve it
+      const verifyVote = await storage.getUserVoteForPoll(userId, pollId);
+      console.log("🔍 VERIFICATION: Vote immediately after creation:", verifyVote ? "FOUND" : "NOT FOUND");
+      if (verifyVote) {
+        console.log("🔍 VERIFICATION: Vote details:", verifyVote);
+      } else {
+        console.error("🚨 CRITICAL ERROR: Vote was created but cannot be retrieved immediately!");
+      }
       
       // Update poll vote count
       await storage.incrementPollVote(pollId, option);

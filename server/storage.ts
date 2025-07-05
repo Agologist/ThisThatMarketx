@@ -665,11 +665,21 @@ export class DatabaseStorage implements IStorage {
   
   // Vote methods
   async createVote(insertVote: InsertVote): Promise<Vote> {
-    const [vote] = await db.insert(votes).values({
-      ...insertVote,
-      votedAt: new Date()
-    }).returning();
-    return vote;
+    console.log(`DB: Creating vote with data:`, insertVote);
+    try {
+      const voteToInsert = {
+        ...insertVote,
+        votedAt: new Date()
+      };
+      console.log(`DB: Vote data to insert:`, voteToInsert);
+      
+      const [vote] = await db.insert(votes).values(voteToInsert).returning();
+      console.log(`DB: Vote successfully inserted:`, vote);
+      return vote;
+    } catch (error) {
+      console.error("DB: Error creating vote:", error);
+      throw error;
+    }
   }
   
   async getUserVoteForPoll(userId: number, pollId: number): Promise<Vote | undefined> {
@@ -690,6 +700,9 @@ export class DatabaseStorage implements IStorage {
       // Get all votes for this poll
       const pollVotes = await db.select().from(votes).where(eq(votes.pollId, pollId));
       console.log(`DB: Votes for this poll: ${pollVotes.length}`);
+      if (pollVotes.length > 0) {
+        console.log("DB: Found poll votes:", pollVotes.map(v => `ID:${v.id}, UserID:${v.userId}, PollID:${v.pollId}, Option:${v.option}`));
+      }
       
       // Find the specific vote
       const [vote] = await db.select().from(votes)
