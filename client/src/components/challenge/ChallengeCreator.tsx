@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ImageIcon, HelpCircle, Upload, Camera, Sword, Coins } from "lucide-react";
+import { Loader2, ImageIcon, HelpCircle, Upload, Camera, Coins } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { searchImages, getFallbackImage, compressImageDataUrl } from "@/utils/imageSearch";
 import { useLocation } from "wouter";
@@ -175,7 +175,7 @@ export default function ChallengeCreator() {
         optionBImage: compressedOptionBImage || null,
         endTime: endTime.toISOString(),
         isPublic: values.audience === "public" ? true : false,
-        isWar: values.isWar,
+        isWar: false, // War mode disabled
         memeCoinMode: values.memeCoinMode,
         creatorWallet: values.creatorWallet || null,
       };
@@ -767,30 +767,7 @@ export default function ChallengeCreator() {
               </div>
             )}
             
-            <FormField
-              control={form.control}
-              name="isWar"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between space-y-0 rounded-lg border border-primary/30 p-4 bg-black/20">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base flex items-center">
-                      <Sword className="w-5 h-5 mr-2 text-primary" />
-                      Enable War Mode
-                    </FormLabel>
-                    <FormDescription>
-                      After challenge ends, a car game will start where cars battle based on votes
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      className="data-[state=checked]:bg-primary"
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+
 
             <FormField
               control={form.control}
