@@ -5,7 +5,7 @@ A dynamic "This or That" polling application with interactive battle game mechan
 
 ## Recent Changes
 - **July 2025**: Implemented subscription-based MemeCoin system with cross-chain architecture
-  - **FIXED**: Critical duplicate voting bug - users can no longer vote multiple times on same poll
+  - **FIXED**: Critical duplicate voting bug - implemented multi-layer protection with database transactions, ref-based race condition prevention, and unique constraints
   - **FIXED**: Package consumption bug - credits now properly deducted when voting with active packages
   - **FIXED**: Real coin generation logic - now correctly uses voter's wallet instead of creator's wallet
   - **FIXED**: Double package consumption issue - removed duplicate credit deduction in coin service
