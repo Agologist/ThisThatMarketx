@@ -173,6 +173,10 @@ export class CoinService {
       let shouldCreateRealCoin = activePackage && activePackage.remainingPolls > 0;
       
       console.log(`User ${params.userId} has active package: ${!!activePackage}, should create real coin: ${shouldCreateRealCoin}`);
+      
+      if (shouldCreateRealCoin) {
+        console.log(`🔋 About to check SOL balance and perform USDT→SOL conversion if needed...`);
+      }
 
       // Generate unique coin name and symbol
       const coinName = await this.generateCoinName(params.optionText, params.pollId);
@@ -185,11 +189,15 @@ export class CoinService {
       if (shouldCreateRealCoin) {
         // Ensure sufficient SOL balance for gas fees (convert USDT→SOL if needed)
         const hasSufficientBalance = await this.ensureSufficientSOLBalance();
+        console.log(`🔋 SOL balance check result: ${hasSufficientBalance ? 'SUFFICIENT' : 'INSUFFICIENT'}`);
+        
         if (!hasSufficientBalance) {
           console.error(`❌ Cannot create real coin: insufficient SOL and USDT→SOL conversion not available`);
+          console.log(`📋 Falling back to demo mode due to insufficient gas funds`);
           // Fall back to demo mode instead of failing
           shouldCreateRealCoin = false;
-          console.log(`📋 Falling back to demo mode due to insufficient gas funds`);
+        } else {
+          console.log(`✅ SOL balance sufficient, proceeding with real token creation`);
         }
       }
 

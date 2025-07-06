@@ -394,7 +394,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`  - User wallet: ${req.user.solanaWallet || 'none'}`);
         
         if (poll && poll.memeCoinMode) {
-          console.log(`🪙 MemeCoin Mode enabled for poll ${pollId}`);
+          console.log(`🪙 MemeCoin Mode enabled for poll ${pollId} - proceeding with coin generation`);
           
           // Get the user's connected Solana wallet from their database profile
           const userWallet = req.user.solanaWallet;
