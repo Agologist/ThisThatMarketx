@@ -153,7 +153,7 @@ export default function ChallengePage() {
         // For now, just proceed with demo mode - could add modal later
         const walletPayload = { 
           option: selectedOption,
-          walletAddress: undefined // This will trigger demo mode
+          walletAddress: null // This will trigger demo mode and survive JSON.stringify
         };
         console.log("Second call payload:", JSON.stringify(walletPayload));
         
