@@ -43,7 +43,7 @@ export default function RaceGame({ races, pollId }: RaceGameProps) {
     try {
       // Only try API call if a poll ID is provided
       if (pollId) {
-        const response = await apiRequest('POST', `/api/polls/${pollId}/vote`, { option });
+        const response = await apiRequest(`/api/polls/${pollId}/vote`, 'POST', { option });
         const data = await response.json();
         
         // Update the UI after successful API call
