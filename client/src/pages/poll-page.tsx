@@ -125,14 +125,57 @@ export default function ChallengePage() {
     
     setIsVoting(true);
     
+    // Direct fetch approach - bypasses any middleware error handlers
     try {
-      // First, try to submit vote without wallet address (this will trigger backend to ask for wallet preference)
-      const response = await apiRequest(`/api/polls/${id}/vote`, "POST", { 
-        option: selectedOption
-        // No walletAddress provided - this triggers the modal flow
+      const response = await fetch(`/api/polls/${id}/vote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ option: selectedOption })
       });
       
-      // If we reach here, vote was processed directly (shouldn't happen for MemeCoin polls)
+      console.error("🔍 Raw response status:", response.status);
+      console.error("🔍 Raw response ok:", response.ok);
+      
+      if (!response.ok) {
+        // Get the error response body
+        const errorData = await response.json();
+        console.error("🔍 Error response data:", errorData);
+        
+        // Check if this is a wallet choice request (MemeCoin modal trigger)
+        if (errorData.requiresWalletChoice && errorData.coinPreview) {
+          console.error("🎯 WALLET CHOICE REQUEST DETECTED - TRIGGERING MODAL!");
+          
+          // Set up the pending vote data
+          const voteData = {
+            option: errorData.coinPreview.option,
+            pollId: errorData.coinPreview.pollId,
+            optionText: errorData.coinPreview.optionText,
+            coinName: errorData.coinPreview.coinName,
+            coinSymbol: errorData.coinPreview.coinSymbol
+          };
+          
+          console.error("✅ Setting pending vote data:", voteData);
+          setPendingVoteData(voteData);
+          
+          console.error("✅ Showing coin modal NOW");
+          setShowCoinModal(true);
+          
+          console.error("✅ Modal should be visible!");
+          return; // Keep loading state for modal
+        }
+        
+        // Other error - reset and show message
+        setIsVoting(false);
+        toast({
+          title: "Vote Failed",
+          description: errorData.message || `${response.status}: ${response.statusText}`,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Success - vote was processed directly
       const result = await response.json();
       console.log("Vote processed directly:", result);
       
@@ -160,52 +203,15 @@ export default function ChallengePage() {
         description: `You voted for ${selectedOption === "A" ? poll.optionAText : poll.optionBText}`,
       });
       
+      setIsVoting(false);
+      
     } catch (error: any) {
-      console.error("=== VOTING CATCH BLOCK START ===");
-      console.error("Voting error:", error);
-      
-      try {
-        console.error("ERROR DATA CHECK:", error.response?.data);
-        console.error("CHECKING CONDITIONS:");
-        console.error("- error.response exists:", !!error.response);
-        console.error("- error.response.data exists:", !!error.response?.data);
-        console.error("- requiresWalletChoice:", error.response?.data?.requiresWalletChoice);
-        console.error("- coinPreview exists:", !!error.response?.data?.coinPreview);
-        
-        // NEW: Check if backend is asking for wallet choice (data is in error.response.data)
-        if (error.response?.data?.requiresWalletChoice && error.response?.data?.coinPreview) {
-          console.error("✅ MODAL TRIGGER DETECTED - Backend requesting wallet choice");
-          
-          // Set up the pending vote data from backend response
-          const voteData = {
-            option: error.response.data.coinPreview.option,
-            pollId: error.response.data.coinPreview.pollId,
-            optionText: error.response.data.coinPreview.optionText,
-            coinName: error.response.data.coinPreview.coinName,
-            coinSymbol: error.response.data.coinPreview.coinSymbol
-          };
-          
-          console.error("✅ SETTING PENDING VOTE DATA:", voteData);
-          setPendingVoteData(voteData);
-          
-          console.error("✅ SETTING MODAL VISIBLE TO TRUE");
-          setShowCoinModal(true);
-          
-          console.error("✅ MODAL STATE UPDATED - EXITING HANDLER");
-          return; // IMPORTANT: Don't call setIsVoting(false) here - keep loading state for modal
-        } else {
-          console.error("❌ MODAL TRIGGER CONDITIONS NOT MET");
-        }
-      } catch (innerError) {
-        console.error("Error in catch block processing:", innerError);
-      }
-      
-      // For other errors, reset state and show error
+      console.error("🚨 Network error:", error);
       setIsVoting(false);
       toast({
         title: "Vote Failed",
-        description: error instanceof Error ? error.message : "Failed to record vote",
-        variant: "destructive"
+        description: "Network error occurred",
+        variant: "destructive",
       });
     }
   };
