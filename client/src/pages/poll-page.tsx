@@ -146,15 +146,18 @@ export default function ChallengePage() {
     
     try {
       console.log("🎯 Making POST request to submit vote...");
+      console.log("🎯 POST REQUEST ABOUT TO BE SENT - THIS SHOULD APPEAR IN LOGS");
       
       // Get wallet address from localStorage for coin generation
       const ethWallet = localStorage.getItem('eth_wallet');
       console.log("🎯 Wallet address from localStorage:", ethWallet);
       
+      console.log("🎯 SENDING POST REQUEST NOW - SHOULD SEE BACKEND LOGS NEXT");
       const response = await apiRequest(`/api/polls/${id}/vote`, "POST", { 
         option: selectedOption,
         walletAddress: ethWallet || undefined
       });
+      console.log("🎯 POST REQUEST COMPLETED - RESPONSE RECEIVED");
       
       console.log("🎯 POST response received:", response.status, response.ok);
       
