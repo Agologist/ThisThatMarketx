@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { setupReplitAuth } from "./replitAuth";
 import { coinService } from "./coinService";
+import { baseCoinService } from "./baseCoinService";
 import { z } from "zod";
 import { insertPollSchema, insertVoteSchema, insertRaceRecordSchema, insertUserAchievementSchema, insertGeneratedCoinSchema, insertMemeCoinPackageSchema } from "@shared/schema";
 import axios from "axios";
@@ -399,16 +400,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`  - User wallet: ${req.user.solanaWallet || 'none'}`);
         
         if (poll && poll.memeCoinMode) {
-          console.log(`🪙 MemeCoin Mode enabled for poll ${pollId} - proceeding with coin generation`);
+          console.log(`🪙 MemeCoin Mode enabled for poll ${pollId} - proceeding with Base coin generation`);
           
-          // Get the user's connected Solana wallet from their database profile
-          const userWallet = req.user.solanaWallet;
+          // Get the user's connected wallet (ETH/Base compatible) from their database profile
+          const userWallet = req.user.solanaWallet; // This field now stores ETH-compatible addresses
           console.log(`🪙 User's connected wallet: ${userWallet || 'none'}`);
           
-          // Only generate coin if user has a connected Solana wallet
-          if (userWallet && userWallet !== null && !userWallet.startsWith('demo_wallet_')) {
-            console.log(`🪙 Valid SOL wallet detected, generating coin...`);
-            console.log(`🪙 About to create coin with params:`, {
+          // Only generate coin if user has a connected wallet (ETH address format)
+          if (userWallet && userWallet !== null && !userWallet.startsWith('demo_wallet_') && userWallet.startsWith('0x')) {
+            console.log(`🪙 Valid ETH wallet detected, generating Base coin...`);
+            console.log(`🪙 About to create Base coin with params:`, {
               userId, pollId, option,
               optionText: option === 'A' ? poll.optionAText : poll.optionBText,
               userWallet
@@ -416,17 +417,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
             
-            const coinResult = await coinService.createMemeCoin({
+            const coinResult = await baseCoinService.createMemeCoin({
+              coinName: optionText,
               userId,
               pollId,
-              option,
-              optionText,
+              optionVoted: option,
               userWallet: userWallet
             });
             
-            console.log(`🪙 Real meme coin generated for wallet ${userWallet}:`, coinResult);
+            console.log(`🪙 Real Base meme coin generated for wallet ${userWallet}:`, coinResult);
           } else {
-            console.log(`🚫 No valid SOL wallet connected - skipping coin generation (demo mode)`);
+            console.log(`🚫 No valid ETH wallet connected - skipping coin generation (demo mode)`);
           }
         } else if (poll) {
           console.log(`🚫 MemeCoin Mode disabled for poll ${pollId}, skipping coin generation`);

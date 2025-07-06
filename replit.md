@@ -4,6 +4,12 @@
 A dynamic "This or That" polling application with interactive battle game mechanics. Users create time-limited challenges with two options, each with image avatars. The key feature is an interactive car battle game where voting impacts car movement in real-time sumo-style contests.
 
 ## Recent Changes
+- **July 6, 2025**: **BASE NETWORK IMPLEMENTATION** - Switched meme coin generation from Solana to Base network
+  - **ADDED**: Base network coin service for ultra-low cost token creation (~$0.0001 vs $0.003)
+  - **IMPROVED**: Direct USDT→ETH gas payment system (no cross-chain conversion needed)
+  - **ENHANCED**: Real ERC-20 tokens on Base network (tradable on Uniswap, SushiSwap, etc.)
+  - **UPDATED**: Database schema with blockchain field to support multiple networks
+  - **ECONOMICS**: $1 revenue - $0.0001 gas = $0.9999 profit per token (99.99% margin)
 - **July 6, 2025**: **WAR MODE COMPLETELY REMOVED** - Full elimination of race/battle game functionality
   - **REMOVED**: All isWar database fields, API endpoints, and frontend components
   - **REMOVED**: Battle game routes, car racing mechanics, and war-related UI elements

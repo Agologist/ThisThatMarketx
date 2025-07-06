@@ -157,6 +157,7 @@ export const generatedCoins = pgTable("generated_coins", {
   coinAddress: text("coin_address").notNull(),
   userWallet: text("user_wallet").notNull(),
   transactionHash: text("transaction_hash"),
+  blockchain: text("blockchain").default("Solana"), // Solana, Base, Ethereum, etc.
   createdAt: timestamp("created_at").defaultNow(),
   status: text("status").default("pending"), // pending, created, failed
 });
@@ -170,6 +171,7 @@ export const insertGeneratedCoinSchema = createInsertSchema(generatedCoins).pick
   coinAddress: true,
   userWallet: true,
   transactionHash: true,
+  blockchain: true,
   status: true,
 });
 
