@@ -13,7 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Poll, RaceRecord } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import BattleGame from "./battle-game";
+
 import WalletConnect from "@/components/wallet/WalletConnect";
 import {
   Popover,
@@ -48,7 +48,7 @@ export default function ChallengePage() {
   
   const { data: userRaces } = useQuery<RaceRecord[]>({
     queryKey: [`/api/races`, forceRefresh],
-    enabled: !!user && !!poll?.isWar,
+    enabled: false, // Race game functionality removed
   });
   
   // Type-safe access to userVoteData properties with default values
@@ -108,7 +108,7 @@ export default function ChallengePage() {
         clearInterval(intervalId);
         
         // If this is a WAR challenge, show the WAR game
-        if (poll?.isWar && !warGameStartedRef.current) {
+        if (false && !warGameStartedRef.current) {
           warGameStartedRef.current = true;
           // Show war game 3 seconds after the challenge ends
           console.log("⚔️ Challenge ended! Starting War game in 3 seconds...");
@@ -120,15 +120,15 @@ export default function ChallengePage() {
     }, 1000); // Update every second
     
     return () => clearInterval(intervalId);
-  }, [isChallengeActive, id, poll?.isWar]);
+  }, [isChallengeActive, id, false]);
   
   // Show War game for already expired challenges with war mode
   useEffect(() => {
-    if (poll?.isWar && status === "ended" && !warGameStartedRef.current) {
+    if (false && status === "ended" && !warGameStartedRef.current) {
       warGameStartedRef.current = true;
       setShowWarGame(true);
     }
-  }, [poll?.isWar, status]);
+  }, [false, status]);
   
   const handleVote = async () => {
     if (!selectedOption || !isChallengeActive) return;
@@ -618,7 +618,7 @@ export default function ChallengePage() {
                         🪙 MemeCoin Mode
                       </Badge>
                     )}
-                    {poll.isWar && (
+                    {false && (
                       <Badge 
                         variant="destructive"
                         className="font-racing uppercase"
@@ -653,8 +653,8 @@ export default function ChallengePage() {
             </CardFooter>
           </Card>
           
-          {/* War Game section - visible only for ended challenges with isWar enabled */}
-          {showWarGame && poll.isWar && !isChallengeActive && (
+          {/* War Mode functionality completely removed */}
+          {showWarGame && false && !isChallengeActive && (
             <Card id="war-game-section" className="mb-8 border-primary/30 relative overflow-hidden">
               <div className="absolute top-2 right-2 z-10">
                 <Badge variant="destructive" className="font-racing uppercase">
@@ -1087,16 +1087,8 @@ export default function ChallengePage() {
                     );
                   }
                   
-                  // For all other challenges, render the battle game component
-                  return (
-                    <BattleGame 
-                      races={userRaces || []} 
-                      pollId={parseInt(id)}
-                      optionAText={poll.optionAText}
-                      optionBText={poll.optionBText}
-                      option={userVoteOption}
-                    />
-                  );
+                  // Battle game removed - polls now use standard voting interface only
+                  return null;
                 })()
               )}
             </Card>

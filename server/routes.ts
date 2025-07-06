@@ -150,31 +150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const filter = req.query.filter as string;
       
-      if (filter === 'active-wars' && req.isAuthenticated()) {
-        // Get active war polls that the user has voted in
-        const allPolls = await storage.getPolls();
-        const userVotes = [];
-        const now = new Date();
-        
-        // For each active war poll, check if user has voted
-        for (const poll of allPolls) {
-          // Only include polls that are:
-          // 1. War polls
-          // 2. Still active (end time is in the future)
-          if (poll.isWar && new Date(poll.endTime) > now) {
-            const vote = await storage.getUserVoteForPoll(req.user.id, poll.id);
-            if (vote) {
-              userVotes.push({
-                ...poll,
-                userVote: vote
-              });
-            }
-          }
-        }
-        
-        console.log(`Found ${userVotes.length} active war polls for user ${req.user.id}`);
-        return res.json(userVotes);
-      }
+      // War Mode functionality removed - all polls use standard voting interface
       
       // Default behavior - return all polls
       const polls = await storage.getPolls();
@@ -869,43 +845,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Route for getting active war passes for the user
-  app.get("/api/user/warpasses", async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    try {
-      // Get all the user's votes
-      const userVotes = await storage.getUserVotes(req.user.id);
-      const warPasses = [];
-      const now = new Date();
-      
-      // For each vote, check if it's for an ACTIVE war poll
-      for (const vote of userVotes) {
-        const poll = await storage.getPoll(vote.pollId);
-        // Only include polls that:
-        // 1. Exist
-        // 2. Are War mode enabled
-        // 3. Are still active (end time is in the future)
-        if (poll && poll.isWar && new Date(poll.endTime) > now) {
-          warPasses.push({
-            ...poll,
-            userVote: vote,
-            isActive: true
-          });
-        }
-      }
-      
-      // Log for debugging
-      console.log(`Found ${warPasses.length} active war passes for user ${req.user.id}`);
-      
-      res.json(warPasses);
-    } catch (error) {
-      console.error('Error fetching war passes:', error);
-      res.status(500).json({ message: "Failed to fetch war passes" });
-    }
-  });
+  // War Mode functionality removed - endpoint disabled
   
   // Route for getting battles the user has won
   app.get("/api/user/battles/won", async (req, res) => {

@@ -197,10 +197,10 @@ export default function ActiveChallenges({ polls }: ActiveChallengesProps) {
                       <Badge
                         className={`
                           border-none px-3 py-1 rounded-full text-xs font-medium
-                          ${poll.isWar === true ? "bg-[#FFD700]/20 text-[#FFD700]" : "bg-gray-500/20 text-gray-400"}
+                          ${false ? "bg-[#FFD700]/20 text-[#FFD700]" : "bg-gray-500/20 text-gray-400"}
                         `}
                       >
-                        {poll.isWar === true ? "Enabled" : "Disabled"}
+                        {false ? "Enabled" : "Disabled"}
                       </Badge>
                     </td>
                     <td className="py-4 text-right">

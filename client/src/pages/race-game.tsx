@@ -400,7 +400,7 @@ export default function RaceGame({ races, pollId: propPollId, optionAText, optio
   useEffect(() => {
     // Only for expired War challenges in ready state that haven't been auto-started yet
     // AND haven't been completed previously (check hasCompletedRace)
-    if (isExpiredChallenge && pollData?.isWar && gameState === "ready" && !hasAutoStartedRef.current && !hasCompletedRace) {
+    if (isExpiredChallenge && false && gameState === "ready" && !hasAutoStartedRef.current && !hasCompletedRace) {
       console.log(`⚠️ WAR CHALLENGE ${pollId} EXPIRED - Starting race game once`);
       
       // Mark as started to prevent repeated triggering

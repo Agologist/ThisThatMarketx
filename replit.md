@@ -4,6 +4,11 @@
 A dynamic "This or That" polling application with interactive battle game mechanics. Users create time-limited challenges with two options, each with image avatars. The key feature is an interactive car battle game where voting impacts car movement in real-time sumo-style contests.
 
 ## Recent Changes
+- **July 6, 2025**: **WAR MODE COMPLETELY REMOVED** - Full elimination of race/battle game functionality
+  - **REMOVED**: All isWar database fields, API endpoints, and frontend components
+  - **REMOVED**: Battle game routes, car racing mechanics, and war-related UI elements
+  - **SIMPLIFIED**: Application now focuses exclusively on standard voting with meme coin generation
+  - **CLEAN**: All War Mode references eliminated from codebase (database, backend, frontend)
 - **July 6, 2025**: **DEBUGGING COIN GENERATION ISSUE** - Investigating why real SPL tokens aren't being created
   - **IDENTIFIED**: Coin generation section never executes during voting process
   - **ISSUE**: System blocks duplicate votes but initial vote doesn't trigger coin generation  

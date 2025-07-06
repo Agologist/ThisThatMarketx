@@ -37,7 +37,6 @@ export default function UserStatCards() {
     enabled: !isGuest && !!user
   });
 
-  // Get active war polls (challenges with isWar=true and user has voted)
   const { data: activeWarPolls = [] } = useQuery<Poll[]>({
     queryKey: ["/api/user/warpasses"],
     enabled: !isGuest && !!user
