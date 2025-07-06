@@ -243,7 +243,7 @@ export default function ChallengePage() {
           const coinSymbol = optionText.slice(0, 6).toUpperCase().replace(/[^A-Z]/g, '');
           toast({
             title: "🪙 Meme Coin Generated!",
-            description: `You received ${optionText} (${coinSymbol}) in your Solana wallet`,
+            description: `You received ${optionText} (${coinSymbol}) in your Ethereum wallet`,
           });
         }
       }, 1500);

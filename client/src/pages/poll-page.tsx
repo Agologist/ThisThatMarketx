@@ -302,7 +302,7 @@ export default function ChallengePage() {
         if (walletAddress) {
           toast({
             title: "🪙 Coin Delivered!",
-            description: `${pendingVoteData.coinName} (${pendingVoteData.coinSymbol}) sent to your Solana wallet`,
+            description: `${pendingVoteData.coinName} (${pendingVoteData.coinSymbol}) sent to your Ethereum wallet`,
           });
         } else {
           toast({
