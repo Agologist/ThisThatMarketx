@@ -314,7 +314,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`🚀 Processing vote for user ${userId} on poll ${pollId}, option ${option}`);
       console.log(`🔍 Full request body:`, JSON.stringify(req.body, null, 2));
-      console.log(`🔍 Wallet address check: walletAddress=${walletAddress}, type=${typeof walletAddress}, hasWalletKey=${req.body.hasOwnProperty('walletAddress')}`);
       
       // Validate option
       if (option !== "A" && option !== "B") {
@@ -326,7 +325,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Found existing vote: ${!!existingVote}`);
       
       if (existingVote) {
-        // Prevent changing votes
         return res.status(400).json({ 
           message: "You have already voted on this challenge", 
           existingVote
@@ -340,11 +338,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.log(`🔍 Poll MemeCoin mode: ${poll.memeCoinMode ? 'enabled' : 'disabled'}`);
-      console.log(`🔍 User wallet: ${req.user.solanaWallet || 'not connected'}`);
       
-      // No need for wallet selection modal - we use the stored wallet address
+      // NEW FLOW: If MemeCoin mode is enabled and no walletAddress provided, 
+      // send coin preview and ask frontend to show modal
+      if (poll.memeCoinMode && !walletAddress) {
+        const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
+        const coinName = await coinService.generateCoinName(optionText, pollId);
+        const coinSymbol = coinService.generateSymbol(coinName);
+        
+        console.log(`🎯 MemeCoin poll detected, sending coin preview to frontend`);
+        
+        return res.status(400).json({
+          requiresWalletChoice: true,
+          coinPreview: {
+            option,
+            pollId,
+            optionText,
+            coinName,
+            coinSymbol
+          }
+        });
+      }
       
-      console.log("🎯 Proceeding directly with vote recording...");
+      // If we reach here, either it's not a MemeCoin poll or wallet choice was provided
+      console.log("🎯 Proceeding with vote recording...");
       
       // Create the vote
       const voteData = insertVoteSchema.parse({
@@ -353,7 +370,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         option,
       });
       
-      // Debug log to see how vote data is being created
       console.log("Creating new vote with data:", JSON.stringify(voteData));
       
       const vote = await storage.createVote(voteData);
@@ -363,28 +379,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.incrementPollVote(pollId, option);
       console.log(`✅ Poll vote count updated successfully for poll ${pollId}`);
       
-      // DEBUG: Add checkpoint before coin generation
-      console.log(`🔥 CHECKPOINT: About to start coin generation check for poll ${pollId}`);
-      console.log(`🔥 DEBUG: Current execution context - userId: ${userId}, pollId: ${pollId}, option: ${option}`);
-      
-      // FIXED: Generate meme coin for EVERY vote on MemeCoin-enabled polls
+      // Generate meme coin if MemeCoin mode is enabled
       console.log(`🎯 Starting coin generation check for poll ${pollId}...`);
       try {
         if (poll && poll.memeCoinMode) {
           console.log(`🪙 MemeCoin Mode is ENABLED for poll ${pollId}`);
           
-          // Get fresh user data from database
-          const freshUser = await storage.getUser(userId);
-          const userWallet = freshUser?.solanaWallet;
-          console.log(`🪙 User's connected wallet (fresh from DB): ${userWallet || 'none'}`);
-          console.log(`🪙 Wallet validation: isValid=${!!userWallet}, notNull=${userWallet !== null}, notDemo=${!userWallet?.startsWith('demo_wallet_')}`);
-          
-          // CRITICAL FIX: Always generate coins for votes on MemeCoin polls, regardless of wallet status
           const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
           console.log(`🪙 Creating coin for option "${optionText}" (option ${option})`);
           
-          // Use the user's real wallet if available, otherwise use demo mode
-          const finalWallet = (userWallet && !userWallet.startsWith('demo_wallet_')) ? userWallet : 'demo_mode_no_wallet';
+          // Use provided wallet address or demo mode
+          const finalWallet = walletAddress || 'demo_mode_no_wallet';
           
           console.log(`🪙 Calling coinService.createMemeCoin with params:`, {
             userId,
@@ -407,32 +412,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
         } else if (poll) {
           console.log(`🚫 SKIPPING: MemeCoin Mode is DISABLED for poll ${pollId}`);
-        } else {
-          console.log(`🚫 ERROR: Poll ${pollId} not found for coin generation`);
         }
       } catch (coinError: any) {
         console.error('💥 CRITICAL: Coin generation FAILED, but vote still recorded:');
-        console.error('💥 Error type:', coinError?.constructor?.name);
         console.error('💥 Error message:', coinError?.message);
         console.error('💥 Full error object:', coinError);
-        console.error('💥 Stack trace:', coinError?.stack);
-        
-        // Log the exact parameters that caused the failure  
-        const failedUser = await storage.getUser(userId).catch(() => null);
-        console.error('💥 Failed parameters were:', {
-          userId,
-          pollId,
-          option,
-          userWallet: failedUser?.solanaWallet,
-          pollMemeCoinMode: poll?.memeCoinMode
-        });
-        
-        // Don't fail the vote if coin generation fails - let user know via logs
       }
       
       console.log(`🎯 Coin generation check completed for poll ${pollId}`);
       
-      // Get updated poll - make sure to wait for the latest data
+      // Get updated poll
       const updatedPoll = await storage.getPoll(pollId);
       console.log("Updated poll after vote:", {
         id: updatedPoll?.id,
