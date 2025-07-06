@@ -146,10 +146,14 @@ export default function ChallengePage() {
     
     try {
       console.log("🎯 Making POST request to submit vote...");
-      // First, try to submit vote without wallet address (this will trigger backend to ask for wallet preference)
+      
+      // Get wallet address from localStorage for coin generation
+      const ethWallet = localStorage.getItem('eth_wallet');
+      console.log("🎯 Wallet address from localStorage:", ethWallet);
+      
       const response = await apiRequest(`/api/polls/${id}/vote`, "POST", { 
-        option: selectedOption
-        // No walletAddress provided - this triggers the modal flow
+        option: selectedOption,
+        walletAddress: ethWallet || undefined
       });
       
       console.log("🎯 POST response received:", response.status, response.ok);
