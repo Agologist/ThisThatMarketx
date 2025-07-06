@@ -65,11 +65,12 @@ export class CoinService {
       
       console.log(`Insufficient SOL (${currentBalance.toFixed(4)}), attempting cross-chain conversion...`);
       
-      // Calculate how much USDT we need to convert to get required SOL
-      const conversionNeeded = requiredBalance - currentBalance + 0.002; // Add small buffer
-      const usdtNeeded = conversionNeeded * 200; // Rough estimate: $200 per SOL
+      // Calculate exact USDT needed for this single token creation
+      const solNeededForOneToken = 0.003; // Exact SOL needed for one token creation
+      const usdtNeeded = solNeededForOneToken * 200; // Convert to USDT (assuming $200/SOL)
+      // Result: ~$0.60 USDT for one token creation
       
-      console.log(`Converting ${usdtNeeded.toFixed(2)} USDT (Polygon) → ${conversionNeeded.toFixed(4)} SOL (Solana)`);
+      console.log(`Converting ${usdtNeeded.toFixed(2)} USDT (Polygon) → SOL (Solana)`);
       
       // Execute cross-chain USDT→SOL conversion
       try {
@@ -190,32 +191,41 @@ export class CoinService {
           shouldCreateRealCoin = false;
           console.log(`📋 Falling back to demo mode due to insufficient gas funds`);
         }
-        
-        // Create real Solana token with metadata
-        const result = await this.createRealSolanaToken(
-          coinName, 
-          coinSymbol, 
-          params.userWallet,
-          params.pollId,
-          params.optionText
-        );
-        coinAddress = result.coinAddress;
-        transactionHash = result.transactionHash;
-        status = 'created';
-        
-        // Consume package usage
-        if (activePackage) {
-          await storage.consumePackageUsage(activePackage.id);
-          console.log(`Consumed package usage for user ${params.userId}, remaining: ${activePackage.remainingPolls - 1}`);
+      }
+
+      if (shouldCreateRealCoin) {
+        try {
+          // Create real Solana token with metadata
+          const result = await this.createRealSolanaToken(
+            coinName, 
+            coinSymbol, 
+            params.userWallet,
+            params.pollId,
+            params.optionText
+          );
+          coinAddress = result.coinAddress;
+          transactionHash = result.transactionHash;
+          status = 'created';
+          
+          // Consume package usage
+          if (activePackage) {
+            await storage.consumePackageUsage(activePackage.id);
+            console.log(`Consumed package usage for user ${params.userId}, remaining: ${activePackage.remainingPolls - 1}`);
+          }
+        } catch (error) {
+          console.error('Real token creation failed, falling back to demo mode:', error.message);
+          shouldCreateRealCoin = false;
         }
-      } else {
+      }
+
+      if (!shouldCreateRealCoin) {
         // Create demo token
         const mintKeypair = Keypair.generate();
         coinAddress = mintKeypair.publicKey.toBase58();
         transactionHash = `demo_tx_${Date.now()}_${Math.random().toString(36).slice(2)}`;
         status = 'demo';
         
-        console.log('Created demo coin - user has no active package');
+        console.log('Created demo coin - user has no active package or insufficient SOL');
       }
       
       // Store in database
