@@ -483,6 +483,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Emergency coin generation endpoint for testing
+  app.post("/api/test/generate-coin", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const { pollId, option } = req.body;
+      const userId = req.user.id;
+      
+      console.log(`🧪 TEST COIN GENERATION: user ${userId}, poll ${pollId}, option ${option}`);
+      
+      // Get poll info
+      const poll = await storage.getPoll(pollId);
+      if (!poll) {
+        return res.status(404).json({ message: "Poll not found" });
+      }
+      
+      const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
+      const userWallet = req.user.solanaWallet;
+      
+      console.log(`🧪 Generating test coin with wallet: ${userWallet}`);
+      
+      const coinResult = await coinService.createMemeCoin({
+        userId,
+        pollId,
+        option,
+        optionText,
+        userWallet: userWallet
+      });
+      
+      console.log(`🧪 Test coin generated:`, coinResult);
+      res.json({ success: true, coin: coinResult });
+    } catch (error) {
+      console.error('🧪 Test coin generation error:', error);
+      res.status(500).json({ message: "Failed to generate test coin" });
+    }
+  });
+
   app.get("/api/user/polls", async (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "Unauthorized" });
