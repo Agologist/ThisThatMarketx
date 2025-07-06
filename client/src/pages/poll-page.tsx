@@ -121,16 +121,38 @@ export default function ChallengePage() {
   }, [isPollActive, id]);
   
   const handleVote = async () => {
-    if (!selectedOption || !isPollActive || !poll) return;
+    console.log("🎯 HandleVote called with:", { 
+      selectedOption, 
+      isPollActive, 
+      hasVoted, 
+      isVoting,
+      pollId: id 
+    });
+    
+    if (!selectedOption || !isPollActive || !poll) {
+      console.log("🎯 Vote blocked by conditions:", {
+        hasSelectedOption: !!selectedOption,
+        isPollActive,
+        hasPoll: !!poll
+      });
+      return;
+    }
+    
+    // Force refresh vote status before attempting to vote
+    console.log("🎯 Refreshing vote status before submitting...");
+    await refetchVoteData();
     
     setIsVoting(true);
     
     try {
+      console.log("🎯 Making POST request to submit vote...");
       // First, try to submit vote without wallet address (this will trigger backend to ask for wallet preference)
       const response = await apiRequest(`/api/polls/${id}/vote`, "POST", { 
         option: selectedOption
         // No walletAddress provided - this triggers the modal flow
       });
+      
+      console.log("🎯 POST response received:", response.status, response.ok);
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -524,7 +546,7 @@ export default function ChallengePage() {
                   <Button 
                     className="btn-gold w-full max-w-md" 
                     size="lg"
-                    disabled={!selectedOption || isVoting || hasVoted}
+                    disabled={!selectedOption || isVoting}
                     onClick={handleVote}
                   >
                     {isVoting ? (
