@@ -161,37 +161,43 @@ export default function ChallengePage() {
       });
       
     } catch (error: any) {
+      console.error("=== VOTING CATCH BLOCK START ===");
       console.error("Voting error:", error);
-      console.error("ERROR DATA CHECK:", error.response?.data);
-      console.error("CHECKING CONDITIONS:");
-      console.error("- error.response exists:", !!error.response);
-      console.error("- error.response.data exists:", !!error.response?.data);
-      console.error("- requiresWalletChoice:", error.response?.data?.requiresWalletChoice);
-      console.error("- coinPreview exists:", !!error.response?.data?.coinPreview);
       
-      // NEW: Check if backend is asking for wallet choice (data is in error.response.data)
-      if (error.response?.data?.requiresWalletChoice && error.response?.data?.coinPreview) {
-        console.error("✅ MODAL TRIGGER DETECTED - Backend requesting wallet choice");
+      try {
+        console.error("ERROR DATA CHECK:", error.response?.data);
+        console.error("CHECKING CONDITIONS:");
+        console.error("- error.response exists:", !!error.response);
+        console.error("- error.response.data exists:", !!error.response?.data);
+        console.error("- requiresWalletChoice:", error.response?.data?.requiresWalletChoice);
+        console.error("- coinPreview exists:", !!error.response?.data?.coinPreview);
         
-        // Set up the pending vote data from backend response
-        const voteData = {
-          option: error.response.data.coinPreview.option,
-          pollId: error.response.data.coinPreview.pollId,
-          optionText: error.response.data.coinPreview.optionText,
-          coinName: error.response.data.coinPreview.coinName,
-          coinSymbol: error.response.data.coinPreview.coinSymbol
-        };
-        
-        console.error("✅ SETTING PENDING VOTE DATA:", voteData);
-        setPendingVoteData(voteData);
-        
-        console.error("✅ SETTING MODAL VISIBLE TO TRUE");
-        setShowCoinModal(true);
-        
-        console.error("✅ MODAL STATE UPDATED - EXITING HANDLER");
-        return; // IMPORTANT: Don't call setIsVoting(false) here - keep loading state for modal
-      } else {
-        console.error("❌ MODAL TRIGGER CONDITIONS NOT MET");
+        // NEW: Check if backend is asking for wallet choice (data is in error.response.data)
+        if (error.response?.data?.requiresWalletChoice && error.response?.data?.coinPreview) {
+          console.error("✅ MODAL TRIGGER DETECTED - Backend requesting wallet choice");
+          
+          // Set up the pending vote data from backend response
+          const voteData = {
+            option: error.response.data.coinPreview.option,
+            pollId: error.response.data.coinPreview.pollId,
+            optionText: error.response.data.coinPreview.optionText,
+            coinName: error.response.data.coinPreview.coinName,
+            coinSymbol: error.response.data.coinPreview.coinSymbol
+          };
+          
+          console.error("✅ SETTING PENDING VOTE DATA:", voteData);
+          setPendingVoteData(voteData);
+          
+          console.error("✅ SETTING MODAL VISIBLE TO TRUE");
+          setShowCoinModal(true);
+          
+          console.error("✅ MODAL STATE UPDATED - EXITING HANDLER");
+          return; // IMPORTANT: Don't call setIsVoting(false) here - keep loading state for modal
+        } else {
+          console.error("❌ MODAL TRIGGER CONDITIONS NOT MET");
+        }
+      } catch (innerError) {
+        console.error("Error in catch block processing:", innerError);
       }
       
       // For other errors, reset state and show error
