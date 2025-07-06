@@ -150,10 +150,13 @@ export default function ChallengePage() {
         console.log("Backend requesting wallet choice for coin generation");
         console.log("Making second API call with wallet preference...");
         
-        // For now, just proceed with demo mode - could add modal later
+        // Check if user has connected a Solana wallet
+        const savedWallet = localStorage.getItem("solana_wallet");
+        console.log("Checking for saved Solana wallet:", savedWallet ? `${savedWallet.slice(0, 8)}...${savedWallet.slice(-8)}` : "none");
+        
         const walletPayload = { 
           option: selectedOption,
-          walletAddress: null // This will trigger demo mode and survive JSON.stringify
+          walletAddress: savedWallet || null // Use saved wallet or null for demo mode
         };
         console.log("Second call payload:", JSON.stringify(walletPayload));
         
