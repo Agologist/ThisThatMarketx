@@ -165,6 +165,11 @@ export default function ChallengePage() {
     } catch (error: any) {
       console.error("Voting error:", error);
       console.error("ERROR DATA CHECK:", error.response?.data);
+      console.error("CHECKING CONDITIONS:");
+      console.error("- error.response exists:", !!error.response);
+      console.error("- error.response.data exists:", !!error.response?.data);
+      console.error("- requiresWalletChoice:", error.response?.data?.requiresWalletChoice);
+      console.error("- coinPreview exists:", !!error.response?.data?.coinPreview);
       
       // NEW: Check if backend is asking for wallet choice (data is in error.response.data)
       if (error.response?.data?.requiresWalletChoice && error.response?.data?.coinPreview) {
@@ -187,6 +192,8 @@ export default function ChallengePage() {
         
         console.error("✅ MODAL STATE UPDATED - EXITING HANDLER");
         return; // IMPORTANT: Don't call setIsVoting(false) here - keep loading state for modal
+      } else {
+        console.error("❌ MODAL TRIGGER CONDITIONS NOT MET");
       }
       
       // For other errors, reset state and show error
