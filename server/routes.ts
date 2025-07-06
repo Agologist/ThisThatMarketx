@@ -367,9 +367,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (poll && poll.memeCoinMode) {
           console.log(`🪙 MemeCoin Mode enabled for poll ${pollId}`);
           
-          // Get the user's connected Solana wallet from their database profile
-          const userWallet = req.user.solanaWallet;
-          console.log(`🪙 User's connected wallet: ${userWallet || 'none'}`);
+          // CRITICAL FIX: Get fresh user data from database instead of potentially stale session
+          const freshUser = await storage.getUser(userId);
+          const userWallet = freshUser?.solanaWallet;
+          console.log(`🪙 User's connected wallet (fresh from DB): ${userWallet || 'none'}`);
           
           // Only generate coin if user has a connected Solana wallet
           if (userWallet && userWallet !== null && !userWallet.startsWith('demo_wallet_')) {
