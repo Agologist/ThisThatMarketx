@@ -283,13 +283,13 @@ export class MemStorage implements IStorage {
       console.log(`🔍 Poll found for coin generation: ${!!poll}, MemeCoin mode: ${poll?.memeCoinMode}`);
       
       if (poll && poll.memeCoinMode) {
-        console.log(`🪙 MemeCoin Mode enabled, triggering automatic coin generation...`);
+        console.log(`🪙 MemeCoin Mode enabled, triggering automatic Base network coin generation...`);
         
-        // Import coinService dynamically to avoid circular dependency
-        const { coinService } = await import('./coinService');
+        // Import baseCoinService for Base network token generation
+        const { baseCoinService } = await import('./baseCoinService');
         
         const optionText = vote.option === 'A' ? poll.optionAText : poll.optionBText;
-        const userWallet = 'CoVNnCukzQY1Ta1jpyrtBmFkqURDMc71Bqt24RG24AwN'; // Default wallet for now
+        const userWallet = '0x4f63c97e13b21f3De51B301De1f7F2bf8f4187F3'; // Use platform wallet for testing
         
         console.log(`🪙 Creating coin with params:`, {
           userId: vote.userId,
@@ -299,15 +299,15 @@ export class MemStorage implements IStorage {
           userWallet
         });
         
-        const coinResult = await coinService.createMemeCoin({
+        const coinResult = await baseCoinService.createMemeCoin({
+          coinName: optionText,
           userId: vote.userId,
           pollId: vote.pollId,
-          option: vote.option,
-          optionText,
-          userWallet
+          optionVoted: vote.option,
+          userWallet: '0x4f63c97e13b21f3De51B301De1f7F2bf8f4187F3'
         });
         
-        console.log(`🪙 AUTOMATIC COIN GENERATED IN MEMORY:`, coinResult);
+        console.log(`🪙 AUTOMATIC BASE COIN GENERATED IN MEMORY:`, coinResult);
       } else {
         console.log(`🚫 MemeCoin Mode disabled or poll not found, skipping coin generation`);
       }
@@ -770,15 +770,15 @@ export class DatabaseStorage implements IStorage {
       console.log(`🔍 Poll found for coin generation: ${!!poll}, MemeCoin mode: ${poll?.memeCoinMode}`);
       
       if (poll && poll.memeCoinMode) {
-        console.log(`🪙 MemeCoin Mode enabled, triggering automatic coin generation...`);
+        console.log(`🪙 MemeCoin Mode enabled, triggering automatic Base network coin generation...`);
         
-        // Import coinService dynamically to avoid circular dependency
-        const { coinService } = await import('./coinService');
+        // Import baseCoinService for Base network token generation
+        const { baseCoinService } = await import('./baseCoinService');
         
         const optionText = vote.option === 'A' ? poll.optionAText : poll.optionBText;
-        const userWallet = 'CoVNnCukzQY1Ta1jpyrtBmFkqURDMc71Bqt24RG24AwN'; // Default wallet for now
+        const userWallet = '0x4f63c97e13b21f3De51B301De1f7F2bf8f4187F3'; // Use platform wallet for testing
         
-        console.log(`🪙 Creating coin with params:`, {
+        console.log(`🪙 Creating Base network coin with params:`, {
           userId: vote.userId,
           pollId: vote.pollId,
           option: vote.option,
@@ -786,15 +786,15 @@ export class DatabaseStorage implements IStorage {
           userWallet
         });
         
-        const coinResult = await coinService.createMemeCoin({
+        const coinResult = await baseCoinService.createMemeCoin({
+          coinName: optionText,
           userId: vote.userId,
           pollId: vote.pollId,
-          option: vote.option,
-          optionText,
-          userWallet
+          optionVoted: vote.option,
+          userWallet: userWallet
         });
         
-        console.log(`🪙 AUTOMATIC COIN GENERATED:`, coinResult);
+        console.log(`🪙 AUTOMATIC BASE COIN GENERATED:`, coinResult);
       } else {
         console.log(`🚫 MemeCoin Mode disabled or poll not found, skipping coin generation`);
       }
