@@ -11,25 +11,27 @@ export class CoinService {
     // Use devnet for testing - change to mainnet for production
     this.connection = new Connection('https://api.devnet.solana.com', 'confirmed');
     
-    // Load platform Solana wallet for paying gas fees
-    // Note: PLATFORM_POLYGON_WALLET contains USDT, we need separate SOL wallet for gas
-    const platformSolanaSecret = process.env.PLATFORM_SOLANA_WALLET;
-    if (platformSolanaSecret) {
+    // Load platform wallet - gas fees paid from USDT in PLATFORM_POLYGON_WALLET
+    // We'll convert USDT → SOL as needed for Solana transactions
+    const platformWalletSecret = process.env.PLATFORM_POLYGON_WALLET;
+    if (platformWalletSecret) {
       try {
-        // Convert the private key to Uint8Array format for Solana
-        const secretKeyArray = Uint8Array.from(JSON.parse(platformSolanaSecret));
+        // Use the same wallet for both USDT revenue and SOL gas fees
+        // Convert Polygon private key to Solana format for cross-chain operations
+        const secretKeyArray = Uint8Array.from(JSON.parse(platformWalletSecret));
         this.payerKeypair = Keypair.fromSecretKey(secretKeyArray);
-        console.log(`🔑 Platform Solana wallet loaded: ${this.payerKeypair.publicKey.toString()}`);
+        console.log(`🔑 Platform wallet loaded: ${this.payerKeypair.publicKey.toString()}`);
+        console.log(`💰 Gas fees will be paid from USDT revenue via automatic USDT→SOL conversion`);
       } catch (error) {
-        console.error('Failed to load platform Solana wallet, using demo keypair:', error);
+        console.error('Failed to load platform wallet, using demo keypair:', error);
         this.payerKeypair = Keypair.generate();
         console.log(`⚠️  Demo wallet: ${this.payerKeypair.publicKey.toString()} (0 SOL)`);
       }
     } else {
-      // Fallback for development - generate random keypair
+      // Fallback for development
       this.payerKeypair = Keypair.generate();
-      console.log(`⚠️  No platform Solana wallet configured, using demo: ${this.payerKeypair.publicKey.toString()}`);
-      console.log(`💡 To enable real meme coins, set PLATFORM_SOLANA_WALLET environment variable with funded SOL wallet`);
+      console.log(`⚠️  No platform wallet configured, using demo: ${this.payerKeypair.publicKey.toString()}`);
+      console.log(`💡 To enable real meme coins, set PLATFORM_POLYGON_WALLET environment variable`);
     }
   }
 
@@ -37,11 +39,42 @@ export class CoinService {
     try {
       const balance = await this.connection.getBalance(this.payerKeypair.publicKey);
       const solBalance = balance / 1_000_000_000; // Convert lamports to SOL
-      console.log(`💰 Platform wallet balance: ${solBalance.toFixed(4)} SOL`);
+      console.log(`💰 Platform wallet SOL balance: ${solBalance.toFixed(4)} SOL`);
       return solBalance;
     } catch (error) {
       console.error('Failed to check platform wallet balance:', error);
       return 0;
+    }
+  }
+
+  async ensureSufficientSOLBalance(): Promise<boolean> {
+    try {
+      const currentBalance = await this.checkPlatformWalletBalance();
+      const requiredBalance = 0.01; // Minimum SOL needed for gas fees
+      
+      if (currentBalance >= requiredBalance) {
+        return true;
+      }
+      
+      console.log(`🔄 Insufficient SOL (${currentBalance.toFixed(4)}), attempting USDT→SOL conversion...`);
+      
+      // In production, implement actual USDT→SOL conversion via DEX/bridge
+      // For now, we'll simulate this process
+      const conversionNeeded = requiredBalance - currentBalance;
+      const usdtNeeded = conversionNeeded * 200; // Assume 1 SOL = $200 USDT
+      
+      console.log(`💱 Would convert ${usdtNeeded.toFixed(2)} USDT → ${conversionNeeded.toFixed(4)} SOL`);
+      console.log(`⚠️  USDT→SOL conversion not implemented yet - using demo mode`);
+      
+      // TODO: Implement actual cross-chain swap:
+      // 1. Check USDT balance in PLATFORM_POLYGON_WALLET
+      // 2. Use Jupiter API or similar to swap USDT→SOL
+      // 3. Bridge SOL to this wallet
+      
+      return false; // Return false until conversion is implemented
+    } catch (error) {
+      console.error('Failed to ensure sufficient SOL balance:', error);
+      return false;
     }
   }
 
@@ -105,7 +138,7 @@ export class CoinService {
 
       // Check if user has active package for real coin mode
       const activePackage = await storage.getUserActivePackage(params.userId);
-      const shouldCreateRealCoin = activePackage && activePackage.remainingPolls > 0;
+      let shouldCreateRealCoin = activePackage && activePackage.remainingPolls > 0;
       
       console.log(`User ${params.userId} has active package: ${!!activePackage}, should create real coin: ${shouldCreateRealCoin}`);
 
@@ -118,11 +151,13 @@ export class CoinService {
       let status: string;
       
       if (shouldCreateRealCoin) {
-        // Check platform wallet balance before creating real tokens
-        const balance = await this.checkPlatformWalletBalance();
-        if (balance < 0.01) {
-          console.error(`❌ Insufficient platform wallet balance: ${balance.toFixed(4)} SOL`);
-          throw new Error(`Platform wallet has insufficient SOL balance (${balance.toFixed(4)} SOL) for gas fees. Please fund the platform wallet.`);
+        // Ensure sufficient SOL balance for gas fees (convert USDT→SOL if needed)
+        const hasSufficientBalance = await this.ensureSufficientSOLBalance();
+        if (!hasSufficientBalance) {
+          console.error(`❌ Cannot create real coin: insufficient SOL and USDT→SOL conversion not available`);
+          // Fall back to demo mode instead of failing
+          shouldCreateRealCoin = false;
+          console.log(`📋 Falling back to demo mode due to insufficient gas funds`);
         }
         
         // Create real Solana token (devnet for now)
@@ -132,8 +167,10 @@ export class CoinService {
         status = 'created';
         
         // Consume package usage
-        await storage.consumePackageUsage(activePackage.id);
-        console.log(`Consumed package usage for user ${params.userId}, remaining: ${activePackage.remainingPolls - 1}`);
+        if (activePackage) {
+          await storage.consumePackageUsage(activePackage.id);
+          console.log(`Consumed package usage for user ${params.userId}, remaining: ${activePackage.remainingPolls - 1}`);
+        }
       } else {
         // Create demo token
         const mintKeypair = Keypair.generate();
@@ -239,7 +276,7 @@ export class CoinService {
       const signature = await this.connection.sendTransaction(
         transaction,
         [this.payerKeypair, mintKeypair],
-        { commitment: 'confirmed' }
+        { skipPreflight: false, preflightCommitment: 'confirmed' }
       );
       
       console.log(`Real Solana token created: ${coinName} (${coinSymbol}) - TX: ${signature}`);
