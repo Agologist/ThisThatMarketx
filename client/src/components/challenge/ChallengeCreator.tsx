@@ -29,7 +29,6 @@ const challengeFormSchema = z.object({
   customMinutes: z.coerce.number().min(0).max(59).optional(),
   isWar: z.boolean().default(false),
   memeCoinMode: z.boolean().default(false),
-  creatorWallet: z.string().optional(),
 });
 
 type ChallengeFormValues = z.infer<typeof challengeFormSchema>;
@@ -90,7 +89,6 @@ export default function ChallengeCreator() {
       customMinutes: 0,
       isWar: false,
       memeCoinMode: false,
-      creatorWallet: "",
     },
   });
   
@@ -177,7 +175,7 @@ export default function ChallengeCreator() {
         isPublic: values.audience === "public" ? true : false,
         isWar: values.isWar,
         memeCoinMode: values.memeCoinMode,
-        creatorWallet: values.creatorWallet || null,
+        creatorWallet: null,
       };
       
       console.log("Submitting challenge data:", challengeData);
@@ -846,29 +844,6 @@ export default function ChallengeCreator() {
                 </FormItem>
               )}
             />
-
-            {form.watch("memeCoinMode") && (
-              <FormField
-                control={form.control}
-                name="creatorWallet"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Creator Wallet Address (Optional)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Enter your Solana wallet address" 
-                        className="bg-black border-primary/30"
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Leave empty to use demo mode. Provide your Solana wallet to receive real coins.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
             
             <div className="pt-4">
               <Button 
