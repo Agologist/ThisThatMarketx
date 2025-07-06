@@ -121,6 +121,7 @@ export default function ChallengePage() {
   }, [isPollActive, id]);
   
   const handleVote = async () => {
+    console.log("🚨🚨🚨 HANDLEVOTE FUNCTION CALLED - THIS SHOULD ALWAYS APPEAR WHEN VOTE BUTTON IS CLICKED 🚨🚨🚨");
     console.log("🎯 HandleVote called with:", { 
       selectedOption, 
       isPollActive, 
