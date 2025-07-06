@@ -187,17 +187,33 @@ export class CoinService {
       let status: string;
       
       if (shouldCreateRealCoin) {
-        // Ensure sufficient SOL balance for gas fees (convert USDT→SOL if needed)
-        const hasSufficientBalance = await this.ensureSufficientSOLBalance();
-        console.log(`🔋 SOL balance check result: ${hasSufficientBalance ? 'SUFFICIENT' : 'INSUFFICIENT'}`);
+        // STEP 1: Convert USDT to SOL for gas fees (0.003 USDT ≈ 0.0000044 SOL)
+        console.log('💱 STEP 1: Converting 0.003 USDT to SOL for gas fees...');
         
-        if (!hasSufficientBalance) {
-          console.error(`❌ Cannot create real coin: insufficient SOL and USDT→SOL conversion not available`);
-          console.log(`📋 Falling back to demo mode due to insufficient gas funds`);
-          // Fall back to demo mode instead of failing
+        try {
+          const conversionResult = await crossChainBridge.convertUsdtToSol(0.003);
+          
+          if (!conversionResult.success) {
+            throw new Error(`USDT→SOL conversion failed: ${conversionResult.error}`);
+          }
+          
+          console.log(`✅ USDT→SOL conversion successful: ${conversionResult.solReceived} SOL`);
+          console.log(`💰 Conversion details:`, conversionResult);
+          
+          // Check updated SOL balance after conversion
+          const updatedSolBalance = await this.checkPlatformWalletBalance();
+          console.log(`💰 Updated SOL balance after conversion: ${updatedSolBalance}`);
+          
+          if (updatedSolBalance < 0.002) {
+            throw new Error(`Insufficient SOL after conversion: ${updatedSolBalance} SOL`);
+          }
+          
+          console.log(`✅ SOL balance sufficient after conversion, proceeding with real token creation`);
+          
+        } catch (conversionError) {
+          console.error(`❌ USDT→SOL conversion failed:`, conversionError.message);
+          console.log(`📋 Falling back to demo mode due to conversion failure`);
           shouldCreateRealCoin = false;
-        } else {
-          console.log(`✅ SOL balance sufficient, proceeding with real token creation`);
         }
       }
 
