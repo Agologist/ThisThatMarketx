@@ -333,35 +333,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Check if this is a poll with MemeCoin mode that requires wallet selection
+      // Get poll info to check if MemeCoin mode is enabled
       const poll = await storage.getPoll(pollId);
       if (!poll) {
         return res.status(404).json({ message: "Poll not found" });
       }
       
       console.log(`🔍 Poll MemeCoin mode: ${poll.memeCoinMode ? 'enabled' : 'disabled'}`);
-      console.log(`🔍 Wallet address key exists: ${req.body.hasOwnProperty('walletAddress')}`);
+      console.log(`🔍 User wallet: ${req.user.solanaWallet || 'not connected'}`);
       
-      // NEW MODAL FLOW: Only for MemeCoin-enabled polls that need wallet preference
-      if (poll.memeCoinMode && !req.body.hasOwnProperty('walletAddress')) {
-        console.log("🚀 MemeCoin poll needs wallet preference - returning wallet request");
-        
-        const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
-        const coinName = optionText;
-        const coinSymbol = optionText.slice(0, 6).toUpperCase().replace(/[^A-Z]/g, '');
-        
-        return res.status(200).json({
-          requiresWalletChoice: true,
-          coinPreview: {
-            option,
-            optionText,
-            coinName,
-            coinSymbol,
-            pollId
-          },
-          message: "Please provide wallet address or choose demo mode"
-        });
-      }
+      // No need for wallet selection modal - we use the stored wallet address
       
       console.log("🎯 Proceeding directly with vote recording...");
       
@@ -385,10 +366,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         if (poll && poll.memeCoinMode) {
           console.log(`🪙 MemeCoin Mode enabled for poll ${pollId}`);
-          console.log(`🪙 Voter wallet address: ${walletAddress || 'null/demo mode'}`);
           
-          // Only generate coin if user provided a real Solana wallet address
-          if (walletAddress && walletAddress !== null && !walletAddress.startsWith('demo_wallet_')) {
+          // Get the user's connected Solana wallet from their database profile
+          const userWallet = req.user.solanaWallet;
+          console.log(`🪙 User's connected wallet: ${userWallet || 'none'}`);
+          
+          // Only generate coin if user has a connected Solana wallet
+          if (userWallet && userWallet !== null && !userWallet.startsWith('demo_wallet_')) {
             console.log(`🪙 Valid SOL wallet detected, generating coin...`);
             
             const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
@@ -398,12 +382,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
               pollId,
               option,
               optionText,
-              userWallet: walletAddress
+              userWallet: userWallet
             });
             
-            console.log(`🪙 Real meme coin generated for wallet ${walletAddress}:`, coinResult);
+            console.log(`🪙 Real meme coin generated for wallet ${userWallet}:`, coinResult);
           } else {
-            console.log(`🚫 No valid SOL wallet provided - skipping coin generation (demo mode)`);
+            console.log(`🚫 No valid SOL wallet connected - skipping coin generation (demo mode)`);
           }
         } else if (poll) {
           console.log(`🚫 MemeCoin Mode disabled for poll ${pollId}, skipping coin generation`);
