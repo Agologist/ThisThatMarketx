@@ -10,6 +10,7 @@ A dynamic "This or That" polling application with interactive battle game mechan
   - **ENHANCED**: Real ERC-20 tokens on Base network (tradable on Uniswap, SushiSwap, etc.)
   - **UPDATED**: Database schema with blockchain field to support multiple networks
   - **ECONOMICS**: $1 revenue - $0.0001 gas = $0.9999 profit per token (99.99% margin)
+  - **DEBUGGING**: Coin generation not executing - duplicate vote protection blocks testing, removed vote 78 to retry
 - **July 6, 2025**: **WAR MODE COMPLETELY REMOVED** - Full elimination of race/battle game functionality
   - **REMOVED**: All isWar database fields, API endpoints, and frontend components
   - **REMOVED**: Battle game routes, car racing mechanics, and war-related UI elements
