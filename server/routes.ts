@@ -331,10 +331,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // NEW MODAL FLOW: If no wallet address provided, return special response asking for wallet preference
-      console.log(`🔍 Wallet address check: walletAddress=${walletAddress}, type=${typeof walletAddress}, undefined=${walletAddress === undefined}, null=${walletAddress === null}, empty=${walletAddress === ''}`);
+      // NEW MODAL FLOW: If no wallet address provided in request body, return special response asking for wallet preference
+      console.log(`🔍 Wallet address check: walletAddress=${walletAddress}, type=${typeof walletAddress}, hasWalletKey=${req.body.hasOwnProperty('walletAddress')}`);
       
-      if (walletAddress === undefined || walletAddress === null || walletAddress === '') {
+      // Only return wallet choice if walletAddress key is not present in the request body
+      if (!req.body.hasOwnProperty('walletAddress')) {
         console.log("🚀 NEW MODAL FLOW: Vote received without wallet preference - returning wallet request");
         
         const poll = await storage.getPoll(pollId);
@@ -357,6 +358,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           },
           message: "Please provide wallet address or choose demo mode"
         });
+      }
+      
+      // At this point, walletAddress is explicitly provided (could be undefined for demo mode)
+      console.log(`🎯 Proceeding with vote recording. Wallet: ${walletAddress || 'demo mode'}`);
+      
+      // Check if poll has MemeCoin mode enabled
+      const poll = await storage.getPoll(pollId);
+      if (!poll) {
+        return res.status(404).json({ message: "Poll not found" });
+      }
+      
+      console.log(`🪙 Poll MemeCoin mode: ${poll.memeCoinMode ? 'enabled' : 'disabled'}`);
+      
+      // If not in MemeCoin mode, we can skip the wallet logic entirely
+      if (!poll.memeCoinMode) {
+        console.log("🔧 Poll is not in MemeCoin mode, proceeding with simple vote recording");
       }
       
       // Create the vote
