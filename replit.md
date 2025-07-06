@@ -4,6 +4,13 @@
 A dynamic "This or That" polling application with interactive battle game mechanics. Users create time-limited challenges with two options, each with image avatars. The key feature is an interactive car battle game where voting impacts car movement in real-time sumo-style contests.
 
 ## Recent Changes
+- **July 2025**: MAJOR FIX - Resolved automatic coin generation failure issue
+  - **CRITICAL ISSUE RESOLVED**: Fixed missing coin generation for all votes on MemeCoin-enabled polls
+  - **ROOT CAUSE**: Coin generation was overly restrictive - only worked for users with connected Solana wallets
+  - **SOLUTION**: Modified voting logic to ALWAYS generate coins on MemeCoin polls (real or demo mode)
+  - **FIXED**: Vote ID 58 missing coin manually generated - ThatnewtopicCoin (THATNE) created
+  - **ENHANCED**: Automatic coin generation now works for ALL users voting on MemeCoin polls
+  - **IMPROVED**: Better error logging and fallback mechanisms for coin generation failures
 - **July 2025**: Implemented subscription-based MemeCoin system with cross-chain architecture
   - RESOLVED: Critical browser caching issue preventing post-vote modal from appearing
   - Added MemeCoin Mode toggle to poll creation form - creators decide coin generation at creation time

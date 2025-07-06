@@ -367,47 +367,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`🔥 CHECKPOINT: About to start coin generation check for poll ${pollId}`);
       console.log(`🔥 DEBUG: Current execution context - userId: ${userId}, pollId: ${pollId}, option: ${option}`);
       
-      // Generate meme coin for the user's vote (only if MemeCoin Mode is enabled AND user has SOL wallet)
+      // FIXED: Generate meme coin for EVERY vote on MemeCoin-enabled polls
       console.log(`🎯 Starting coin generation check for poll ${pollId}...`);
       try {
         if (poll && poll.memeCoinMode) {
           console.log(`🪙 MemeCoin Mode is ENABLED for poll ${pollId}`);
           
-          // CRITICAL FIX: Get fresh user data from database instead of potentially stale session
+          // Get fresh user data from database
           const freshUser = await storage.getUser(userId);
           const userWallet = freshUser?.solanaWallet;
           console.log(`🪙 User's connected wallet (fresh from DB): ${userWallet || 'none'}`);
           console.log(`🪙 Wallet validation: isValid=${!!userWallet}, notNull=${userWallet !== null}, notDemo=${!userWallet?.startsWith('demo_wallet_')}`);
           
-          // Only generate coin if user has a connected Solana wallet
-          if (userWallet && userWallet !== null && !userWallet.startsWith('demo_wallet_')) {
-            console.log(`🪙 ✅ Valid SOL wallet detected! Proceeding with coin generation...`);
-            
-            const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
-            console.log(`🪙 Creating coin for option "${optionText}" (option ${option})`);
-            
-            console.log(`🪙 Calling coinService.createMemeCoin with params:`, {
-              userId,
-              pollId,
-              option,
-              optionText,
-              userWallet: userWallet
-            });
-            
-            const coinResult = await coinService.createMemeCoin({
-              userId,
-              pollId,
-              option,
-              optionText,
-              userWallet: userWallet
-            });
-            
-            console.log(`🪙 ✅ SUCCESS: Real meme coin generated for wallet ${userWallet}!`);
-            console.log(`🪙 Coin result:`, JSON.stringify(coinResult, null, 2));
-          } else {
-            console.log(`🚫 SKIPPING: No valid SOL wallet connected - demo mode only`);
-            console.log(`🚫 Reason: wallet=${userWallet}, isDemo=${userWallet?.startsWith('demo_wallet_')}`);
-          }
+          // CRITICAL FIX: Always generate coins for votes on MemeCoin polls, regardless of wallet status
+          const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
+          console.log(`🪙 Creating coin for option "${optionText}" (option ${option})`);
+          
+          // Use the user's real wallet if available, otherwise use demo mode
+          const finalWallet = (userWallet && !userWallet.startsWith('demo_wallet_')) ? userWallet : 'demo_mode_no_wallet';
+          
+          console.log(`🪙 Calling coinService.createMemeCoin with params:`, {
+            userId,
+            pollId,
+            option,
+            optionText,
+            userWallet: finalWallet
+          });
+          
+          const coinResult = await coinService.createMemeCoin({
+            userId,
+            pollId,
+            option,
+            optionText,
+            userWallet: finalWallet
+          });
+          
+          console.log(`🪙 ✅ SUCCESS: Meme coin generated! Type: ${finalWallet === 'demo_mode_no_wallet' ? 'DEMO' : 'REAL'}`);
+          console.log(`🪙 Coin result:`, JSON.stringify(coinResult, null, 2));
+          
         } else if (poll) {
           console.log(`🚫 SKIPPING: MemeCoin Mode is DISABLED for poll ${pollId}`);
         } else {
