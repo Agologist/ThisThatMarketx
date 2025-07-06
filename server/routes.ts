@@ -363,21 +363,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.incrementPollVote(pollId, option);
       
       // Generate meme coin for the user's vote (only if MemeCoin Mode is enabled AND user has SOL wallet)
+      console.log(`🎯 Starting coin generation check for poll ${pollId}...`);
       try {
         if (poll && poll.memeCoinMode) {
-          console.log(`🪙 MemeCoin Mode enabled for poll ${pollId}`);
+          console.log(`🪙 MemeCoin Mode is ENABLED for poll ${pollId}`);
           
           // CRITICAL FIX: Get fresh user data from database instead of potentially stale session
           const freshUser = await storage.getUser(userId);
           const userWallet = freshUser?.solanaWallet;
           console.log(`🪙 User's connected wallet (fresh from DB): ${userWallet || 'none'}`);
+          console.log(`🪙 Wallet validation: isValid=${!!userWallet}, notNull=${userWallet !== null}, notDemo=${!userWallet?.startsWith('demo_wallet_')}`);
           
           // Only generate coin if user has a connected Solana wallet
           if (userWallet && userWallet !== null && !userWallet.startsWith('demo_wallet_')) {
-            console.log(`🪙 Valid SOL wallet detected, generating coin...`);
+            console.log(`🪙 ✅ Valid SOL wallet detected! Proceeding with coin generation...`);
             
             const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
-            console.log(`🪙 Creating coin for option "${optionText}"`);
+            console.log(`🪙 Creating coin for option "${optionText}" (option ${option})`);
+            
+            console.log(`🪙 Calling coinService.createMemeCoin with params:`, {
+              userId,
+              pollId,
+              option,
+              optionText,
+              userWallet: userWallet
+            });
             
             const coinResult = await coinService.createMemeCoin({
               userId,
@@ -387,21 +397,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
               userWallet: userWallet
             });
             
-            console.log(`🪙 Real meme coin generated for wallet ${userWallet}:`, coinResult);
+            console.log(`🪙 ✅ SUCCESS: Real meme coin generated for wallet ${userWallet}!`);
+            console.log(`🪙 Coin result:`, JSON.stringify(coinResult, null, 2));
           } else {
-            console.log(`🚫 No valid SOL wallet connected - skipping coin generation (demo mode)`);
+            console.log(`🚫 SKIPPING: No valid SOL wallet connected - demo mode only`);
+            console.log(`🚫 Reason: wallet=${userWallet}, isDemo=${userWallet?.startsWith('demo_wallet_')}`);
           }
         } else if (poll) {
-          console.log(`🚫 MemeCoin Mode disabled for poll ${pollId}, skipping coin generation`);
+          console.log(`🚫 SKIPPING: MemeCoin Mode is DISABLED for poll ${pollId}`);
+        } else {
+          console.log(`🚫 ERROR: Poll ${pollId} not found for coin generation`);
         }
       } catch (coinError: any) {
-        console.error('💥 CRITICAL: Failed to generate coin, but vote still recorded:');
-        console.error('Error type:', coinError?.constructor?.name);
-        console.error('Error message:', coinError?.message);
-        console.error('Full error:', coinError);
-        console.error('Stack trace:', coinError?.stack);
-        // Don't fail the vote if coin generation fails
+        console.error('💥 CRITICAL: Coin generation FAILED, but vote still recorded:');
+        console.error('💥 Error type:', coinError?.constructor?.name);
+        console.error('💥 Error message:', coinError?.message);
+        console.error('💥 Full error object:', coinError);
+        console.error('💥 Stack trace:', coinError?.stack);
+        
+        // Log the exact parameters that caused the failure  
+        const failedUser = await storage.getUser(userId).catch(() => null);
+        console.error('💥 Failed parameters were:', {
+          userId,
+          pollId,
+          option,
+          userWallet: failedUser?.solanaWallet,
+          pollMemeCoinMode: poll?.memeCoinMode
+        });
+        
+        // Don't fail the vote if coin generation fails - let user know via logs
       }
+      
+      console.log(`🎯 Coin generation check completed for poll ${pollId}`);
       
       // Get updated poll - make sure to wait for the latest data
       const updatedPoll = await storage.getPoll(pollId);
