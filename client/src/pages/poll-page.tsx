@@ -164,10 +164,11 @@ export default function ChallengePage() {
       
     } catch (error: any) {
       console.error("Voting error:", error);
+      console.error("ERROR DATA CHECK:", error.response?.data);
       
       // NEW: Check if backend is asking for wallet choice (data is in error.response.data)
       if (error.response?.data?.requiresWalletChoice && error.response?.data?.coinPreview) {
-        console.log("✅ Backend requesting wallet choice, showing modal with:", error.response.data.coinPreview);
+        console.error("✅ MODAL TRIGGER DETECTED - Backend requesting wallet choice");
         
         // Set up the pending vote data from backend response
         const voteData = {
@@ -178,13 +179,13 @@ export default function ChallengePage() {
           coinSymbol: error.response.data.coinPreview.coinSymbol
         };
         
-        console.log("✅ Setting pending vote data:", voteData);
+        console.error("✅ SETTING PENDING VOTE DATA:", voteData);
         setPendingVoteData(voteData);
         
-        console.log("✅ Setting showCoinModal to true");
+        console.error("✅ SETTING MODAL VISIBLE TO TRUE");
         setShowCoinModal(true);
         
-        console.log("✅ Modal trigger complete - returning from error handler");
+        console.error("✅ MODAL STATE UPDATED - EXITING HANDLER");
         return; // IMPORTANT: Don't call setIsVoting(false) here - keep loading state for modal
       }
       
