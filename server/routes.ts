@@ -341,7 +341,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // NEW FLOW: If MemeCoin mode is enabled and no walletAddress provided, 
       // send coin preview and ask frontend to show modal
-      if (poll.memeCoinMode && !walletAddress) {
+      if (poll.memeCoinMode && walletAddress === undefined) {
         const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
         const coinName = await coinService.generateCoinName(optionText, pollId);
         const coinSymbol = coinService.generateSymbol(coinName);

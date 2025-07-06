@@ -45,8 +45,8 @@ export default function ChallengePage() {
     refetchOnMount: true, // Always refetch on mount
   });
   
-  const hasVoted = userVoteData?.hasVoted || false;
-  const userVoteOption = userVoteData?.option || null;
+  const hasVoted = (userVoteData as any)?.hasVoted || false;
+  const userVoteOption = (userVoteData as any)?.option || null;
   
   // Calculate poll percentages for display
   const totalVotes = (poll?.optionAVotes || 0) + (poll?.optionBVotes || 0);
@@ -595,7 +595,7 @@ export default function ChallengePage() {
             
             <CardFooter className="border-t pt-4 flex justify-between">
               <span className="text-sm text-muted-foreground">
-                Created {new Date(poll.createdAt).toLocaleDateString()}
+                Created {poll.createdAt ? new Date(poll.createdAt).toLocaleDateString() : 'Unknown'}
               </span>
               
               <Button 
