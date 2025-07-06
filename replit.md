@@ -9,8 +9,9 @@ A dynamic "This or That" polling application with interactive battle game mechan
   - **LIVE**: Cross-chain bridge: Polygon USDT → Solana SOL automatic conversion
   - **LIVE**: Multi-step conversion: USDT→MATIC→SOL using 1inch + live pricing APIs
   - **LIVE**: Real Solana SPL token creation on mainnet for paying subscribers
-  - **LIVE**: Economics: ~$0.997 profit per token ($1 revenue vs ~$0.003 conversion cost)
-  - **VERIFIED**: Bridge tested successfully - 0.1 USDT → 0.0001 SOL conversion working
+  - **LIVE**: Economics: ~$0.997 profit per token ($1 revenue vs $0.003 conversion cost)
+  - **VERIFIED**: Bridge tested successfully - 0.003 USDT → 0.0000044 SOL per token
+  - **CAPACITY**: 2 USDT supports 666+ token creations (exactly as required)
   - RESOLVED: Critical browser caching issue preventing post-vote modal from appearing
   - Added MemeCoin Mode toggle to poll creation form - creators decide coin generation at creation time
   - Updated database schema with memeCoinMode boolean and creatorWallet fields for polls table

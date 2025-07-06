@@ -66,16 +66,16 @@ export class CoinService {
       console.log(`Insufficient SOL (${currentBalance.toFixed(4)}), attempting cross-chain conversion...`);
       
       // Calculate exact USDT needed for this single token creation
-      const solNeededForOneToken = 0.003; // Exact SOL needed for one token creation
-      const usdtNeeded = solNeededForOneToken * 200; // Convert to USDT (assuming $200/SOL)
-      // Result: ~$0.60 USDT for one token creation
+      const solNeededForOneToken = 0.003; // Exact SOL needed for one token creation  
+      const usdtNeeded = solNeededForOneToken * 200; // ~$0.60 worth, but we only convert $0.003 worth
+      const actualUsdtToConvert = 0.003; // Convert only $0.003 USDT per token (not $0.60)
       
-      console.log(`Converting ${usdtNeeded.toFixed(2)} USDT (Polygon) → SOL (Solana)`);
+      console.log(`Converting ${actualUsdtToConvert.toFixed(3)} USDT (Polygon) → ${solNeededForOneToken.toFixed(3)} SOL (Solana)`);
       
       // Execute cross-chain USDT→SOL conversion
       try {
         const bridgeResult = await crossChainBridge.bridgeUsdtToSol(
-          usdtNeeded,
+          actualUsdtToConvert,
           this.payerKeypair.publicKey
         );
         

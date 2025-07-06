@@ -6,7 +6,7 @@ async function testCrossChainBridge() {
   console.log('🧪 Testing cross-chain USDT→SOL bridge...');
   
   try {
-    const testAmount = 0.1; // Test with $0.10 USDT
+    const testAmount = 0.003; // Test with exact amount per token: $0.003 USDT
     const destinationWallet = new PublicKey('CoVNnCukzQY1Ta1jpyrtBmFkqURDMc71Bqt24RG24AwN');
     
     const result = await crossChainBridge.bridgeUsdtToSol(testAmount, destinationWallet);
