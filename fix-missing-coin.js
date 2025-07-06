@@ -5,12 +5,12 @@ async function fixMissingCoin() {
   try {
     console.log('🔧 Generating missing coin for Vote ID 60...');
     
-    // Vote details: User 1, Poll 59, Option A, OptionAText: "Option A Test"
+    // Vote details: User 1, Poll 60, Option A, OptionAText: "bzzfdbdfb" 
     const result = await coinService.createMemeCoin({
       userId: 1,
-      pollId: 59,
+      pollId: 60,
       option: 'A',
-      optionText: 'Option A Test',
+      optionText: 'bzzfdbdfb',
       userWallet: 'demo_mode_no_wallet'
     });
     
