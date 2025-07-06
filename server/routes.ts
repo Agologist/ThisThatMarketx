@@ -379,9 +379,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const vote = await storage.createVote(voteData);
       console.log("Vote created:", vote);
       
+      console.log(`🔄 About to increment poll vote count for poll ${pollId}, option ${option}`);
+      
       // Update poll vote count
       await storage.incrementPollVote(pollId, option);
       
+      console.log(`✅ Poll vote count updated successfully`);
       console.log(`🔗 About to process coin generation for poll ${pollId}`);
       
       console.log(`⚡ STARTING COIN GENERATION SECTION - this should always appear`);
