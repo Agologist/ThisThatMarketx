@@ -13,7 +13,7 @@ import UserStatCards from "@/components/dashboard/UserStatCards";
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [votesDropdownOpen, setVotesDropdownOpen] = useState(false);
-  const [warPassesDropdownOpen, setWarPassesDropdownOpen] = useState(false);
+
   const [location, navigate] = useLocation();
   const { user, isGuest, logoutMutation, exitGuestMode } = useAuth();
   
@@ -43,28 +43,9 @@ export default function Header() {
     enabled: !!user && !isGuest
   });
   
-  const { data: activeWarPolls = [] } = useQuery({
-    queryKey: ["/api/user/warpasses"],
-    queryFn: async () => {
-      if (!user) return [];
-      const res = await fetch("/api/user/warpasses", { credentials: "include" });
-      if (!res.ok) return [];
-      return await res.json();
-    },
-    enabled: !!user && !isGuest
-  });
+
   
-  // Fetch user's won battles directly from API
-  const { data: userWonBattles = [] } = useQuery({
-    queryKey: ["/api/user/battles/won"],
-    queryFn: async () => {
-      if (!user) return [];
-      const res = await fetch("/api/user/battles/won", { credentials: "include" });
-      if (!res.ok) return [];
-      return await res.json();
-    },
-    enabled: !!user && !isGuest
-  });
+
   
   // Fetch all polls for reference when displaying battle results
   const { data: allPolls = [] } = useQuery({
@@ -80,9 +61,7 @@ export default function Header() {
   // Calculate stats
   const challengeCount = userPolls.length;
   const voteCount = (user?.id && !isGuest) ? userVotes.length : 0;
-  // Count all battles won by the user for display
-  const warCount = userWonBattles.length;
-  const warPassesCount = (activeWarPolls || []).length;
+
   
   // Calculate ranks based on count
   const getRank = (count: number): string => {
@@ -96,7 +75,6 @@ export default function Header() {
   
   const challengeRank = getRank(challengeCount);
   const voteRank = getRank(voteCount);
-  const warRank = getRank(warCount);
 
   const handleLogout = async () => {
     try {
@@ -319,85 +297,7 @@ export default function Header() {
                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <div className="flex items-center cursor-pointer">
-                              <Trophy className="text-primary h-4 w-4 mr-1.5" />
-                              <div className="text-xs">
-                                <p className="text-muted-foreground">Wars</p>
-                                <p className="font-bold">{warCount}</p>
-                                <p className="text-xs text-primary">Rank: {warRank}</p>
-                              </div>
-                            </div>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuLabel>Wars You've Won</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {userWonBattles.length > 0 ? (
-                              userWonBattles.map((race: any) => {
-                                const battleTime = race.racedAt ? new Date(race.racedAt).toLocaleDateString() : '';
-                                
-                                const displayTitle = race.title || "Unnamed Challenge";
-                                const winTime = (race.time / 1000).toFixed(1); // Format time to 1 decimal place
-                                
-                                return (
-                                  <DropdownMenuItem key={race.id}>
-                                    {race.pollId ? (
-                                      <Link 
-                                        href={`/polls/${race.pollId}`} 
-                                        className="cursor-pointer flex items-center w-full"
-                                      >
-                                        <Trophy className="h-4 w-4 mr-2 text-primary" />
-                                        <span className="truncate">{displayTitle} <span className="text-xs text-muted-foreground">({battleTime}) - {winTime}s</span></span>
-                                      </Link>
-                                    ) : (
-                                      <div className="flex items-center">
-                                        <Trophy className="h-4 w-4 mr-2 text-primary" />
-                                        <span className="truncate">Challenge <span className="text-xs text-muted-foreground">({battleTime}) - {winTime}s</span></span>
-                                      </div>
-                                    )}
-                                  </DropdownMenuItem>
-                                );
-                              })
-                            ) : (
-                              <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                                You haven't won any battles yet
-                              </div>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <div className="flex items-center cursor-pointer">
-                              <Award className="text-primary h-4 w-4 mr-1.5" />
-                              <div className="text-xs">
-                                <p className="text-muted-foreground">War Passes</p>
-                                <p className="font-bold">{warPassesCount}</p>
-                              </div>
-                            </div>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuLabel>Available War Passes</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {activeWarPolls.length > 0 ? (
-                              activeWarPolls.map((poll: any) => (
-                                <DropdownMenuItem key={poll.id} asChild>
-                                  <Link 
-                                    href={`/polls/${poll.id}`} 
-                                    className="cursor-pointer flex items-center"
-                                  >
-                                    <Trophy className="h-4 w-4 mr-2 text-primary" />
-                                    <span className="truncate">{poll.question}</span>
-                                  </Link>
-                                </DropdownMenuItem>
-                              ))
-                            ) : (
-                              <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                                No active War passes available
-                              </div>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+
                       </div>
                       <DropdownMenuSeparator />
                     </>
