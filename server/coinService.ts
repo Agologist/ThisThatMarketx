@@ -148,6 +148,7 @@ export class CoinService {
     coinName: string;
     coinSymbol: string;
   }> {
+    console.log(`🚀 CoinService.createMemeCoin called with:`, params);
     try {
       // Check if user already has a coin for this poll/option
       const existingCoin = await storage.getUserCoinForPoll(params.userId, params.pollId, params.option);

@@ -382,6 +382,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Generate meme coin for the user's vote (only if MemeCoin Mode is enabled AND user has SOL wallet)
       try {
+        console.log(`🔍 Checking coin generation requirements for poll ${pollId}:`);
+        console.log(`  - Poll exists: ${!!poll}`);
+        console.log(`  - MemeCoin mode: ${poll?.memeCoinMode}`);
+        console.log(`  - User wallet: ${req.user.solanaWallet || 'none'}`);
+        
         if (poll && poll.memeCoinMode) {
           console.log(`🪙 MemeCoin Mode enabled for poll ${pollId}`);
           
@@ -392,6 +397,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Only generate coin if user has a connected Solana wallet
           if (userWallet && userWallet !== null && !userWallet.startsWith('demo_wallet_')) {
             console.log(`🪙 Valid SOL wallet detected, generating coin...`);
+            console.log(`🪙 About to create coin with params:`, {
+              userId, pollId, option,
+              optionText: option === 'A' ? poll.optionAText : poll.optionBText,
+              userWallet
+            });
             
             const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
             
@@ -409,9 +419,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         } else if (poll) {
           console.log(`🚫 MemeCoin Mode disabled for poll ${pollId}, skipping coin generation`);
+        } else {
+          console.log(`🚫 Poll not found for coin generation`);
         }
       } catch (coinError) {
         console.error('Failed to generate coin, but vote still recorded:', coinError);
+        console.error('Coin error stack:', coinError.stack);
         // Don't fail the vote if coin generation fails
       }
       
