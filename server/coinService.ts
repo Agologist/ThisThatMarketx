@@ -4,6 +4,7 @@ import { createInitializeMintInstruction, createAssociatedTokenAccountInstructio
 // import { createCreateMetadataAccountV3Instruction, PROGRAM_ID as METADATA_PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata';
 import { storage } from './storage';
 import { conversionService } from './conversionService';
+import { crossChainBridge } from './crossChainBridge';
 import type { InsertGeneratedCoin } from '../shared/schema';
 
 export class CoinService {
@@ -62,15 +63,44 @@ export class CoinService {
         return true;
       }
       
-      console.log(`Insufficient SOL (${currentBalance.toFixed(4)}), need cross-chain funding...`);
+      console.log(`Insufficient SOL (${currentBalance.toFixed(4)}), attempting cross-chain conversion...`);
       
-      // SOLUTION: For production, implement cross-chain bridge or manual SOL funding
-      // Current limitation: USDT is on Polygon, but we need SOL on Solana for gas
-      console.log(`💰 Platform has ${this.polygonWalletKey ? '2 USDT on Polygon' : 'no'} but needs SOL on Solana`);
-      console.log(`🔄 Implementing temporary solution: manual SOL funding required`);
+      // Calculate how much USDT we need to convert to get required SOL
+      const conversionNeeded = requiredBalance - currentBalance + 0.002; // Add small buffer
+      const usdtNeeded = conversionNeeded * 200; // Rough estimate: $200 per SOL
       
-      // For immediate testing, fall back to demo mode
-      return false;
+      console.log(`Converting ${usdtNeeded.toFixed(2)} USDT (Polygon) → ${conversionNeeded.toFixed(4)} SOL (Solana)`);
+      
+      // Execute cross-chain USDT→SOL conversion
+      try {
+        const bridgeResult = await crossChainBridge.bridgeUsdtToSol(
+          usdtNeeded,
+          this.payerKeypair.publicKey
+        );
+        
+        if (bridgeResult.success) {
+          console.log(`Bridge successful: ${bridgeResult.solReceived.toFixed(4)} SOL via ${bridgeResult.bridgeUsed}`);
+          console.log(`Transaction: ${bridgeResult.transactionHash}`);
+          
+          // Verify we now have sufficient balance
+          const newBalance = await this.checkPlatformWalletBalance();
+          if (newBalance >= requiredBalance) {
+            console.log(`Balance after bridge: ${newBalance.toFixed(4)} SOL - sufficient for token creation`);
+            return true;
+          } else {
+            console.error(`Insufficient balance after bridge: ${newBalance.toFixed(4)} SOL`);
+            return false;
+          }
+        } else {
+          console.error('Cross-chain bridge failed, falling back to demo mode');
+          return false;
+        }
+        
+      } catch (bridgeError) {
+        console.error('Cross-chain conversion failed:', bridgeError.message);
+        console.log('Falling back to demo mode for this transaction');
+        return false;
+      }
       
     } catch (error) {
       console.error('Failed to ensure sufficient SOL balance:', error);

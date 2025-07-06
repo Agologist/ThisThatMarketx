@@ -1,35 +1,36 @@
-// Manual test of coin creation system
-import { coinService } from './server/coinService.js';
-import { storage } from './server/storage.js';
+// Test cross-chain bridge system
+import { crossChainBridge } from './server/crossChainBridge.js';
+import { PublicKey } from '@solana/web3.js';
 
-async function testCoinCreation() {
-  console.log('🧪 Testing coin creation system...');
+async function testCrossChainBridge() {
+  console.log('🧪 Testing cross-chain USDT→SOL bridge...');
   
   try {
-    const result = await coinService.createMemeCoin({
-      userId: 1,
-      pollId: 54,
-      option: 'B',
-      optionText: 'rome that',
-      userWallet: 'CoVNnCukzQY1Ta1jpyrtBmFkqURDMc71Bqt24RG24AwN'
-    });
+    const testAmount = 0.1; // Test with $0.10 USDT
+    const destinationWallet = new PublicKey('CoVNnCukzQY1Ta1jpyrtBmFkqURDMc71Bqt24RG24AwN');
     
-    console.log('✅ Coin creation successful:', result);
+    const result = await crossChainBridge.bridgeUsdtToSol(testAmount, destinationWallet);
     
-    // Check database
-    const coin = await storage.getUserCoinForPoll(1, 54, 'B');
-    console.log('✅ Coin stored in database:', coin);
+    console.log('✅ Cross-chain bridge result:', result);
+    
+    if (result.success) {
+      console.log(`✅ Successfully converted ${testAmount} USDT → ${result.solReceived.toFixed(4)} SOL`);
+      console.log(`✅ Bridge used: ${result.bridgeUsed}`);
+      console.log(`✅ Transaction: ${result.transactionHash}`);
+    } else {
+      console.log('❌ Bridge failed, but system handled gracefully');
+    }
     
   } catch (error) {
-    console.error('❌ Coin creation failed:', error.message);
+    console.error('❌ Bridge test failed:', error.message);
     console.error('Stack:', error.stack);
   }
 }
 
-testCoinCreation().then(() => {
-  console.log('Test completed');
+testCrossChainBridge().then(() => {
+  console.log('Bridge test completed');
   process.exit(0);
 }).catch(err => {
-  console.error('Test failed:', err);
+  console.error('Bridge test failed:', err);
   process.exit(1);
 });
