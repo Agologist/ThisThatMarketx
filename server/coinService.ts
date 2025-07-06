@@ -144,39 +144,49 @@ export class CoinService {
       const coinName = await this.generateCoinName(params.optionText, params.pollId);
       const coinSymbol = this.generateSymbol(coinName);
       
-      let coinAddress: string;
-      let transactionHash: string;
-      let status: string;
+      // Initialize with demo values by default (fallback in case of any failure)
+      let coinAddress: string = '';
+      let transactionHash: string = '';
+      let status: string = 'demo';
       
       if (shouldCreateRealCoin) {
-        // Ensure sufficient SOL balance for gas fees (convert USDT→SOL if needed)
-        const hasSufficientBalance = await this.ensureSufficientSOLBalance();
-        if (!hasSufficientBalance) {
-          console.error(`❌ Cannot create real coin: insufficient SOL and USDT→SOL conversion not available`);
-          // Fall back to demo mode instead of failing
+        try {
+          // Ensure sufficient SOL balance for gas fees (convert USDT→SOL if needed)
+          const hasSufficientBalance = await this.ensureSufficientSOLBalance();
+          if (!hasSufficientBalance) {
+            console.error(`❌ Cannot create real coin: insufficient SOL and USDT→SOL conversion not available`);
+            // Fall back to demo mode instead of failing
+            shouldCreateRealCoin = false;
+            console.log(`📋 Falling back to demo mode due to insufficient gas funds`);
+          } else {
+            // Create real Solana token (devnet for now)
+            const result = await this.createRealSolanaToken(coinName, coinSymbol, params.userWallet);
+            coinAddress = result.coinAddress;
+            transactionHash = result.transactionHash;
+            status = 'created';
+            
+            // Consume package usage
+            if (activePackage) {
+              await storage.consumePackageUsage(activePackage.id);
+              console.log(`Consumed package usage for user ${params.userId}, remaining: ${activePackage.remainingPolls - 1}`);
+            }
+          }
+        } catch (realCoinError) {
+          console.error('Failed to create real Solana token:', realCoinError);
+          console.error('❌ Real coin creation failed, falling back to demo mode');
           shouldCreateRealCoin = false;
-          console.log(`📋 Falling back to demo mode due to insufficient gas funds`);
         }
-        
-        // Create real Solana token (devnet for now)
-        const result = await this.createRealSolanaToken(coinName, coinSymbol, params.userWallet);
-        coinAddress = result.coinAddress;
-        transactionHash = result.transactionHash;
-        status = 'created';
-        
-        // Consume package usage
-        if (activePackage) {
-          await storage.consumePackageUsage(activePackage.id);
-          console.log(`Consumed package usage for user ${params.userId}, remaining: ${activePackage.remainingPolls - 1}`);
-        }
-      } else {
+      }
+      
+      // Ensure we always have valid coin values (either real or demo)
+      if (!shouldCreateRealCoin || !coinAddress) {
         // Create demo token
         const mintKeypair = Keypair.generate();
         coinAddress = mintKeypair.publicKey.toBase58();
         transactionHash = `demo_tx_${Date.now()}_${Math.random().toString(36).slice(2)}`;
         status = 'demo';
         
-        console.log('Created demo coin - user has no active package');
+        console.log('Created demo coin - either no active package or real coin creation failed');
       }
       
       // Store in database
