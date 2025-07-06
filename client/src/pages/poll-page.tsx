@@ -153,7 +153,7 @@ export default function ChallengePage() {
           return;
         }
         
-        throw new Error(errorData.message || "Failed to record vote");
+        return; // Don't throw error for modal flow
       }
       
       // OLD FLOW: If vote was processed directly (shouldn't happen anymore)
@@ -185,7 +185,8 @@ export default function ChallengePage() {
       });
       
     } catch (error) {
-      console.error("Vote submission error:", error);
+      console.error("Voting error:", error);
+      setIsVoting(false);
       toast({
         title: "Vote Failed",
         description: error instanceof Error ? error.message : "Failed to record vote",
