@@ -132,9 +132,7 @@ export default function ChallengePage() {
         // No walletAddress provided - this triggers the modal flow
       });
       
-
-      
-      // OLD FLOW: If vote was processed directly (shouldn't happen anymore)
+      // If we reach here, vote was processed directly (shouldn't happen for MemeCoin polls)
       const result = await response.json();
       console.log("Vote processed directly:", result);
       
