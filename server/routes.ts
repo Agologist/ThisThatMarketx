@@ -330,12 +330,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { option, walletAddress } = req.body;
       const userId = req.user.id;
       
-      console.log(`🚀 Processing vote for user ${userId} on poll ${pollId}, option ${option}`);
+      console.log(`🚀 VOTE POST ROUTE CALLED: Processing vote for user ${userId} on poll ${pollId}, option ${option}`);
       console.log(`🔍 Full request body:`, JSON.stringify(req.body, null, 2));
       console.log(`🔍 Wallet address check: walletAddress=${walletAddress}, type=${typeof walletAddress}, hasWalletKey=${req.body.hasOwnProperty('walletAddress')}`);
       
       // Validate option
       if (option !== "A" && option !== "B") {
+        console.log(`❌ Invalid option provided: ${option}`);
         return res.status(400).json({ message: "Invalid option. Must be 'A' or 'B'" });
       }
       
@@ -344,6 +345,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Found existing vote: ${!!existingVote}`);
       
       if (existingVote) {
+        console.log(`❌ User already voted, blocking duplicate vote`);
         // Prevent changing votes
         return res.status(400).json({ 
           message: "You have already voted on this challenge", 
