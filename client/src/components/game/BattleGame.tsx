@@ -43,11 +43,16 @@ export default function BattleGame({ races, pollId, optionAText, optionBText, op
   
   // Vote and move cars
   const handleVote = async (option: 'A' | 'B') => {
+    console.log("🎮 BattleGame Vote:", { pollId, option, timestamp: new Date().toISOString() });
+    
     try {
       // Only try API call if a poll ID is provided
       if (pollId) {
+        console.log("🎮 Making POST request to:", `/api/polls/${pollId}/vote`);
         const response = await apiRequest(`/api/polls/${pollId}/vote`, 'POST', { option });
+        console.log("🎮 Response received:", response.status, response.ok);
         const data = await response.json();
+        console.log("🎮 Response data:", data);
         
         // Update the UI after successful API call
         if (option === 'A') {
