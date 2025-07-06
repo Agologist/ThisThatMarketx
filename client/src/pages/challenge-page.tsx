@@ -148,11 +148,16 @@ export default function ChallengePage() {
       // Check if the backend is asking for wallet preference (MemeCoin Mode)
       if (result.requiresWalletChoice) {
         console.log("Backend requesting wallet choice for coin generation");
+        console.log("Making second API call with wallet preference...");
+        
         // For now, just proceed with demo mode - could add modal later
-        const walletResponse = await apiRequest(`/api/polls/${id}/vote`, "POST", { 
+        const walletPayload = { 
           option: selectedOption,
           walletAddress: undefined // This will trigger demo mode
-        });
+        };
+        console.log("Second call payload:", JSON.stringify(walletPayload));
+        
+        const walletResponse = await apiRequest(`/api/polls/${id}/vote`, "POST", walletPayload);
         
         if (!walletResponse.ok) {
           const walletErrorData = await walletResponse.json();

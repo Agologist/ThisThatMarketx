@@ -333,20 +333,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // NEW MODAL FLOW: If no wallet address key provided in request body, return special response asking for wallet preference
-      console.log(`🔍 Checking if walletAddress key exists in request body...`);
-      const hasWalletKey = req.body.hasOwnProperty('walletAddress');
-      console.log(`🔍 hasWalletKey: ${hasWalletKey}`);
+      // Check if this is a poll with MemeCoin mode that requires wallet selection
+      const poll = await storage.getPoll(pollId);
+      if (!poll) {
+        return res.status(404).json({ message: "Poll not found" });
+      }
       
-      // Only return wallet choice if walletAddress key is not present in the request body
-      // If the key exists (even with undefined value), proceed with vote recording
-      if (!hasWalletKey) {
-        console.log("🚀 NEW MODAL FLOW: Vote received without wallet preference - returning wallet request");
-        
-        const poll = await storage.getPoll(pollId);
-        if (!poll) {
-          return res.status(404).json({ message: "Poll not found" });
-        }
+      console.log(`🔍 Poll MemeCoin mode: ${poll.memeCoinMode ? 'enabled' : 'disabled'}`);
+      console.log(`🔍 Wallet address key exists: ${req.body.hasOwnProperty('walletAddress')}`);
+      
+      // NEW MODAL FLOW: Only for MemeCoin-enabled polls that need wallet preference
+      if (poll.memeCoinMode && !req.body.hasOwnProperty('walletAddress')) {
+        console.log("🚀 MemeCoin poll needs wallet preference - returning wallet request");
         
         const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
         const coinName = optionText;
@@ -365,21 +363,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // At this point, walletAddress is explicitly provided (could be undefined for demo mode)
-      console.log(`🎯 Proceeding with vote recording. Wallet: ${walletAddress || 'demo mode'}`);
-      
-      // Check if poll has MemeCoin mode enabled
-      const poll = await storage.getPoll(pollId);
-      if (!poll) {
-        return res.status(404).json({ message: "Poll not found" });
-      }
-      
-      console.log(`🪙 Poll MemeCoin mode: ${poll.memeCoinMode ? 'enabled' : 'disabled'}`);
-      
-      // If not in MemeCoin mode, we can skip the wallet logic entirely
-      if (!poll.memeCoinMode) {
-        console.log("🔧 Poll is not in MemeCoin mode, proceeding with simple vote recording");
-      }
+      console.log("🎯 Proceeding directly with vote recording...");
       
       // Create the vote
       const voteData = insertVoteSchema.parse({
@@ -399,7 +383,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Generate meme coin for the user's vote (only if MemeCoin Mode is enabled)
       try {
-        const poll = await storage.getPoll(pollId);
         if (poll && poll.memeCoinMode) {
           console.log(`🪙 MemeCoin Mode enabled for poll ${pollId}, generating coin...`);
           
