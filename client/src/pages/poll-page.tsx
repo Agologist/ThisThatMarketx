@@ -184,21 +184,17 @@ export default function ChallengePage() {
         console.log("✅ Setting showCoinModal to true");
         setShowCoinModal(true);
         
-        console.log("✅ Setting isVoting to false");
-        setIsVoting(false);
-        
         console.log("✅ Modal trigger complete - returning from error handler");
-        return;
+        return; // IMPORTANT: Don't call setIsVoting(false) here - keep loading state for modal
       }
       
+      // For other errors, reset state and show error
       setIsVoting(false);
       toast({
         title: "Vote Failed",
         description: error instanceof Error ? error.message : "Failed to record vote",
         variant: "destructive"
       });
-    } finally {
-      setIsVoting(false);
     }
   };
 
