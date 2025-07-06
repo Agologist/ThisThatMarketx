@@ -408,6 +408,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.log(`🔗 About to process coin generation for poll ${pollId}`);
+      console.log(`🔗 DEBUG: Execution reached coin generation section`);
+      console.log(`🔗 DEBUG: poll object:`, poll);
+      console.log(`🔗 DEBUG: req.user object:`, req.user);
       
       console.log(`⚡ STARTING COIN GENERATION SECTION - this should always appear`);
       
