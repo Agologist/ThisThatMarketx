@@ -255,7 +255,7 @@ export class CoinService {
         transactionHash = `demo_tx_${Date.now()}_${Math.random().toString(36).slice(2)}`;
         status = 'demo';
         
-        console.log('Created demo coin - user has no active package or insufficient SOL');
+        console.log('Created demo coin - user has no active package or gas fee payment failed');
       }
       
       // Store in database
@@ -330,17 +330,10 @@ export class CoinService {
           
         } catch (conversionError) {
           console.error(`❌ USDT→SOL conversion failed:`, conversionError);
-          console.log(`📋 Falling back to queuing token for later processing`);
+          console.log(`❌ Cannot create real token without gas fees - conversion required`);
           
-          // Fallback: queue the token
-          const mintKeypair = Keypair.generate();
-          const mintAddress = mintKeypair.publicKey.toBase58();
-          const queuedTxHash = `queued_tx_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-          
-          return {
-            coinAddress: mintAddress,
-            transactionHash: queuedTxHash
-          };
+          // Do not create fake tokens - throw error to fallback to demo mode
+          throw new Error(`Gas fee payment failed: USDT→SOL conversion unsuccessful`);
         }
       }
       
