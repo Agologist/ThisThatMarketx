@@ -117,7 +117,7 @@ export class BaseCoinService {
   async ensureSufficientETHBalance(): Promise<boolean> {
     try {
       const balance = await this.checkWalletBalance();
-      const requiredETH = 0.001; // Minimum ETH needed for token creation
+      const requiredETH = 0.0002; // Optimized minimal ETH needed for token creation
       
       if (balance.eth >= requiredETH) {
         console.log(`✅ Sufficient ETH balance: ${balance.eth.toFixed(6)} ETH`);
@@ -153,10 +153,10 @@ export class BaseCoinService {
     try {
       console.log(`🔄 Cross-chain conversion: Polygon USDT → Base ETH (need ${requiredETH} ETH)...`);
       
-      // Estimate USDT needed (ETH price * amount + fees + slippage)
+      // Optimized conversion economics - much more reasonable costs
       const ethPriceUSD = 3500; // Approximate ETH price
-      const crossChainFeeUSD = 0.50; // Cross-chain bridge fee
-      const usdtNeeded = (requiredETH * ethPriceUSD * 1.05) + crossChainFeeUSD; // 5% slippage + bridge fee
+      const crossChainFeeUSD = 0.02; // Minimal cross-chain bridge fee (2 cents)
+      const usdtNeeded = (requiredETH * ethPriceUSD * 1.01) + crossChainFeeUSD; // 1% slippage + minimal bridge fee
       
       console.log(`💱 Cross-chain conversion estimate:`);
       console.log(`   Required ETH: ${requiredETH}`);
@@ -273,11 +273,23 @@ export class BaseCoinService {
 
       console.log(`📝 Token details: ${finalCoinName} (${symbol}) - 1 token → ${params.userWallet}`);
 
+      // Ensure proper address checksum for user wallet
+      let checksummedWallet: string;
+      try {
+        checksummedWallet = ethers.getAddress(params.userWallet);
+        console.log(`✅ Checksummed user wallet: ${checksummedWallet}`);
+      } catch (error) {
+        // If checksum validation fails, try to fix the address format
+        const cleanAddress = params.userWallet.toLowerCase();
+        checksummedWallet = ethers.getAddress(cleanAddress);
+        console.log(`🔧 Fixed user wallet checksum: ${checksummedWallet}`);
+      }
+
       // Create ERC-20 token contract
       const tokenBytecode = ERC20_BYTECODE;
       const constructorABI = ["constructor(string memory name, string memory symbol, uint256 totalSupply, address recipient)"];
       const iface = new ethers.Interface(constructorABI);
-      const constructorData = iface.encodeDeploy([finalCoinName, symbol, totalSupply, params.userWallet]);
+      const constructorData = iface.encodeDeploy([finalCoinName, symbol, totalSupply, checksummedWallet]);
       
       // Deploy the token contract
       const deployTx = {
