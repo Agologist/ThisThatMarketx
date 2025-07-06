@@ -305,23 +305,43 @@ export class CoinService {
       console.log(`💰 Platform SOL balance: ${currentBalance.toFixed(4)} SOL`);
       
       if (currentBalance < 0.002) {
-        console.log(`⚠️ Insufficient SOL balance for immediate token creation`);
-        console.log(`💡 Creating queued token for batch processing when SOL is available`);
+        console.log(`⚠️ Insufficient SOL balance (${currentBalance.toFixed(4)} SOL) for token creation`);
+        console.log(`💱 Converting $0.25 USDT from Polygon wallet to SOL...`);
         
-        // Generate mint address for future processing
-        const mintKeypair = Keypair.generate();
-        const mintAddress = mintKeypair.publicKey.toBase58();
-        const queuedTxHash = `queued_tx_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-        
-        console.log(`📋 Token queued: ${coinName} (${coinSymbol})`);
-        console.log(`🔗 Mint address: ${mintAddress}`);
-        console.log(`👤 Will be minted to: ${userWallet}`);
-        console.log(`📝 Queue ID: ${queuedTxHash}`);
-        
-        return {
-          coinAddress: mintAddress,
-          transactionHash: queuedTxHash
-        };
+        try {
+          // Convert $0.25 USDT to SOL for gas fees
+          const conversionResult = await crossChainBridge.bridgeUsdtToSol(0.25, this.payerKeypair.publicKey);
+          
+          if (!conversionResult.success) {
+            throw new Error(`USDT→SOL conversion failed: ${conversionResult.transactionHash}`);
+          }
+          
+          console.log(`✅ Conversion successful: $0.25 USDT → ${conversionResult.solReceived.toFixed(4)} SOL via ${conversionResult.bridgeUsed}`);
+          
+          // Check updated balance
+          const newBalance = await this.checkPlatformWalletBalance();
+          console.log(`💰 Updated SOL balance: ${newBalance.toFixed(4)} SOL`);
+          
+          if (newBalance < 0.002) {
+            throw new Error(`Still insufficient SOL after conversion: ${newBalance.toFixed(4)} SOL`);
+          }
+          
+          console.log(`🎯 Proceeding with token creation using converted SOL...`);
+          
+        } catch (conversionError) {
+          console.error(`❌ USDT→SOL conversion failed:`, conversionError);
+          console.log(`📋 Falling back to queuing token for later processing`);
+          
+          // Fallback: queue the token
+          const mintKeypair = Keypair.generate();
+          const mintAddress = mintKeypair.publicKey.toBase58();
+          const queuedTxHash = `queued_tx_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+          
+          return {
+            coinAddress: mintAddress,
+            transactionHash: queuedTxHash
+          };
+        }
       }
       
       // Create mint keypair
