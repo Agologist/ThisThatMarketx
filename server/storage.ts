@@ -144,17 +144,7 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentId.users++;
     const now = new Date();
-    const user: User = { 
-      ...insertUser, 
-      id,
-      displayName: insertUser.displayName ?? null,
-      provider: insertUser.provider ?? null,
-      profileImageUrl: insertUser.profileImageUrl ?? null,
-      firebaseUid: insertUser.firebaseUid ?? null,
-      photoURL: insertUser.photoURL ?? null,
-      replitId: insertUser.replitId ?? null,
-      solanaWallet: insertUser.solanaWallet ?? null,
-    };
+    const user: User = { ...insertUser, id };
     this.users.set(id, user);
     return user;
   }
@@ -172,11 +162,7 @@ export class MemStorage implements IStorage {
   // Poll methods
   async getPolls(): Promise<Poll[]> {
     return Array.from(this.polls.values())
-      .sort((a, b) => {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return dateB - dateA;
-      });
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
   
   async getPoll(id: number): Promise<Poll | undefined> {
@@ -186,11 +172,7 @@ export class MemStorage implements IStorage {
   async getUserPolls(userId: number): Promise<Poll[]> {
     return Array.from(this.polls.values())
       .filter(poll => poll.userId === userId)
-      .sort((a, b) => {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return dateB - dateA;
-      });
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
   
   async createPoll(insertPoll: InsertPoll): Promise<Poll> {
@@ -236,9 +218,7 @@ export class MemStorage implements IStorage {
         id, 
         createdAt: now, 
         optionAVotes: 0, 
-        optionBVotes: 0,
-        memeCoinMode: sanitizedData.memeCoinMode ?? false,
-        creatorWallet: sanitizedData.creatorWallet ?? null,
+        optionBVotes: 0 
       };
       
       this.polls.set(id, poll);
@@ -255,9 +235,9 @@ export class MemStorage implements IStorage {
     if (!poll) return;
     
     if (option === "A") {
-      poll.optionAVotes = (poll.optionAVotes || 0) + 1;
+      poll.optionAVotes += 1;
     } else if (option === "B") {
-      poll.optionBVotes = (poll.optionBVotes || 0) + 1;
+      poll.optionBVotes += 1;
     }
     
     this.polls.set(pollId, poll);
@@ -267,10 +247,10 @@ export class MemStorage implements IStorage {
     const poll = this.polls.get(pollId);
     if (!poll) return;
     
-    if (option === "A" && (poll.optionAVotes || 0) > 0) {
-      poll.optionAVotes = (poll.optionAVotes || 0) - 1;
-    } else if (option === "B" && (poll.optionBVotes || 0) > 0) {
-      poll.optionBVotes = (poll.optionBVotes || 0) - 1;
+    if (option === "A" && poll.optionAVotes > 0) {
+      poll.optionAVotes -= 1;
+    } else if (option === "B" && poll.optionBVotes > 0) {
+      poll.optionBVotes -= 1;
     }
     
     this.polls.set(pollId, poll);
@@ -317,11 +297,7 @@ export class MemStorage implements IStorage {
   async getUserVotes(userId: number): Promise<Vote[]> {
     return Array.from(this.votes.values())
       .filter(vote => vote.userId === userId)
-      .sort((a, b) => {
-        const dateA = a.votedAt ? new Date(a.votedAt).getTime() : 0;
-        const dateB = b.votedAt ? new Date(b.votedAt).getTime() : 0;
-        return dateB - dateA;
-      });
+      .sort((a, b) => new Date(b.votedAt).getTime() - new Date(a.votedAt).getTime());
   }
   
   async deleteVote(id: number): Promise<void> {
@@ -359,11 +335,7 @@ export class MemStorage implements IStorage {
   async getUserRaces(userId: number): Promise<RaceRecord[]> {
     return Array.from(this.raceRecords.values())
       .filter(record => record.userId === userId)
-      .sort((a, b) => {
-        const dateA = a.racedAt ? new Date(a.racedAt).getTime() : 0;
-        const dateB = b.racedAt ? new Date(b.racedAt).getTime() : 0;
-        return dateB - dateA;
-      });
+      .sort((a, b) => new Date(b.racedAt).getTime() - new Date(a.racedAt).getTime());
   }
   
   // Achievement methods
@@ -396,13 +368,7 @@ export class MemStorage implements IStorage {
   async createUserAchievement(insertUA: InsertUserAchievement): Promise<UserAchievement> {
     const id = this.currentId.userAchievements++;
     const now = new Date();
-    const userAchievement: UserAchievement = { 
-      ...insertUA, 
-      id, 
-      unlockedAt: now,
-      progress: insertUA.progress ?? null,
-      completed: insertUA.completed ?? null,
-    };
+    const userAchievement: UserAchievement = { ...insertUA, id, unlockedAt: now };
     this.userAchievements.set(id, userAchievement);
     return userAchievement;
   }
@@ -424,8 +390,7 @@ export class MemStorage implements IStorage {
       ...insertCoin, 
       id, 
       createdAt: now,
-      status: insertCoin.status || 'created',
-      transactionHash: insertCoin.transactionHash ?? null,
+      status: insertCoin.status || 'created'
     };
     this.generatedCoins.set(id, coin);
     return coin;
@@ -457,15 +422,7 @@ export class MemStorage implements IStorage {
     const packageRecord: MemeCoinPackage = {
       ...packageData,
       id,
-      purchasedAt: new Date(),
-      status: packageData.status || 'active',
-      packageType: packageData.packageType || '3_polls',
-      totalPolls: packageData.totalPolls || 3,
-      usedPolls: packageData.usedPolls || 0,
-      remainingPolls: packageData.remainingPolls || 3,
-      paymentToken: packageData.paymentToken || 'USDT',
-      paymentChain: packageData.paymentChain || 'polygon',
-      expiresAt: packageData.expiresAt ?? null,
+      purchasedAt: new Date()
     };
     this.memeCoinPackages.set(id, packageRecord);
     return packageRecord;
@@ -474,11 +431,7 @@ export class MemStorage implements IStorage {
   async getUserActivePackage(userId: number): Promise<MemeCoinPackage | undefined> {
     const userPackages = Array.from(this.memeCoinPackages.values())
       .filter(pkg => pkg.userId === userId && pkg.status === 'active')
-      .sort((a, b) => {
-        const dateA = a.purchasedAt ? new Date(a.purchasedAt).getTime() : 0;
-        const dateB = b.purchasedAt ? new Date(b.purchasedAt).getTime() : 0;
-        return dateB - dateA;
-      });
+      .sort((a, b) => b.purchasedAt.getTime() - a.purchasedAt.getTime());
     
     // Find package with remaining polls
     const activePackage = userPackages.find(pkg => pkg.remainingPolls > 0);
@@ -488,11 +441,7 @@ export class MemStorage implements IStorage {
   async getUserPackages(userId: number): Promise<MemeCoinPackage[]> {
     return Array.from(this.memeCoinPackages.values())
       .filter(pkg => pkg.userId === userId)
-      .sort((a, b) => {
-        const dateA = a.purchasedAt ? new Date(a.purchasedAt).getTime() : 0;
-        const dateB = b.purchasedAt ? new Date(b.purchasedAt).getTime() : 0;
-        return dateB - dateA;
-      });
+      .sort((a, b) => b.purchasedAt.getTime() - a.purchasedAt.getTime());
   }
 
   async consumePackageUsage(packageId: number): Promise<void> {
@@ -843,12 +792,7 @@ export class DatabaseStorage implements IStorage {
   async getUserAchievements(userId: number): Promise<(UserAchievement & Achievement)[]> {
     // Join userAchievements with achievements to get full data
     const result = await db.select({
-      id: userAchievements.id,
-      userId: userAchievements.userId,
-      achievementId: userAchievements.achievementId,
-      unlockedAt: userAchievements.unlockedAt,
-      progress: userAchievements.progress,
-      completed: userAchievements.completed,
+      ...userAchievements,
       name: achievements.name,
       description: achievements.description,
       iconName: achievements.iconName,
@@ -858,7 +802,7 @@ export class DatabaseStorage implements IStorage {
     .innerJoin(achievements, eq(userAchievements.achievementId, achievements.id))
     .where(eq(userAchievements.userId, userId));
     
-    return result as (UserAchievement & Achievement)[];
+    return result;
   }
   
   async getUserAchievement(userId: number, achievementId: number): Promise<UserAchievement | undefined> {

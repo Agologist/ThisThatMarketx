@@ -45,8 +45,8 @@ export default function ChallengePage() {
     refetchOnMount: true, // Always refetch on mount
   });
   
-  const hasVoted = (userVoteData as any)?.hasVoted || false;
-  const userVoteOption = (userVoteData as any)?.option || null;
+  const hasVoted = userVoteData?.hasVoted || false;
+  const userVoteOption = userVoteData?.option || null;
   
   // Calculate poll percentages for display
   const totalVotes = (poll?.optionAVotes || 0) + (poll?.optionBVotes || 0);
@@ -125,57 +125,38 @@ export default function ChallengePage() {
     
     setIsVoting(true);
     
-    // Direct fetch approach - bypasses any middleware error handlers
     try {
-      const response = await fetch(`/api/polls/${id}/vote`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ option: selectedOption })
+      // First, try to submit vote without wallet address (this will trigger backend to ask for wallet preference)
+      const response = await apiRequest(`/api/polls/${id}/vote`, "POST", { 
+        option: selectedOption
+        // No walletAddress provided - this triggers the modal flow
       });
       
-      console.error("🔍 Raw response status:", response.status);
-      console.error("🔍 Raw response ok:", response.ok);
-      
       if (!response.ok) {
-        // Get the error response body
         const errorData = await response.json();
-        console.error("🔍 Error response data:", errorData);
         
-        // Check if this is a wallet choice request (MemeCoin modal trigger)
+        // NEW: Check if backend is asking for wallet choice
         if (errorData.requiresWalletChoice && errorData.coinPreview) {
-          console.error("🎯 WALLET CHOICE REQUEST DETECTED - TRIGGERING MODAL!");
+          console.log("Backend requesting wallet choice, showing modal with:", errorData.coinPreview);
           
-          // Set up the pending vote data
-          const voteData = {
+          // Set up the pending vote data from backend response
+          setPendingVoteData({
             option: errorData.coinPreview.option,
             pollId: errorData.coinPreview.pollId,
             optionText: errorData.coinPreview.optionText,
             coinName: errorData.coinPreview.coinName,
             coinSymbol: errorData.coinPreview.coinSymbol
-          };
+          });
           
-          console.error("✅ Setting pending vote data:", voteData);
-          setPendingVoteData(voteData);
-          
-          console.error("✅ Showing coin modal NOW");
+          setIsVoting(false);
           setShowCoinModal(true);
-          
-          console.error("✅ Modal should be visible!");
-          return; // Keep loading state for modal
+          return;
         }
         
-        // Other error - reset and show message
-        setIsVoting(false);
-        toast({
-          title: "Vote Failed",
-          description: errorData.message || `${response.status}: ${response.statusText}`,
-          variant: "destructive",
-        });
-        return;
+        throw new Error(errorData.message || "Failed to record vote");
       }
       
-      // Success - vote was processed directly
+      // OLD FLOW: If vote was processed directly (shouldn't happen anymore)
       const result = await response.json();
       console.log("Vote processed directly:", result);
       
@@ -203,16 +184,15 @@ export default function ChallengePage() {
         description: `You voted for ${selectedOption === "A" ? poll.optionAText : poll.optionBText}`,
       });
       
-      setIsVoting(false);
-      
-    } catch (error: any) {
-      console.error("🚨 Network error:", error);
-      setIsVoting(false);
+    } catch (error) {
+      console.error("Vote submission error:", error);
       toast({
         title: "Vote Failed",
-        description: "Network error occurred",
-        variant: "destructive",
+        description: error instanceof Error ? error.message : "Failed to record vote",
+        variant: "destructive"
       });
+    } finally {
+      setIsVoting(false);
     }
   };
 
@@ -595,7 +575,7 @@ export default function ChallengePage() {
             
             <CardFooter className="border-t pt-4 flex justify-between">
               <span className="text-sm text-muted-foreground">
-                Created {poll.createdAt ? new Date(poll.createdAt).toLocaleDateString() : 'Unknown'}
+                Created {new Date(poll.createdAt).toLocaleDateString()}
               </span>
               
               <Button 

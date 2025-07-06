@@ -314,6 +314,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`🚀 Processing vote for user ${userId} on poll ${pollId}, option ${option}`);
       console.log(`🔍 Full request body:`, JSON.stringify(req.body, null, 2));
+      console.log(`🔍 Wallet address check: walletAddress=${walletAddress}, type=${typeof walletAddress}, hasWalletKey=${req.body.hasOwnProperty('walletAddress')}`);
       
       // Validate option
       if (option !== "A" && option !== "B") {
@@ -325,6 +326,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Found existing vote: ${!!existingVote}`);
       
       if (existingVote) {
+        // Prevent changing votes
         return res.status(400).json({ 
           message: "You have already voted on this challenge", 
           existingVote
@@ -338,30 +340,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.log(`🔍 Poll MemeCoin mode: ${poll.memeCoinMode ? 'enabled' : 'disabled'}`);
+      console.log(`🔍 User wallet: ${req.user.solanaWallet || 'not connected'}`);
       
-      // NEW FLOW: If MemeCoin mode is enabled and no walletAddress provided, 
-      // send coin preview and ask frontend to show modal
-      if (poll.memeCoinMode && walletAddress === undefined) {
-        const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
-        const coinName = await coinService.generateCoinName(optionText, pollId);
-        const coinSymbol = coinService.generateSymbol(coinName);
-        
-        console.log(`🎯 MemeCoin poll detected, sending coin preview to frontend`);
-        
-        return res.status(400).json({
-          requiresWalletChoice: true,
-          coinPreview: {
-            option,
-            pollId,
-            optionText,
-            coinName,
-            coinSymbol
-          }
-        });
-      }
+      // No need for wallet selection modal - we use the stored wallet address
       
-      // If we reach here, either it's not a MemeCoin poll or wallet choice was provided
-      console.log("🎯 Proceeding with vote recording...");
+      console.log("🎯 Proceeding directly with vote recording...");
       
       // Create the vote
       const voteData = insertVoteSchema.parse({
@@ -370,6 +353,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         option,
       });
       
+      // Debug log to see how vote data is being created
       console.log("Creating new vote with data:", JSON.stringify(voteData));
       
       const vote = await storage.createVote(voteData);
@@ -377,51 +361,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Update poll vote count
       await storage.incrementPollVote(pollId, option);
-      console.log(`✅ Poll vote count updated successfully for poll ${pollId}`);
       
-      // Generate meme coin if MemeCoin mode is enabled
-      console.log(`🎯 Starting coin generation check for poll ${pollId}...`);
+      // Generate meme coin for the user's vote (only if MemeCoin Mode is enabled AND user has SOL wallet)
       try {
         if (poll && poll.memeCoinMode) {
-          console.log(`🪙 MemeCoin Mode is ENABLED for poll ${pollId}`);
+          console.log(`🪙 MemeCoin Mode enabled for poll ${pollId}`);
           
-          const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
-          console.log(`🪙 Creating coin for option "${optionText}" (option ${option})`);
+          // Get the user's connected Solana wallet from their database profile
+          const userWallet = req.user.solanaWallet;
+          console.log(`🪙 User's connected wallet: ${userWallet || 'none'}`);
           
-          // Use provided wallet address or demo mode
-          const finalWallet = walletAddress || 'demo_mode_no_wallet';
-          
-          console.log(`🪙 Calling coinService.createMemeCoin with params:`, {
-            userId,
-            pollId,
-            option,
-            optionText,
-            userWallet: finalWallet
-          });
-          
-          const coinResult = await coinService.createMemeCoin({
-            userId,
-            pollId,
-            option,
-            optionText,
-            userWallet: finalWallet
-          });
-          
-          console.log(`🪙 ✅ SUCCESS: Meme coin generated! Type: ${finalWallet === 'demo_mode_no_wallet' ? 'DEMO' : 'REAL'}`);
-          console.log(`🪙 Coin result:`, JSON.stringify(coinResult, null, 2));
-          
+          // Only generate coin if user has a connected Solana wallet
+          if (userWallet && userWallet !== null && !userWallet.startsWith('demo_wallet_')) {
+            console.log(`🪙 Valid SOL wallet detected, generating coin...`);
+            
+            const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
+            
+            const coinResult = await coinService.createMemeCoin({
+              userId,
+              pollId,
+              option,
+              optionText,
+              userWallet: userWallet
+            });
+            
+            console.log(`🪙 Real meme coin generated for wallet ${userWallet}:`, coinResult);
+          } else {
+            console.log(`🚫 No valid SOL wallet connected - skipping coin generation (demo mode)`);
+          }
         } else if (poll) {
-          console.log(`🚫 SKIPPING: MemeCoin Mode is DISABLED for poll ${pollId}`);
+          console.log(`🚫 MemeCoin Mode disabled for poll ${pollId}, skipping coin generation`);
         }
-      } catch (coinError: any) {
-        console.error('💥 CRITICAL: Coin generation FAILED, but vote still recorded:');
-        console.error('💥 Error message:', coinError?.message);
-        console.error('💥 Full error object:', coinError);
+      } catch (coinError) {
+        console.error('Failed to generate coin, but vote still recorded:', coinError);
+        // Don't fail the vote if coin generation fails
       }
       
-      console.log(`🎯 Coin generation check completed for poll ${pollId}`);
-      
-      // Get updated poll
+      // Get updated poll - make sure to wait for the latest data
       const updatedPoll = await storage.getPoll(pollId);
       console.log("Updated poll after vote:", {
         id: updatedPoll?.id,
@@ -1026,60 +1002,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error consuming package usage:', error);
       res.status(500).json({ message: "Failed to consume package usage" });
-    }
-  });
-
-  // Manual coin generation endpoint for recovering missing coins
-  app.post("/api/coins/generate-manual", async (req, res) => {
-    try {
-      const { userId, pollId, option, optionText, userWallet } = req.body;
-      
-      console.log(`🔧 MANUAL COIN GENERATION: Starting for userId=${userId}, pollId=${pollId}, option=${option}`);
-      
-      // Validate required fields
-      if (!userId || !pollId || !option || !optionText || !userWallet) {
-        return res.status(400).json({ 
-          message: "Missing required fields", 
-          required: ["userId", "pollId", "option", "optionText", "userWallet"] 
-        });
-      }
-      
-      // Check if coin already exists for this vote
-      const existingCoins = await storage.getPollGeneratedCoins(pollId);
-      const existingCoin = existingCoins.find(coin => 
-        coin.userId === userId && coin.option === option
-      );
-      
-      if (existingCoin) {
-        console.log(`🔧 MANUAL: Coin already exists for this vote:`, existingCoin);
-        return res.json({ 
-          message: "Coin already exists for this vote", 
-          coin: existingCoin 
-        });
-      }
-      
-      // Generate the coin using coinService
-      const coinResult = await coinService.createMemeCoin({
-        userId,
-        pollId,
-        option,
-        optionText,
-        userWallet
-      });
-      
-      console.log(`🔧 MANUAL: Coin generation completed:`, coinResult);
-      
-      res.json({ 
-        message: "Coin generated successfully", 
-        coin: coinResult 
-      });
-      
-    } catch (error) {
-      console.error('🔧 MANUAL: Coin generation failed:', error);
-      res.status(500).json({ 
-        message: "Failed to generate coin manually", 
-        error: error instanceof Error ? error.message : "Unknown error" 
-      });
     }
   });
 

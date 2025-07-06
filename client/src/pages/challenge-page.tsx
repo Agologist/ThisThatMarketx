@@ -139,6 +139,11 @@ export default function ChallengePage() {
       // Send the vote request
       const response = await apiRequest(`/api/polls/${id}/vote`, "POST", { option: selectedOption });
       
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to record vote");
+      }
+      
       const result = await response.json();
       
       // Check if the backend is asking for wallet preference (MemeCoin Mode)
@@ -181,9 +186,6 @@ export default function ChallengePage() {
             option: walletResult.vote.option
           });
         }
-      } else if (!response.ok) {
-        // Handle actual errors (not wallet choice requests)
-        throw new Error(result.message || "Failed to record vote");
       } else {
         // Normal voting flow - directly update the poll data
         if (result.poll) {
@@ -293,7 +295,7 @@ export default function ChallengePage() {
         shareUrl = `https://wa.me/?text=${encodedText}%20${encodedUrl}`;
         break;
       case 'native':
-        if (navigator.share && typeof navigator.share === 'function') {
+        if (navigator.share) {
           navigator.share({
             title: poll?.question || "Check out this challenge",
             text: `Vote on "${poll?.question}"`,
@@ -474,7 +476,7 @@ export default function ChallengePage() {
                     </div>
                     
                     <div className="flex flex-col gap-2">
-                      {typeof navigator !== 'undefined' && navigator.share && (
+                      {navigator.share && (
                         <Button 
                           variant="outline"
                           className="w-full justify-start" 
@@ -951,7 +953,7 @@ export default function ChallengePage() {
                                   )
                                 ) : (
                                   // Fallback to poll results when no personal battle data
-                                  (poll.optionAVotes || 0) > (poll.optionBVotes || 0) ? (
+                                  poll.optionAVotes > poll.optionBVotes ? (
                                     // Option A won the poll - show A car victorious and B car exploded
                                     <>
                                       {/* Option A car won and pushed to the right */}
@@ -975,7 +977,7 @@ export default function ChallengePage() {
                                         </div>
                                       </div>
                                     </>
-                                  ) : (poll.optionBVotes || 0) > (poll.optionAVotes || 0) ? (
+                                  ) : poll.optionBVotes > poll.optionAVotes ? (
                                     // Option B won the poll - show B car victorious and A car exploded
                                     <>
                                       {/* Option B car won and pushed to the left */}
@@ -1029,9 +1031,9 @@ export default function ChallengePage() {
                                     `YOU LOSE!`
                                 ) : (
                                   /* Otherwise fall back to team results */
-                                  (poll.optionAVotes || 0) > (poll.optionBVotes || 0) ? 
+                                  poll.optionAVotes > poll.optionBVotes ? 
                                     "TEAM A WINS!" : 
-                                    (poll.optionBVotes || 0) > (poll.optionAVotes || 0) ? 
+                                    poll.optionBVotes > poll.optionAVotes ? 
                                       "TEAM B WINS!" : 
                                       "IT'S A TIE!"
                                 )}
