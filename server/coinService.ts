@@ -160,6 +160,7 @@ export class CoinService {
       // Check if user already has a coin for this poll/option
       const existingCoin = await storage.getUserCoinForPoll(params.userId, params.pollId, params.option);
       if (existingCoin) {
+        console.log(`🔄 Existing coin found for user ${params.userId}, poll ${params.pollId}, option ${params.option}`);
         return {
           coinAddress: existingCoin.coinAddress,
           transactionHash: existingCoin.transactionHash || 'existing',
@@ -172,7 +173,10 @@ export class CoinService {
       const activePackage = await storage.getUserActivePackage(params.userId);
       let shouldCreateRealCoin = activePackage && activePackage.remainingPolls > 0;
       
-      console.log(`User ${params.userId} has active package: ${!!activePackage}, should create real coin: ${shouldCreateRealCoin}`);
+      console.log(`🔍 PACKAGE CHECK for user ${params.userId}:`);
+      console.log(`  - Package exists: ${!!activePackage}`);
+      console.log(`  - Package details:`, activePackage);
+      console.log(`  - Should create real coin: ${shouldCreateRealCoin}`);
       
       if (shouldCreateRealCoin) {
         console.log(`🔋 About to check SOL balance and perform USDT→SOL conversion if needed...`);
