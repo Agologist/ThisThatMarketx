@@ -137,19 +137,27 @@ export default function ChallengePage() {
         
         // NEW: Check if backend is asking for wallet choice
         if (errorData.requiresWalletChoice && errorData.coinPreview) {
-          console.log("Backend requesting wallet choice, showing modal with:", errorData.coinPreview);
+          console.log("✅ Backend requesting wallet choice, showing modal with:", errorData.coinPreview);
           
           // Set up the pending vote data from backend response
-          setPendingVoteData({
+          const voteData = {
             option: errorData.coinPreview.option,
             pollId: errorData.coinPreview.pollId,
             optionText: errorData.coinPreview.optionText,
             coinName: errorData.coinPreview.coinName,
             coinSymbol: errorData.coinPreview.coinSymbol
-          });
+          };
           
-          setIsVoting(false);
+          console.log("✅ Setting pending vote data:", voteData);
+          setPendingVoteData(voteData);
+          
+          console.log("✅ Setting showCoinModal to true");
           setShowCoinModal(true);
+          
+          console.log("✅ Setting isVoting to false");
+          setIsVoting(false);
+          
+          console.log("✅ Modal trigger complete - returning from error handler");
           return;
         }
         
