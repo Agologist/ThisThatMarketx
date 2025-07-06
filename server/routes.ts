@@ -1043,8 +1043,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-
-
+  // Manual coin generation endpoint for recovering missing coins
+  app.post("/api/coins/generate-manual", async (req, res) => {
+    try {
+      const { userId, pollId, option, optionText, userWallet } = req.body;
+      
+      console.log(`🔧 MANUAL COIN GENERATION: Starting for userId=${userId}, pollId=${pollId}, option=${option}`);
+      
+      // Validate required fields
+      if (!userId || !pollId || !option || !optionText || !userWallet) {
+        return res.status(400).json({ 
+          message: "Missing required fields", 
+          required: ["userId", "pollId", "option", "optionText", "userWallet"] 
+        });
+      }
+      
+      // Check if coin already exists for this vote
+      const existingCoins = await storage.getPollGeneratedCoins(pollId);
+      const existingCoin = existingCoins.find(coin => 
+        coin.userId === userId && coin.option === option
+      );
+      
+      if (existingCoin) {
+        console.log(`🔧 MANUAL: Coin already exists for this vote:`, existingCoin);
+        return res.json({ 
+          message: "Coin already exists for this vote", 
+          coin: existingCoin 
+        });
+      }
+      
+      // Generate the coin using coinService
+      const coinResult = await coinService.createMemeCoin({
+        userId,
+        pollId,
+        option,
+        optionText,
+        userWallet
+      });
+      
+      console.log(`🔧 MANUAL: Coin generation completed:`, coinResult);
+      
+      res.json({ 
+        message: "Coin generated successfully", 
+        coin: coinResult 
+      });
+      
+    } catch (error) {
+      console.error('🔧 MANUAL: Coin generation failed:', error);
+      res.status(500).json({ 
+        message: "Failed to generate coin manually", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
