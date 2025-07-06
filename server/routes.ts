@@ -312,7 +312,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { option, walletAddress } = req.body;
       const userId = req.user.id;
       
-      console.log(`Processing vote for user ${userId} on poll ${pollId}, option ${option}, wallet: ${walletAddress || 'not provided'}`);
+      console.log(`🚀 Processing vote for user ${userId} on poll ${pollId}, option ${option}`);
+      console.log(`🔍 Full request body:`, JSON.stringify(req.body, null, 2));
+      console.log(`🔍 Wallet address check: walletAddress=${walletAddress}, type=${typeof walletAddress}, hasWalletKey=${req.body.hasOwnProperty('walletAddress')}`);
       
       // Validate option
       if (option !== "A" && option !== "B") {
@@ -331,11 +333,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // NEW MODAL FLOW: If no wallet address provided in request body, return special response asking for wallet preference
-      console.log(`🔍 Wallet address check: walletAddress=${walletAddress}, type=${typeof walletAddress}, hasWalletKey=${req.body.hasOwnProperty('walletAddress')}`);
+      // NEW MODAL FLOW: If no wallet address key provided in request body, return special response asking for wallet preference
+      console.log(`🔍 Checking if walletAddress key exists in request body...`);
+      const hasWalletKey = req.body.hasOwnProperty('walletAddress');
+      console.log(`🔍 hasWalletKey: ${hasWalletKey}`);
       
       // Only return wallet choice if walletAddress key is not present in the request body
-      if (!req.body.hasOwnProperty('walletAddress')) {
+      // If the key exists (even with undefined value), proceed with vote recording
+      if (!hasWalletKey) {
         console.log("🚀 NEW MODAL FLOW: Vote received without wallet preference - returning wallet request");
         
         const poll = await storage.getPoll(pollId);
