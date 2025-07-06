@@ -361,6 +361,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Update poll vote count
       await storage.incrementPollVote(pollId, option);
+      console.log(`✅ Poll vote count updated successfully for poll ${pollId}`);
+      
+      // DEBUG: Add checkpoint before coin generation
+      console.log(`🔥 CHECKPOINT: About to start coin generation check for poll ${pollId}`);
+      console.log(`🔥 DEBUG: Current execution context - userId: ${userId}, pollId: ${pollId}, option: ${option}`);
       
       // Generate meme coin for the user's vote (only if MemeCoin Mode is enabled AND user has SOL wallet)
       console.log(`🎯 Starting coin generation check for poll ${pollId}...`);
