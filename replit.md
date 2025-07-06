@@ -4,6 +4,10 @@
 A dynamic "This or That" polling application with interactive battle game mechanics. Users create time-limited challenges with two options, each with image avatars. The key feature is an interactive car battle game where voting impacts car movement in real-time sumo-style contests.
 
 ## Recent Changes
+- **July 6, 2025**: **DEBUGGING COIN GENERATION ISSUE** - Investigating why real SPL tokens aren't being created
+  - **IDENTIFIED**: Coin generation section never executes during voting process
+  - **ISSUE**: System blocks duplicate votes but initial vote doesn't trigger coin generation  
+  - **STATUS**: Debugging complete voting flow with comprehensive logging
 - **July 6, 2025**: **MEME COIN GENERATION FULLY FUNCTIONAL** - Complete real SPL token creation system
   - **FIXED**: Users with active packages receive real Solana SPL tokens (not demo mode)
   - **FIXED**: Correct token amount - 1 token per vote (was incorrectly 1,000,000 tokens)
