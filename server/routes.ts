@@ -376,6 +376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log(`🪙 Valid SOL wallet detected, generating coin...`);
             
             const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
+            console.log(`🪙 Creating coin for option "${optionText}"`);
             
             const coinResult = await coinService.createMemeCoin({
               userId,
@@ -393,7 +394,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`🚫 MemeCoin Mode disabled for poll ${pollId}, skipping coin generation`);
         }
       } catch (coinError) {
-        console.error('Failed to generate coin, but vote still recorded:', coinError);
+        console.error('💥 CRITICAL: Failed to generate coin, but vote still recorded:');
+        console.error('Error type:', coinError?.constructor?.name);
+        console.error('Error message:', coinError?.message);
+        console.error('Full error:', coinError);
+        console.error('Stack trace:', coinError?.stack);
         // Don't fail the vote if coin generation fails
       }
       
