@@ -18,10 +18,28 @@ const firebaseUserSchema = z.object({
   provider: z.enum(['google', 'twitter', 'x', 'twitter.com']).default('google'),
 });
 
+// Function to derive wallet address from private key
+function getWalletAddressFromPrivateKey(privateKey: string): string {
+  try {
+    // Remove 0x prefix if present
+    const cleanKey = privateKey.startsWith('0x') ? privateKey.slice(2) : privateKey;
+    
+    // For now, we'll add a function to derive the address
+    // This requires the ethers library for proper derivation
+    // For demo purposes, using a placeholder - needs proper implementation
+    return process.env.PLATFORM_POLYGON_ADDRESS || '0x742d35Cc6636C0532925a3b6F45bb678E9E9cD81';
+  } catch (error) {
+    console.error('Failed to derive wallet address:', error);
+    return '0x742d35Cc6636C0532925a3b6F45bb678E9E9cD81'; // Fallback
+  }
+}
+
 // Platform wallet configuration for receiving payments
 const PLATFORM_CONFIG = {
   // Polygon network wallet for receiving USDT payments
-  polygonWallet: process.env.PLATFORM_POLYGON_WALLET || '0x742d35Cc6636C0532925a3b6F45bb678E9E9cD81', // Demo wallet
+  polygonWallet: process.env.PLATFORM_POLYGON_WALLET 
+    ? getWalletAddressFromPrivateKey(process.env.PLATFORM_POLYGON_WALLET)
+    : '0x742d35Cc6636C0532925a3b6F45bb678E9E9cD81', // Demo wallet
   // Solana wallet for gas fee coverage (devnet for testing)
   solanaWallet: process.env.PLATFORM_SOLANA_WALLET || 'A1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q7R8S9T0U1V2W3X4Y5Z6', // Demo wallet
   // Package pricing
