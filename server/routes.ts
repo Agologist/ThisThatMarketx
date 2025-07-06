@@ -393,7 +393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else if (poll) {
           console.log(`🚫 MemeCoin Mode disabled for poll ${pollId}, skipping coin generation`);
         }
-      } catch (coinError) {
+      } catch (coinError: any) {
         console.error('💥 CRITICAL: Failed to generate coin, but vote still recorded:');
         console.error('Error type:', coinError?.constructor?.name);
         console.error('Error message:', coinError?.message);
@@ -1009,6 +1009,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to consume package usage" });
     }
   });
+
 
   const httpServer = createServer(app);
   return httpServer;

@@ -15,18 +15,16 @@ export class CoinService {
     // We'll convert USDT → SOL as needed for Solana transactions
     const platformWalletSecret = process.env.PLATFORM_POLYGON_WALLET;
     if (platformWalletSecret) {
-      try {
-        // Use the same wallet for both USDT revenue and SOL gas fees
-        // Convert Polygon private key to Solana format for cross-chain operations
-        const secretKeyArray = Uint8Array.from(JSON.parse(platformWalletSecret));
-        this.payerKeypair = Keypair.fromSecretKey(secretKeyArray);
-        console.log(`🔑 Platform wallet loaded: ${this.payerKeypair.publicKey.toString()}`);
-        console.log(`💰 Gas fees will be paid from USDT revenue via automatic USDT→SOL conversion`);
-      } catch (error) {
-        console.error('Failed to load platform wallet, using demo keypair:', error);
-        this.payerKeypair = Keypair.generate();
-        console.log(`⚠️  Demo wallet: ${this.payerKeypair.publicKey.toString()} (0 SOL)`);
-      }
+      console.log('💡 PLATFORM_POLYGON_WALLET detected as wallet address (for USDT payments)');
+      console.log('🔍 Platform wallet address:', platformWalletSecret);
+      
+      // Since PLATFORM_POLYGON_WALLET contains the wallet address (not private key),
+      // we'll generate a demo Solana keypair for coin creation on devnet
+      // In production, this would use the actual platform's Solana private key
+      this.payerKeypair = Keypair.generate();
+      console.log(`💰 Platform USDT wallet: ${platformWalletSecret}`);
+      console.log(`🔑 Generated Solana demo keypair: ${this.payerKeypair.publicKey.toString()}`);
+      console.log(`📄 NOTE: Real coins require platform Solana private key, currently using demo mode`);
     } else {
       // Fallback for development
       this.payerKeypair = Keypair.generate();
