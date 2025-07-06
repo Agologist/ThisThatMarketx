@@ -139,11 +139,6 @@ export default function ChallengePage() {
       // Send the vote request
       const response = await apiRequest(`/api/polls/${id}/vote`, "POST", { option: selectedOption });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to record vote");
-      }
-      
       const result = await response.json();
       
       // Check if the backend is asking for wallet preference (MemeCoin Mode)
@@ -186,6 +181,9 @@ export default function ChallengePage() {
             option: walletResult.vote.option
           });
         }
+      } else if (!response.ok) {
+        // Handle actual errors (not wallet choice requests)
+        throw new Error(result.message || "Failed to record vote");
       } else {
         // Normal voting flow - directly update the poll data
         if (result.poll) {
