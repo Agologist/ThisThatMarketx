@@ -371,8 +371,8 @@ export class CoinService {
         )
       );
       
-      // Mint tokens to user
-      const mintAmount = 1000000 * Math.pow(10, 6); // 1 million tokens with 6 decimals
+      // Mint tokens to user - 1 token per vote
+      const mintAmount = 1 * Math.pow(10, 6); // 1 token with 6 decimals
       transaction.add(
         createMintToInstruction(
           mintKeypair.publicKey,
@@ -383,7 +383,7 @@ export class CoinService {
       );
       
       console.log(`📊 Token details: ${coinName} (${coinSymbol})`);
-      console.log(`🪙 Mint amount: 1,000,000 tokens`);
+      console.log(`🪙 Mint amount: 1 token (1 vote = 1 token)`);
       console.log(`👤 Recipient: ${userWallet}`);
       
       // Sign and send transaction
@@ -403,7 +403,7 @@ export class CoinService {
       console.log(`🎉 REAL SPL token successfully created and minted!`);
       console.log(`🔗 Mint address: ${mintKeypair.publicKey.toBase58()}`);
       console.log(`📝 Transaction: ${signature}`);
-      console.log(`✅ 1,000,000 ${coinSymbol} tokens sent to ${userWallet}`);
+      console.log(`✅ 1 ${coinSymbol} token sent to ${userWallet}`);
       
       return {
         coinAddress: mintKeypair.publicKey.toBase58(),
