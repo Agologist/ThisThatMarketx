@@ -381,28 +381,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update poll vote count
       await storage.incrementPollVote(pollId, option);
       
-      // Generate meme coin for the user's vote (only if MemeCoin Mode is enabled)
+      // Generate meme coin for the user's vote (only if MemeCoin Mode is enabled AND user has SOL wallet)
       try {
         if (poll && poll.memeCoinMode) {
-          console.log(`🪙 MemeCoin Mode enabled for poll ${pollId}, generating coin...`);
+          console.log(`🪙 MemeCoin Mode enabled for poll ${pollId}`);
+          console.log(`🪙 Voter wallet address: ${walletAddress || 'null/demo mode'}`);
           
-          const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
-          
-          // Use creator's wallet or default to demo mode
-          let userWallet = poll.creatorWallet || `demo_wallet_${userId}`;
-          
-          // If it's still a demo wallet, we're in demo mode
-          const isDemoMode = userWallet.startsWith('demo_wallet_');
-          
-          const coinResult = await coinService.createMemeCoin({
-            userId,
-            pollId,
-            option,
-            optionText,
-            userWallet
-          });
-          
-          console.log(`🪙 Meme coin generated (${isDemoMode ? 'DEMO' : 'REAL'} mode):`, coinResult);
+          // Only generate coin if user provided a real Solana wallet address
+          if (walletAddress && walletAddress !== null && !walletAddress.startsWith('demo_wallet_')) {
+            console.log(`🪙 Valid SOL wallet detected, generating coin...`);
+            
+            const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
+            
+            const coinResult = await coinService.createMemeCoin({
+              userId,
+              pollId,
+              option,
+              optionText,
+              userWallet: walletAddress
+            });
+            
+            console.log(`🪙 Real meme coin generated for wallet ${walletAddress}:`, coinResult);
+          } else {
+            console.log(`🚫 No valid SOL wallet provided - skipping coin generation (demo mode)`);
+          }
         } else if (poll) {
           console.log(`🚫 MemeCoin Mode disabled for poll ${pollId}, skipping coin generation`);
         }
