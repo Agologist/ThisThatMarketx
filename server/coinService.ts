@@ -9,6 +9,7 @@ import type { InsertGeneratedCoin } from '../shared/schema';
 export class CoinService {
   private connection: Connection;
   private payerKeypair: Keypair;
+  private polygonWalletKey?: string;
 
   constructor() {
     // Use mainnet for production - real SPL tokens
@@ -19,14 +20,15 @@ export class CoinService {
     const platformWalletSecret = process.env.PLATFORM_POLYGON_WALLET;
     if (platformWalletSecret) {
       try {
-        // Use the same wallet for both USDT revenue and SOL gas fees
-        // Convert Polygon private key to Solana format for cross-chain operations
-        const secretKeyArray = Uint8Array.from(JSON.parse(platformWalletSecret));
-        this.payerKeypair = Keypair.fromSecretKey(secretKeyArray);
-        console.log(`Platform wallet loaded: ${this.payerKeypair.publicKey.toString()}`);
+        // Store the Polygon wallet private key for USDT operations
+        // For now, generate a Solana keypair for gas fees (will be funded via USDT→SOL conversion)
+        this.polygonWalletKey = platformWalletSecret.trim();
+        this.payerKeypair = Keypair.generate(); // Generate dedicated Solana wallet for gas
+        console.log(`Platform Polygon wallet configured for USDT revenue`);
+        console.log(`Solana gas wallet: ${this.payerKeypair.publicKey.toString()}`);
         console.log(`Gas fees will be paid from USDT revenue via automatic USDT→SOL conversion`);
       } catch (error) {
-        console.error('Failed to load platform wallet, using demo keypair:', error);
+        console.error('Failed to configure platform wallet, using demo mode:', error);
         this.payerKeypair = Keypair.generate();
         console.log(`Demo wallet: ${this.payerKeypair.publicKey.toString()} (0 SOL)`);
       }
