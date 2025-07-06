@@ -145,21 +145,56 @@ export default function ChallengePage() {
       
       const result = await response.json();
       
-      // Immediately update the local poll data for instant feedback
-      if (result.poll) {
-        queryClient.setQueryData([`/api/polls/${id}`], result.poll);
-      }
-      
-      // Also update the vote status
-      if (result.vote) {
-        queryClient.setQueryData([`/api/polls/${id}/vote`], {
-          hasVoted: true,
-          poll: result.poll,
-          userId: user?.id,
-          pollId: parseInt(id),
-          option: result.vote.option
+      // Check if the backend is asking for wallet preference (MemeCoin Mode)
+      if (result.requiresWalletChoice) {
+        console.log("Backend requesting wallet choice for coin generation");
+        // For now, just proceed with demo mode - could add modal later
+        const walletResponse = await apiRequest(`/api/polls/${id}/vote`, "POST", { 
+          option: selectedOption,
+          walletAddress: undefined // This will trigger demo mode
         });
+        
+        if (!walletResponse.ok) {
+          const walletErrorData = await walletResponse.json();
+          throw new Error(walletErrorData.message || "Failed to record vote");
+        }
+        
+        const walletResult = await walletResponse.json();
+        console.log("Vote recorded with wallet preference:", walletResult);
+        
+        // Update with the actual vote result
+        if (walletResult.poll) {
+          queryClient.setQueryData([`/api/polls/${id}`], walletResult.poll);
+        }
+        
+        // Update vote status
+        if (walletResult.vote) {
+          queryClient.setQueryData([`/api/polls/${id}/vote`], {
+            hasVoted: true,
+            poll: walletResult.poll,
+            userId: user?.id,
+            pollId: parseInt(id),
+            option: walletResult.vote.option
+          });
+        }
+      } else {
+        // Normal voting flow - directly update the poll data
+        if (result.poll) {
+          queryClient.setQueryData([`/api/polls/${id}`], result.poll);
+        }
+        
+        // Also update the vote status
+        if (result.vote) {
+          queryClient.setQueryData([`/api/polls/${id}/vote`], {
+            hasVoted: true,
+            poll: result.poll,
+            userId: user?.id,
+            pollId: parseInt(id),
+            option: result.vote.option
+          });
+        }
       }
+
       
       // Let's force the query client to actually refresh with the new data
       queryClient.invalidateQueries({ queryKey: [`/api/polls/${id}`] });
