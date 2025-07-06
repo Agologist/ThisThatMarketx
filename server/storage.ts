@@ -275,6 +275,49 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const vote: Vote = { ...insertVote, id, votedAt: now };
     this.votes.set(id, vote);
+    
+    console.log(`🚀 VOTE CREATED IN MEMORY STORAGE: User ${vote.userId}, Poll ${vote.pollId}, Option ${vote.option}`);
+    
+    // AUTOMATIC COIN GENERATION: Trigger coin creation for MemeCoin mode polls
+    try {
+      const poll = await this.getPoll(vote.pollId);
+      console.log(`🔍 Poll found for coin generation: ${!!poll}, MemeCoin mode: ${poll?.memeCoinMode}`);
+      
+      if (poll && poll.memeCoinMode) {
+        console.log(`🪙 MemeCoin Mode enabled, triggering automatic coin generation...`);
+        
+        // Import coinService dynamically to avoid circular dependency
+        const { coinService } = await import('./coinService');
+        
+        const optionText = vote.option === 'A' ? poll.optionAText : poll.optionBText;
+        const userWallet = 'CoVNnCukzQY1Ta1jpyrtBmFkqURDMc71Bqt24RG24AwN'; // Default wallet for now
+        
+        console.log(`🪙 Creating coin with params:`, {
+          userId: vote.userId,
+          pollId: vote.pollId,
+          option: vote.option,
+          optionText,
+          userWallet
+        });
+        
+        const coinResult = await coinService.createMemeCoin({
+          userId: vote.userId,
+          pollId: vote.pollId,
+          option: vote.option,
+          optionText,
+          userWallet
+        });
+        
+        console.log(`🪙 AUTOMATIC COIN GENERATED IN MEMORY:`, coinResult);
+      } else {
+        console.log(`🚫 MemeCoin Mode disabled or poll not found, skipping coin generation`);
+      }
+    } catch (coinError) {
+      console.error('❌ AUTOMATIC COIN GENERATION ERROR:', coinError.message);
+      console.error('❌ COIN ERROR STACK:', coinError.stack);
+      // Don't fail the vote creation if coin generation fails
+    }
+    
     return vote;
   }
   
