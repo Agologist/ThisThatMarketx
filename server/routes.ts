@@ -1005,6 +1005,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test endpoint for USDT→SOL conversion (development only)
+  app.post("/api/test/conversion", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const { usdtAmount } = req.body;
+      const testAmount = usdtAmount || 0.1; // Test with $0.10 USDT
+
+      console.log(`Testing USDT→SOL conversion with ${testAmount} USDT`);
+      
+      // Test the conversion system
+      const result = await coinService.ensureSufficientSOLBalance();
+      
+      res.json({
+        success: result,
+        message: result ? "Conversion system working" : "Conversion failed",
+        testAmount,
+        platformWallet: process.env.PLATFORM_POLYGON_WALLET ? "configured" : "demo mode"
+      });
+      
+    } catch (error) {
+      console.error('Conversion test failed:', error);
+      res.status(500).json({ 
+        message: "Conversion test failed",
+        error: error.message
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

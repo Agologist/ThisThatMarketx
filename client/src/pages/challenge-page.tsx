@@ -476,7 +476,7 @@ export default function ChallengePage() {
                     </div>
                     
                     <div className="flex flex-col gap-2">
-                      {navigator.share && (
+                      {(navigator as any).share && (
                         <Button 
                           variant="outline"
                           className="w-full justify-start" 
@@ -953,7 +953,7 @@ export default function ChallengePage() {
                                   )
                                 ) : (
                                   // Fallback to poll results when no personal battle data
-                                  poll.optionAVotes > poll.optionBVotes ? (
+                                  (poll.optionAVotes || 0) > (poll.optionBVotes || 0) ? (
                                     // Option A won the poll - show A car victorious and B car exploded
                                     <>
                                       {/* Option A car won and pushed to the right */}
@@ -977,7 +977,7 @@ export default function ChallengePage() {
                                         </div>
                                       </div>
                                     </>
-                                  ) : poll.optionBVotes > poll.optionAVotes ? (
+                                  ) : (poll.optionBVotes || 0) > (poll.optionAVotes || 0) ? (
                                     // Option B won the poll - show B car victorious and A car exploded
                                     <>
                                       {/* Option B car won and pushed to the left */}
@@ -1031,9 +1031,9 @@ export default function ChallengePage() {
                                     `YOU LOSE!`
                                 ) : (
                                   /* Otherwise fall back to team results */
-                                  poll.optionAVotes > poll.optionBVotes ? 
+                                  (poll.optionAVotes || 0) > (poll.optionBVotes || 0) ? 
                                     "TEAM A WINS!" : 
-                                    poll.optionBVotes > poll.optionAVotes ? 
+                                    (poll.optionBVotes || 0) > (poll.optionAVotes || 0) ? 
                                       "TEAM B WINS!" : 
                                       "IT'S A TIE!"
                                 )}
