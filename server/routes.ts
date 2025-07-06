@@ -48,6 +48,13 @@ const PLATFORM_CONFIG = {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  
+  // Add comprehensive request logging middleware
+  app.use('/api/polls/:id/vote', (req, res, next) => {
+    console.log(`🚨 MIDDLEWARE: POST vote request intercepted at ${new Date().toISOString()}`);
+    console.log(`🚨 Method: ${req.method}, URL: ${req.url}, Body:`, req.body);
+    next();
+  });
   // Set up authentication routes
   setupAuth(app);
   
