@@ -707,6 +707,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Route for updating user wallet address
+  app.post("/api/user/wallet", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const { walletAddress } = req.body;
+      
+      if (!walletAddress || typeof walletAddress !== 'string') {
+        return res.status(400).json({ message: "Valid wallet address is required" });
+      }
+
+      // Basic validation for Solana address format (base58, 32-44 characters)
+      if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(walletAddress)) {
+        return res.status(400).json({ message: "Invalid Solana wallet address format" });
+      }
+
+      // Update the user's Solana wallet address
+      await storage.updateUser(req.user.id, { solanaWallet: walletAddress });
+      
+      res.json({ 
+        success: true, 
+        message: "Wallet address updated successfully",
+        walletAddress: walletAddress
+      });
+    } catch (error) {
+      console.error('Error updating user wallet:', error);
+      res.status(500).json({ message: "Failed to update wallet address" });
+    }
+  });
+
   // Route for getting all votes that the user has cast
   app.get("/api/user/votes", async (req, res) => {
     if (!req.isAuthenticated()) {

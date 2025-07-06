@@ -48,7 +48,7 @@ export default function WalletConnect({ onWalletUpdate }: WalletConnectProps) {
       // Optionally save to user profile if authenticated
       if (user) {
         try {
-          await apiRequest("POST", "/api/user/wallet", { 
+          await apiRequest("/api/user/wallet", "POST", { 
             walletAddress: walletAddress 
           });
         } catch (error) {
