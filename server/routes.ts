@@ -380,6 +380,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update poll vote count
       await storage.incrementPollVote(pollId, option);
       
+      console.log(`⚡ STARTING COIN GENERATION SECTION - this should always appear`);
+      
       // Generate meme coin for the user's vote (only if MemeCoin Mode is enabled AND user has SOL wallet)
       try {
         console.log(`🔍 Checking coin generation requirements for poll ${pollId}:`);
@@ -423,10 +425,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`🚫 Poll not found for coin generation`);
         }
       } catch (coinError) {
-        console.error('Failed to generate coin, but vote still recorded:', coinError);
-        console.error('Coin error stack:', coinError.stack);
+        console.error('❌ COIN GENERATION ERROR:', coinError.message);
+        console.error('❌ COIN ERROR STACK:', coinError.stack);
         // Don't fail the vote if coin generation fails
       }
+      
+      console.log(`⚡ FINISHED COIN GENERATION SECTION`);
       
       // Get updated poll - make sure to wait for the latest data
       const updatedPoll = await storage.getPoll(pollId);
@@ -1033,6 +1037,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error consuming package usage:', error);
       res.status(500).json({ message: "Failed to consume package usage" });
+    }
+  });
+
+  // Test endpoint for manual coin creation
+  app.post("/api/test/coin", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      console.log(`🧪 Manual coin creation test for user ${req.user.id}`);
+      
+      const coinResult = await coinService.createMemeCoin({
+        userId: req.user.id,
+        pollId: 54,
+        option: 'B',
+        optionText: 'rome that',
+        userWallet: req.user.solanaWallet || 'CoVNnCukzQY1Ta1jpyrtBmFkqURDMc71Bqt24RG24AwN'
+      });
+      
+      res.json({
+        success: true,
+        message: "Manual coin creation completed",
+        result: coinResult
+      });
+      
+    } catch (error) {
+      console.error('Manual coin creation failed:', error);
+      res.status(500).json({ 
+        message: "Manual coin creation failed",
+        error: error.message
+      });
     }
   });
 
