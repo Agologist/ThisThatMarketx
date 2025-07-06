@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Poll, RaceRecord } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import BattleGame from "./battle-game";
+import WalletConnect from "@/components/wallet/WalletConnect";
 import {
   Popover,
   PopoverContent,
@@ -596,19 +597,36 @@ export default function ChallengePage() {
               <div className="mt-6">
                 <Separator className="my-6" />
                 
+                {/* MemeCoin Wallet Connection - Show only for MemeCoin-enabled challenges */}
+                {poll.memeCoinMode && user && (
+                  <div className="mb-6">
+                    <WalletConnect />
+                  </div>
+                )}
+                
                 <div className="mt-4 flex items-center justify-between">
                   <div className="text-sm text-muted-foreground">
                     Total votes: <span className="font-medium">{totalVotes}</span>
                   </div>
                   
-                  {poll.isWar && (
-                    <Badge 
-                      variant="destructive"
-                      className="font-racing uppercase"
-                    >
-                      War Mode
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {poll.memeCoinMode && (
+                      <Badge 
+                        variant="outline"
+                        className="font-medium bg-gradient-to-r from-yellow-400/20 to-orange-400/20 border-yellow-500/50 text-yellow-700 dark:text-yellow-300"
+                      >
+                        🪙 MemeCoin Mode
+                      </Badge>
+                    )}
+                    {poll.isWar && (
+                      <Badge 
+                        variant="destructive"
+                        className="font-racing uppercase"
+                      >
+                        War Mode
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
             </CardContent>
