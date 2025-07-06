@@ -11,9 +11,38 @@ export class CoinService {
     // Use devnet for testing - change to mainnet for production
     this.connection = new Connection('https://api.devnet.solana.com', 'confirmed');
     
-    // For demo purposes, create a random keypair
-    // In production, load from secure environment variable
-    this.payerKeypair = Keypair.generate();
+    // Load platform Solana wallet for paying gas fees
+    // Note: PLATFORM_POLYGON_WALLET contains USDT, we need separate SOL wallet for gas
+    const platformSolanaSecret = process.env.PLATFORM_SOLANA_WALLET;
+    if (platformSolanaSecret) {
+      try {
+        // Convert the private key to Uint8Array format for Solana
+        const secretKeyArray = Uint8Array.from(JSON.parse(platformSolanaSecret));
+        this.payerKeypair = Keypair.fromSecretKey(secretKeyArray);
+        console.log(`🔑 Platform Solana wallet loaded: ${this.payerKeypair.publicKey.toString()}`);
+      } catch (error) {
+        console.error('Failed to load platform Solana wallet, using demo keypair:', error);
+        this.payerKeypair = Keypair.generate();
+        console.log(`⚠️  Demo wallet: ${this.payerKeypair.publicKey.toString()} (0 SOL)`);
+      }
+    } else {
+      // Fallback for development - generate random keypair
+      this.payerKeypair = Keypair.generate();
+      console.log(`⚠️  No platform Solana wallet configured, using demo: ${this.payerKeypair.publicKey.toString()}`);
+      console.log(`💡 To enable real meme coins, set PLATFORM_SOLANA_WALLET environment variable with funded SOL wallet`);
+    }
+  }
+
+  async checkPlatformWalletBalance(): Promise<number> {
+    try {
+      const balance = await this.connection.getBalance(this.payerKeypair.publicKey);
+      const solBalance = balance / 1_000_000_000; // Convert lamports to SOL
+      console.log(`💰 Platform wallet balance: ${solBalance.toFixed(4)} SOL`);
+      return solBalance;
+    } catch (error) {
+      console.error('Failed to check platform wallet balance:', error);
+      return 0;
+    }
   }
 
   async generateCoinName(baseName: string, pollId: number): Promise<string> {
@@ -89,6 +118,13 @@ export class CoinService {
       let status: string;
       
       if (shouldCreateRealCoin) {
+        // Check platform wallet balance before creating real tokens
+        const balance = await this.checkPlatformWalletBalance();
+        if (balance < 0.01) {
+          console.error(`❌ Insufficient platform wallet balance: ${balance.toFixed(4)} SOL`);
+          throw new Error(`Platform wallet has insufficient SOL balance (${balance.toFixed(4)} SOL) for gas fees. Please fund the platform wallet.`);
+        }
+        
         // Create real Solana token (devnet for now)
         const result = await this.createRealSolanaToken(coinName, coinSymbol, params.userWallet);
         coinAddress = result.coinAddress;
