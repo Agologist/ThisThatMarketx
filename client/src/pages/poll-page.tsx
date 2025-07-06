@@ -132,37 +132,7 @@ export default function ChallengePage() {
         // No walletAddress provided - this triggers the modal flow
       });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        
-        // NEW: Check if backend is asking for wallet choice
-        if (errorData.requiresWalletChoice && errorData.coinPreview) {
-          console.log("✅ Backend requesting wallet choice, showing modal with:", errorData.coinPreview);
-          
-          // Set up the pending vote data from backend response
-          const voteData = {
-            option: errorData.coinPreview.option,
-            pollId: errorData.coinPreview.pollId,
-            optionText: errorData.coinPreview.optionText,
-            coinName: errorData.coinPreview.coinName,
-            coinSymbol: errorData.coinPreview.coinSymbol
-          };
-          
-          console.log("✅ Setting pending vote data:", voteData);
-          setPendingVoteData(voteData);
-          
-          console.log("✅ Setting showCoinModal to true");
-          setShowCoinModal(true);
-          
-          console.log("✅ Setting isVoting to false");
-          setIsVoting(false);
-          
-          console.log("✅ Modal trigger complete - returning from error handler");
-          return;
-        }
-        
-        return; // Don't throw error for modal flow
-      }
+
       
       // OLD FLOW: If vote was processed directly (shouldn't happen anymore)
       const result = await response.json();
@@ -192,8 +162,35 @@ export default function ChallengePage() {
         description: `You voted for ${selectedOption === "A" ? poll.optionAText : poll.optionBText}`,
       });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Voting error:", error);
+      
+      // NEW: Check if backend is asking for wallet choice (data is in error.response.data)
+      if (error.response?.data?.requiresWalletChoice && error.response?.data?.coinPreview) {
+        console.log("✅ Backend requesting wallet choice, showing modal with:", error.response.data.coinPreview);
+        
+        // Set up the pending vote data from backend response
+        const voteData = {
+          option: error.response.data.coinPreview.option,
+          pollId: error.response.data.coinPreview.pollId,
+          optionText: error.response.data.coinPreview.optionText,
+          coinName: error.response.data.coinPreview.coinName,
+          coinSymbol: error.response.data.coinPreview.coinSymbol
+        };
+        
+        console.log("✅ Setting pending vote data:", voteData);
+        setPendingVoteData(voteData);
+        
+        console.log("✅ Setting showCoinModal to true");
+        setShowCoinModal(true);
+        
+        console.log("✅ Setting isVoting to false");
+        setIsVoting(false);
+        
+        console.log("✅ Modal trigger complete - returning from error handler");
+        return;
+      }
+      
       setIsVoting(false);
       toast({
         title: "Vote Failed",
