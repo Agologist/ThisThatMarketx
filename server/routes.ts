@@ -331,7 +331,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/polls/:id/vote", async (req, res) => {
-    console.log(`🎯 POST ROUTE ENTRY: /api/polls/:id/vote called at ${new Date().toISOString()}`);
+    console.log(`🚨🚨🚨 POST ROUTE ENTRY: /api/polls/:id/vote called at ${new Date().toISOString()} 🚨🚨🚨`);
+    console.log(`🚨🚨🚨 THIS IS THE VOTING POST ROUTE - IF YOU SEE THIS, VOTE SUBMISSION IS WORKING 🚨🚨🚨`);
     console.log(`🎯 Request params:`, req.params);
     console.log(`🎯 Request body:`, req.body);
     console.log(`🎯 User authenticated:`, !!req.isAuthenticated());
