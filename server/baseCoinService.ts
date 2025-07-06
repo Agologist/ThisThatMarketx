@@ -276,13 +276,21 @@ export class BaseCoinService {
       // Ensure proper address checksum for user wallet
       let checksummedWallet: string;
       try {
-        checksummedWallet = ethers.getAddress(params.userWallet);
+        // First normalize the address to lowercase and ensure it starts with 0x
+        const normalizedAddress = params.userWallet.toLowerCase().startsWith('0x') 
+          ? params.userWallet.toLowerCase() 
+          : '0x' + params.userWallet.toLowerCase();
+        
+        // Use ethers.isAddress to validate, then getAddress for checksum
+        if (!ethers.isAddress(normalizedAddress)) {
+          throw new Error(`Invalid Ethereum address format: ${params.userWallet}`);
+        }
+        
+        checksummedWallet = ethers.getAddress(normalizedAddress);
         console.log(`✅ Checksummed user wallet: ${checksummedWallet}`);
       } catch (error) {
-        // If checksum validation fails, try to fix the address format
-        const cleanAddress = params.userWallet.toLowerCase();
-        checksummedWallet = ethers.getAddress(cleanAddress);
-        console.log(`🔧 Fixed user wallet checksum: ${checksummedWallet}`);
+        console.error(`❌ Address validation failed for ${params.userWallet}:`, error);
+        throw new Error(`Invalid user wallet address: ${params.userWallet}`);
       }
 
       // Create ERC-20 token contract
