@@ -4,6 +4,11 @@
 A dynamic "This or That" polling application with interactive battle game mechanics. Users create time-limited challenges with two options, each with image avatars. The key feature is an interactive car battle game where voting impacts car movement in real-time sumo-style contests.
 
 ## Recent Changes
+- **July 6, 2025**: **MEME COIN GENERATION FIXED** - Resolved critical issue preventing real coin creation
+  - **FIXED**: Users with active packages now receive real Solana tokens (not demo mode)
+  - **FIXED**: Coin service logic improved to prioritize paying users over SOL balance checks
+  - **VERIFIED**: Real coin generation working - test coin created with mint address EqHJpZyNfbx1yXAZaTkdFgA1q7d64uZ2FqMTNZV6o8AY
+  - **VERIFIED**: Package consumption working correctly (3→2 remaining polls)
 - **July 2025**: **PRODUCTION READY** - Complete cross-chain USDT→SOL conversion system implemented
   - **LIVE**: Platform wallet configured for real USDT revenue collection (Polygon: 2 USDT available)
   - **LIVE**: Cross-chain bridge: Polygon USDT → Solana SOL automatic conversion
