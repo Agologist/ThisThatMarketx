@@ -11,29 +11,87 @@ interface WalletConnectProps {
   onWalletUpdate?: (wallet: string) => void;
 }
 
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
+
 export default function WalletConnect({ onWalletUpdate }: WalletConnectProps) {
   const [walletAddress, setWalletAddress] = useState("");
   const [isConnecting, setIsConnecting] = useState(false);
-  const [savedWallet, setSavedWallet] = useState(localStorage.getItem("solana_wallet") || "");
+  const [savedWallet, setSavedWallet] = useState(localStorage.getItem("eth_wallet") || "");
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const handleSaveWallet = async () => {
-    if (!walletAddress.trim()) {
+  const connectMetaMask = async () => {
+    if (!window.ethereum) {
       toast({
-        title: "Invalid Wallet",
-        description: "Please enter a valid Solana wallet address",
+        title: "MetaMask Required",
+        description: "Please install MetaMask to connect your wallet",
         variant: "destructive",
       });
       return;
     }
 
-    // Basic validation for Solana address format (base58, 32-44 characters)
-    if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(walletAddress)) {
+    setIsConnecting(true);
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      
+      if (accounts.length === 0) {
+        throw new Error('No accounts found. Please unlock MetaMask.');
+      }
+
+      const address = accounts[0];
+      setWalletAddress(address);
+      setSavedWallet(address);
+      localStorage.setItem("eth_wallet", address);
+      
+      if (onWalletUpdate) {
+        onWalletUpdate(address);
+      }
+
       toast({
-        title: "Invalid Format",
-        description: "Please enter a valid Solana wallet address",
+        title: "Wallet Connected",
+        description: `Connected ${address.slice(0, 8)}...${address.slice(-6)}`,
+      });
+    } catch (error: any) {
+      console.error('Wallet connection error:', error);
+      
+      if (error.code === 4001) {
+        toast({
+          title: "Connection Cancelled",
+          description: "Please approve the connection in MetaMask",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Connection Failed",
+          description: "Please try connecting again",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleManualWallet = async () => {
+    if (!walletAddress.trim()) {
+      toast({
+        title: "Invalid Wallet",
+        description: "Please enter a valid Ethereum wallet address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Basic validation for Ethereum address format (0x + 40 hex characters)
+    if (!/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
+      toast({
+        title: "Invalid Format", 
+        description: "Please enter a valid Ethereum wallet address (0x...)",
         variant: "destructive",
       });
       return;
@@ -42,7 +100,7 @@ export default function WalletConnect({ onWalletUpdate }: WalletConnectProps) {
     setIsConnecting(true);
     try {
       // Save to localStorage for immediate use
-      localStorage.setItem("solana_wallet", walletAddress);
+      localStorage.setItem("eth_wallet", walletAddress);
       setSavedWallet(walletAddress);
       
       // Optionally save to user profile if authenticated
@@ -86,7 +144,7 @@ export default function WalletConnect({ onWalletUpdate }: WalletConnectProps) {
   };
 
   const disconnectWallet = () => {
-    localStorage.removeItem("solana_wallet");
+    localStorage.removeItem("eth_wallet");
     setSavedWallet("");
     onWalletUpdate?.("");
     toast({
@@ -100,7 +158,7 @@ export default function WalletConnect({ onWalletUpdate }: WalletConnectProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Wallet className="w-5 h-5" />
-          Solana Wallet
+          Ethereum Wallet
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -123,7 +181,7 @@ export default function WalletConnect({ onWalletUpdate }: WalletConnectProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => window.open(`https://solscan.io/account/${savedWallet}`, '_blank')}
+                  onClick={() => window.open(`https://basescan.org/address/${savedWallet}`, '_blank')}
                   className="h-8 w-8 p-0"
                 >
                   <ExternalLink className="w-4 h-4" />
@@ -131,7 +189,7 @@ export default function WalletConnect({ onWalletUpdate }: WalletConnectProps) {
               </div>
             </div>
             <p className="text-sm text-muted-foreground">
-              Your meme coins will be sent to this wallet when you vote on polls.
+              Your Base network ERC-20 tokens will be sent to this wallet when you vote on polls.
             </p>
             <Button 
               variant="outline" 
@@ -144,41 +202,50 @@ export default function WalletConnect({ onWalletUpdate }: WalletConnectProps) {
         ) : (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Connect your Solana wallet to receive meme coins when you vote.
+              Connect your Ethereum wallet to receive Base network tokens when you vote.
             </p>
+            
+            {window.ethereum ? (
+              <div className="space-y-2">
+                <Button 
+                  onClick={connectMetaMask}
+                  disabled={isConnecting}
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                >
+                  {isConnecting ? "Connecting..." : "Connect with MetaMask"}
+                </Button>
+                <div className="text-center text-xs text-muted-foreground">or</div>
+              </div>
+            ) : (
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="text-sm text-orange-400 mb-2">MetaMask not detected</p>
+                <a 
+                  href="https://metamask.io" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline text-sm"
+                >
+                  Install MetaMask
+                </a>
+              </div>
+            )}
+            
             <div className="flex gap-2">
               <Input
-                placeholder="Enter your Solana wallet address..."
+                placeholder="Enter your Ethereum wallet address (0x...)..."
                 value={walletAddress}
                 onChange={(e) => setWalletAddress(e.target.value)}
                 className="flex-1"
               />
               <Button 
-                onClick={handleSaveWallet}
+                onClick={handleManualWallet}
                 disabled={isConnecting || !walletAddress.trim()}
               >
                 {isConnecting ? "Connecting..." : "Connect"}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Don't have a Solana wallet? Try{" "}
-              <a 
-                href="https://phantom.app" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                Phantom
-              </a>{" "}
-              or{" "}
-              <a 
-                href="https://solflare.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                Solflare
-              </a>
+              Enter your Ethereum wallet address or use MetaMask for automatic connection.
             </p>
           </div>
         )}

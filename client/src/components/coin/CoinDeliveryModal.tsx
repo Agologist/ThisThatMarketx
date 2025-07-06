@@ -31,26 +31,26 @@ export default function CoinDeliveryModal({
 
   console.log("🔄 CoinDeliveryModal render:", { isOpen, coinName, coinSymbol, option, pollId });
 
-  const validateSolanaAddress = (address: string): boolean => {
-    // Basic Solana address validation - should be 32-44 characters, alphanumeric + specific chars
-    const solanaAddressRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-    return solanaAddressRegex.test(address);
+  const validateEthereumAddress = (address: string): boolean => {
+    // Basic Ethereum address validation - should be 0x + 40 hex characters
+    const ethereumAddressRegex = /^0x[a-fA-F0-9]{40}$/;
+    return ethereumAddressRegex.test(address);
   };
 
   const handleReceiveInWallet = async () => {
     if (!walletAddress.trim()) {
       toast({
         title: "Wallet Address Required",
-        description: "Please enter your Solana wallet address to receive the coin.",
+        description: "Please enter your Ethereum wallet address to receive the token.",
         variant: "destructive",
       });
       return;
     }
 
-    if (!validateSolanaAddress(walletAddress.trim())) {
+    if (!validateEthereumAddress(walletAddress.trim())) {
       toast({
         title: "Invalid Wallet Address",
-        description: "Please enter a valid Solana wallet address.",
+        description: "Please enter a valid Ethereum wallet address (0x...).",
         variant: "destructive",
       });
       return;
@@ -109,20 +109,20 @@ export default function CoinDeliveryModal({
           <div className="space-y-3">
             <div>
               <Label htmlFor="wallet-address" className="text-sm font-medium">
-                Your Solana Wallet Address (Optional)
+                Your Ethereum Wallet Address (Optional)
               </Label>
               <div className="flex items-center gap-2 mt-1">
                 <Wallet className="w-4 h-4 text-muted-foreground" />
                 <Input
                   id="wallet-address"
-                  placeholder="Enter your Solana wallet address..."
+                  placeholder="Enter your Ethereum wallet address (0x...)..."
                   value={walletAddress}
                   onChange={(e) => setWalletAddress(e.target.value)}
                   className="flex-1"
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Don't have a wallet? Try <a href="https://phantom.app" target="_blank" rel="noopener noreferrer" className="text-yellow-600 hover:underline">Phantom</a> or <a href="https://solflare.com" target="_blank" rel="noopener noreferrer" className="text-yellow-600 hover:underline">Solflare</a>
+                Don't have a wallet? Try <a href="https://metamask.io" target="_blank" rel="noopener noreferrer" className="text-yellow-600 hover:underline">MetaMask</a> for Base network tokens
               </p>
             </div>
           </div>

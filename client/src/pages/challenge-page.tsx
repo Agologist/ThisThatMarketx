@@ -151,9 +151,9 @@ export default function ChallengePage() {
         console.log("Backend requesting wallet choice for coin generation");
         console.log("Making second API call with wallet preference...");
         
-        // Check if user has connected a Solana wallet
-        const savedWallet = localStorage.getItem("solana_wallet");
-        console.log("Checking for saved Solana wallet:", savedWallet ? `${savedWallet.slice(0, 8)}...${savedWallet.slice(-8)}` : "none");
+        // Check if user has connected an Ethereum wallet
+        const savedWallet = localStorage.getItem("eth_wallet");
+        console.log("Checking for saved Ethereum wallet:", savedWallet ? `${savedWallet.slice(0, 8)}...${savedWallet.slice(-6)}` : "none");
         
         const walletPayload = { 
           option: selectedOption,
