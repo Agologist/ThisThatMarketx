@@ -307,6 +307,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add global POST interceptor to catch all POST requests
+  app.use((req, res, next) => {
+    if (req.method === 'POST') {
+      console.log(`🚨 ALL POST INTERCEPTOR: ${req.method} ${req.path} at ${new Date().toISOString()}`);
+      console.log(`🚨 Body:`, JSON.stringify(req.body));
+      console.log(`🚨 Headers:`, JSON.stringify(req.headers));
+    }
+    next();
+  });
+
   app.post("/api/polls/:id/vote", async (req, res) => {
     console.log(`🚨🚨🚨 POST ROUTE ENTRY: /api/polls/:id/vote called at ${new Date().toISOString()} 🚨🚨🚨`);
     console.log(`🚨🚨🚨 THIS IS THE VOTING POST ROUTE - IF YOU SEE THIS, VOTE SUBMISSION IS WORKING 🚨🚨🚨`);
