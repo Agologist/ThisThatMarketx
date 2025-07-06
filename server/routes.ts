@@ -382,9 +382,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`🔄 About to increment poll vote count for poll ${pollId}, option ${option}`);
       
       // Update poll vote count
-      await storage.incrementPollVote(pollId, option);
+      try {
+        await storage.incrementPollVote(pollId, option);
+        console.log(`✅ Poll vote count updated successfully`);
+      } catch (incrementError) {
+        console.error('❌ ERROR incrementing poll vote count:', incrementError.message);
+        console.error('❌ INCREMENT ERROR STACK:', incrementError.stack);
+        // Continue execution even if increment fails
+      }
       
-      console.log(`✅ Poll vote count updated successfully`);
       console.log(`🔗 About to process coin generation for poll ${pollId}`);
       
       console.log(`⚡ STARTING COIN GENERATION SECTION - this should always appear`);
