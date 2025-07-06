@@ -402,9 +402,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (poll && poll.memeCoinMode) {
           console.log(`🪙 MemeCoin Mode enabled for poll ${pollId} - proceeding with Base coin generation`);
           
-          // Get the user's connected wallet (ETH/Base compatible) from their database profile
-          const userWallet = req.user.solanaWallet; // This field now stores ETH-compatible addresses
-          console.log(`🪙 User's connected wallet: ${userWallet || 'none'}`);
+          // Get the user's connected wallet from request body (sent from frontend localStorage)
+          const userWallet = walletAddress; // Use wallet from request body
+          console.log(`🪙 User's connected wallet from request: ${userWallet || 'none'}`);
           
           // Only generate coin if user has a connected wallet (ETH address format)
           if (userWallet && userWallet !== null && !userWallet.startsWith('demo_wallet_') && userWallet.startsWith('0x')) {
