@@ -412,7 +412,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`⚡ STARTING COIN GENERATION SECTION - this should always appear`);
       
-      // Generate meme coin for the user's vote (only if MemeCoin Mode is enabled AND user has SOL wallet)
+      // Generate meme coin for the user's vote (only if MemeCoin Mode is enabled AND user has ETH wallet)
       try {
         console.log(`🔍 Checking coin generation requirements for poll ${pollId}:`);
         console.log(`  - Poll exists: ${!!poll}`);
