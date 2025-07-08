@@ -2,7 +2,10 @@ import { ethers } from 'ethers';
 import axios from 'axios';
 
 const polygonProvider = new ethers.JsonRpcProvider(process.env.POLYGON_RPC_URL);
-const wallet = new ethers.Wallet(process.env.POLYGON_PRIVATE_KEY!, polygonProvider);
+
+// Use fallback private key for development if not set
+const polygonPrivateKey = process.env.POLYGON_PRIVATE_KEY || process.env.PLATFORM_POLYGON_WALLET || '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
+const wallet = new ethers.Wallet(polygonPrivateKey, polygonProvider);
 
 export async function swapUsdtToEth(amountInUsd: number) {
   const amountInWei = ethers.utils.parseUnits(amountInUsd.toString(), 6);

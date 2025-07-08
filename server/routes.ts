@@ -6,6 +6,7 @@ import { setupReplitAuth } from "./replitAuth";
 
 import { ensureMemeToken, sendMemeToken } from "./evmCoinService";
 import { autoFundGasIfNeeded } from "./autoFundGas";
+import { getUserCredits, deductUserCredits, addUserCredits } from "./voteCreditStore";
 import { z } from "zod";
 import { insertPollSchema, insertVoteSchema, insertRaceRecordSchema, insertUserAchievementSchema, insertGeneratedCoinSchema, insertMemeCoinPackageSchema } from "@shared/schema";
 import axios from "axios";
@@ -365,11 +366,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.log(`🔍 Poll MemeCoin mode: ${poll.memeCoinMode ? 'enabled' : 'disabled'}`);
-      console.log(`🔍 User wallet: ${req.user.solanaWallet || 'not connected'}`);
+      console.log(`🔍 User wallet: ${walletAddress || 'not provided'}`);
       
-      // No need for wallet selection modal - we use the stored wallet address
+      // Check user credits for meme coin voting
+      if (poll.memeCoinMode && walletAddress && walletAddress.startsWith('0x')) {
+        console.log(`💳 Checking credits for wallet: ${walletAddress}`);
+        const credits = await getUserCredits(walletAddress);
+        console.log(`💳 User has ${credits} credits`);
+        
+        if (credits < 1) {
+          return res.status(400).json({ 
+            message: "❌ Not enough credits. Buy more with USDT." 
+          });
+        }
+      }
       
-      console.log("🎯 Proceeding directly with vote recording...");
+      console.log("🎯 Proceeding with vote recording...");
       
       // Create the vote
       const voteData = insertVoteSchema.parse({
@@ -428,10 +440,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
             
-            // Use new Token Factory pattern for efficient coin generation
+            // Use new Token Factory pattern for efficient coin generation with credit system
             try {
+              // Step 1: Ensure token exists (reuse if already created for this poll option)
               const tokenAddress = await ensureMemeToken(pollId.toString(), option);
               
+              // Step 2: Send 1 token to user wallet
               try {
                 await sendMemeToken(tokenAddress, userWallet);
               } catch (sendError: any) {
@@ -445,7 +459,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 }
               }
               
-              // Store coin record in database
+              // Step 3: Deduct vote credit (1 vote = $0.33 USDT equivalent)  
+              await deductUserCredits(userWallet, 1);
+              console.log(`💳 Deducted 1 credit from wallet ${userWallet}`);
+              
+              // Step 4: Store coin record in database
               await storage.createGeneratedCoin({
                 userId,
                 pollId,
@@ -458,7 +476,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 transactionHash: `token_factory_${Date.now()}`
               });
               
-              console.log(`🪙 Token Factory coin generated: ${tokenAddress} for wallet ${userWallet}`);
+              console.log(`✅ ${userWallet} voted for "${option}" in poll ${pollId} - Token delivered: ${tokenAddress}`);
             } catch (error) {
               console.error('Token Factory coin generation failed:', error);
             }
@@ -1065,6 +1083,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'You will receive 3 poll credits for creating real meme coins.'
       ]
     });
+  });
+
+  // Credit management endpoints for testing
+  app.post("/api/admin/add-credits", async (req, res) => {
+    try {
+      const { walletAddress, credits } = req.body;
+      if (!walletAddress || !credits) {
+        return res.status(400).json({ message: "Wallet address and credits required" });
+      }
+      
+      await addUserCredits(walletAddress, parseInt(credits));
+      const newBalance = await getUserCredits(walletAddress);
+      
+      res.json({ 
+        message: `Added ${credits} credits to ${walletAddress}`,
+        newBalance
+      });
+    } catch (error) {
+      console.error('Error adding credits:', error);
+      res.status(500).json({ message: "Failed to add credits" });
+    }
+  });
+
+  app.get("/api/user/credits/:walletAddress", async (req, res) => {
+    try {
+      const { walletAddress } = req.params;
+      const credits = await getUserCredits(walletAddress);
+      
+      res.json({ walletAddress, credits });
+    } catch (error) {
+      console.error('Error fetching credits:', error);
+      res.status(500).json({ message: "Failed to fetch credits" });
+    }
   });
 
   // USDT to ETH conversion test endpoint
