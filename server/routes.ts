@@ -445,18 +445,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Step 1: Ensure token exists (reuse if already created for this poll option)
               const tokenAddress = await ensureMemeToken(pollId.toString(), option);
               
-              // Step 2: Send 1 token to user wallet
+              // Step 2: Send 1 token to user wallet with graceful failure handling
               try {
                 await sendMemeToken(tokenAddress, userWallet);
-              } catch (sendError: any) {
-                if (sendError.message && sendError.message.includes('insufficient funds')) {
-                  console.log('⛽ Gas funding needed, attempting auto-refill...');
-                  await autoFundGasIfNeeded();
-                  // Retry token send after funding
-                  await sendMemeToken(tokenAddress, userWallet);
-                } else {
-                  throw sendError;
-                }
+              } catch (err: any) {
+                console.error('Token delivery failed:', err);
+                await autoFundGasIfNeeded(); // auto-refund gas
+                throw new Error("Vote recorded, but token delivery delayed.");
               }
               
               // Step 3: Deduct vote credit (1 vote = $0.33 USDT equivalent)  
@@ -913,15 +908,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         try {
           await sendMemeToken(tokenAddress, walletAddress);
-        } catch (sendError: any) {
-          if (sendError.message && sendError.message.includes('insufficient funds')) {
-            console.log('⛽ Gas funding needed, attempting auto-refill...');
-            await autoFundGasIfNeeded();
-            // Retry token send after funding
-            await sendMemeToken(tokenAddress, walletAddress);
-          } else {
-            throw sendError;
-          }
+        } catch (err: any) {
+          console.error('Token delivery failed:', err);
+          await autoFundGasIfNeeded(); // auto-refund gas
+          throw new Error("Token generation completed, but delivery delayed.");
         }
         
         // Store coin record in database
