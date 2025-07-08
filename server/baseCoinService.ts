@@ -524,16 +524,16 @@ export class BaseCoinService {
       // Step 1: Check Polygon USDT balance
       const polygonProvider = new ethers.JsonRpcProvider('https://polygon-rpc.com');
       
-      // Use the same wallet as the Base wallet for consistency
-      const privateKey = process.env.PLATFORM_PRIVATE_KEY || process.env.SOLANA_PRIVATE_KEY;
-      if (!privateKey) {
+      // Use the same Ethereum wallet for consistency (from PLATFORM_POLYGON_WALLET)
+      const ethereumPrivateKey = process.env.PLATFORM_POLYGON_WALLET;
+      if (!ethereumPrivateKey) {
         return {
           success: false,
-          error: 'No private key configured for cross-chain conversion'
+          error: 'No Ethereum private key configured for cross-chain conversion'
         };
       }
       
-      const polygonWallet = new ethers.Wallet(privateKey.trim(), polygonProvider);
+      const polygonWallet = new ethers.Wallet(ethereumPrivateKey.trim(), polygonProvider);
       
       const polygonUSDTContract = new ethers.Contract(
         '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
