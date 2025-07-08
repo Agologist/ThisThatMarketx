@@ -1018,6 +1018,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Mock coin verification endpoint
+  app.get("/api/admin/verify-coins", async (req, res) => {
+    try {
+      const result = await storage.getAllGeneratedCoins();
+      
+      // Group by poll and provide verification details
+      const verificationData = result.map((coin: any) => ({
+        pollId: coin.pollId,
+        userId: coin.userId,
+        coinName: coin.coinName,
+        symbol: coin.coinSymbol,
+        contractAddress: coin.coinAddress,
+        blockchain: coin.blockchain,
+        status: coin.status,
+        createdAt: coin.createdAt,
+        isVerifiable: coin.status === 'mock' ? 'NO - Mock token (database only)' : 'YES - Real blockchain token',
+        explorerLink: coin.status === 'mock' 
+          ? 'Not available - mock token' 
+          : coin.blockchain === 'Base' 
+            ? `https://basescan.org/token/${coin.coinAddress}`
+            : `https://explorer.solana.com/address/${coin.coinAddress}`
+      }));
+
+      res.json({
+        totalCoins: result.length,
+        mockCoins: result.filter((c: any) => c.status === 'mock').length,
+        realCoins: result.filter((c: any) => c.status !== 'mock').length,
+        coins: verificationData
+      });
+    } catch (error) {
+      console.error('Error verifying coins:', error);
+      res.status(500).json({ message: "Failed to verify coins" });
+    }
+  });
+
   // Package Management API endpoints
   app.post("/api/packages/purchase", async (req, res) => {
     if (!req.isAuthenticated()) {
