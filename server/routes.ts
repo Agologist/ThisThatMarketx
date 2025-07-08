@@ -41,11 +41,7 @@ function getWalletAddressFromPrivateKey(privateKey: string): string {
 // Platform wallet configuration for receiving payments
 const PLATFORM_CONFIG = {
   // Polygon network wallet for receiving USDT payments
-  polygonWallet: process.env.PLATFORM_POLYGON_WALLET 
-    ? getWalletAddressFromPrivateKey(process.env.PLATFORM_POLYGON_WALLET)
-    : '0x742d35Cc6636C0532925a3b6F45bb678E9E9cD81', // Demo wallet
-  // Solana wallet for gas fee coverage (devnet for testing)
-  solanaWallet: process.env.PLATFORM_SOLANA_WALLET || 'A1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q7R8S9T0U1V2W3X4Y5Z6', // Demo wallet
+  polygonWallet: process.env.POLYGON_BACKEND_WALLET || '0x742d35Cc6636C0532925a3b6F45bb678E9E9cD81', // Demo wallet
   // Package pricing
   packagePrice: '1.00', // $1 USDT
   packagePolls: 3, // 3 polls per package
@@ -840,13 +836,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Valid wallet address is required" });
       }
 
-      // Basic validation for Solana address format (base58, 32-44 characters)
-      if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(walletAddress)) {
-        return res.status(400).json({ message: "Invalid Solana wallet address format" });
+      // Basic validation for Ethereum address format
+      if (!/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
+        return res.status(400).json({ message: "Invalid Ethereum wallet address format" });
       }
 
-      // Update the user's Solana wallet address
-      await storage.updateUser(req.user.id, { solanaWallet: walletAddress });
+      // Update the user's wallet address
+      await storage.updateUser(req.user.id, { walletAddress });
       
       res.json({ 
         success: true, 

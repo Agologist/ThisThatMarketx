@@ -14,7 +14,7 @@ export const users = pgTable("users", {
   firebaseUid: text("firebase_uid").unique(),
   photoURL: text("photo_url"),
   replitId: text("replit_id").unique(),
-  solanaWallet: text("solana_wallet"),
+
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -27,7 +27,6 @@ export const insertUserSchema = createInsertSchema(users).pick({
   firebaseUid: true,
   photoURL: true,
   replitId: true,
-  solanaWallet: true,
 });
 
 // Poll model
@@ -157,7 +156,7 @@ export const generatedCoins = pgTable("generated_coins", {
   coinAddress: text("coin_address").notNull(),
   userWallet: text("user_wallet").notNull(),
   transactionHash: text("transaction_hash"),
-  blockchain: text("blockchain").default("Solana"), // Solana, Base, Ethereum, etc.
+  blockchain: text("blockchain").default("Base"), // Base, Ethereum, etc.
   createdAt: timestamp("created_at").defaultNow(),
   status: text("status").default("pending"), // pending, created, failed
 });

@@ -4,6 +4,12 @@
 A dynamic "This or That" polling application with interactive battle game mechanics. Users create time-limited challenges with two options, each with image avatars. The key feature is an interactive car battle game where voting impacts car movement in real-time sumo-style contests.
 
 ## Recent Changes
+- **July 8, 2025**: **COMPLETE ENVIRONMENT & LEGACY CLEANUP** - Full migration to Base network with EVM-only architecture
+  - **ENVIRONMENT**: Cleaned up .env with final variable list for Base + Polygon networks
+  - **SCHEMA**: Removed solanaWallet field from users table, updated generatedCoins blockchain default to "Base"
+  - **FILES**: Removed legacy Solana test files (test-coin-creation.js, test-complete-flow.js, etc.)
+  - **ROUTES**: Cleaned up PLATFORM_CONFIG to remove Solana wallet references
+  - **ARCHITECTURE**: Complete transition to EVM-only (Base + Polygon) with no Solana dependencies
 - **July 8, 2025**: **ANTI-REPLAY PROTECTION FULLY IMPLEMENTED** - Complete database-backed transaction deduplication system
   - **SECURITY**: Added processedTransactions table with unique transaction hash constraint
   - **PROTECTION**: Prevents duplicate credit allocation from same USDT transaction hash

@@ -167,7 +167,7 @@ export class MemStorage implements IStorage {
       firebaseUid: insertUser.firebaseUid || null,
       photoURL: insertUser.photoURL || null,
       replitId: insertUser.replitId || null,
-      solanaWallet: insertUser.solanaWallet || null
+
     };
     this.users.set(id, user);
     return user;
@@ -872,7 +872,12 @@ export class DatabaseStorage implements IStorage {
   async getUserAchievements(userId: number): Promise<(UserAchievement & Achievement)[]> {
     // Join userAchievements with achievements to get full data
     const result = await db.select({
-      ...userAchievements,
+      id: userAchievements.id,
+      userId: userAchievements.userId,
+      achievementId: userAchievements.achievementId,
+      unlockedAt: userAchievements.unlockedAt,
+      progress: userAchievements.progress,
+      completed: userAchievements.completed,
       name: achievements.name,
       description: achievements.description,
       iconName: achievements.iconName,
