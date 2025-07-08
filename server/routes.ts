@@ -817,6 +817,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin endpoint to manually trigger coin generation
+  app.post("/api/admin/generate-coin", async (req, res) => {
+    console.log('🔧 Admin coin generation endpoint called');
+    
+    if (!req.isAuthenticated()) {
+      console.log('❌ User not authenticated');
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const { pollId, userId, option, walletAddress } = req.body;
+      console.log('📝 Admin coin generation params:', { pollId, userId, option, walletAddress });
+      
+      // Get poll details
+      const poll = await storage.getPoll(pollId);
+      console.log('📊 Poll found:', poll ? 'Yes' : 'No', poll?.memeCoinMode ? 'MemeCoin enabled' : 'MemeCoin disabled');
+      if (!poll) {
+        return res.status(404).json({ message: "Poll not found" });
+      }
+
+      // Only generate if MemeCoin mode is enabled
+      if (!poll.memeCoinMode) {
+        return res.status(400).json({ message: "Poll does not have MemeCoin mode enabled" });
+      }
+
+      // Check if coin already exists
+      const existingCoin = await storage.getUserCoinForPoll(userId, pollId, option);
+      console.log('💰 Existing coin check:', existingCoin ? 'Found existing coin' : 'No existing coin');
+      if (existingCoin) {
+        return res.status(400).json({ message: "Coin already generated for this poll" });
+      }
+
+      // Get user package
+      const userPackage = await storage.getUserActivePackage(userId);
+      console.log('📦 User package:', userPackage ? 'Active package found' : 'No active package');
+      if (!userPackage) {
+        return res.status(400).json({ message: "No active package found" });
+      }
+
+      // Determine option text
+      const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
+      console.log('🏷️ Option text:', optionText);
+
+      // Generate coin using Base service
+      console.log('🚀 Starting coin generation with Base service...');
+      const result = await baseCoinService.createMemeCoin({
+        coinName: optionText,
+        userId,
+        pollId,
+        optionVoted: option,
+        userWallet: walletAddress
+      });
+
+      console.log('🎯 Coin generation result:', result);
+
+      if (result.success) {
+        res.json({
+          success: true,
+          message: "Coin generated successfully",
+          tokenAddress: result.tokenAddress,
+          transactionHash: result.transactionHash
+        });
+      } else {
+        res.status(500).json({ message: "Failed to generate coin" });
+      }
+    } catch (error) {
+      console.error('❌ Error in admin coin generation:', error);
+      res.status(500).json({ message: "Failed to generate coin", error: error.message });
+    }
+  });
+
   // Route for getting all votes that the user has cast
   app.get("/api/user/votes", async (req, res) => {
     if (!req.isAuthenticated()) {
