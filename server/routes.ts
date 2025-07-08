@@ -7,6 +7,7 @@ import { setupReplitAuth } from "./replitAuth";
 import { ensureMemeToken, sendMemeToken } from "./evmCoinService";
 import { autoFundGasIfNeeded } from "./autoFundGas";
 import { getUserCredits, deductUserCredits, addUserCredits } from "./voteCreditStore";
+import { verifyUsdtPayment } from "./walletMonitor";
 import { z } from "zod";
 import { insertPollSchema, insertVoteSchema, insertRaceRecordSchema, insertUserAchievementSchema, insertGeneratedCoinSchema, insertMemeCoinPackageSchema } from "@shared/schema";
 import axios from "axios";
@@ -1105,6 +1106,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching credits:', error);
       res.status(500).json({ message: "Failed to fetch credits" });
+    }
+  });
+
+  // USDT payment verification endpoint for manual credit allocation
+  app.post("/api/verify-payment", async (req, res) => {
+    try {
+      const { txHash, walletAddress } = req.body;
+      if (!txHash || !walletAddress) {
+        return res.status(400).json({ message: "Transaction hash and wallet address required" });
+      }
+      
+      const result = await verifyUsdtPayment(txHash, walletAddress);
+      
+      if (result.success) {
+        res.json({
+          success: true,
+          message: result.message,
+          credits: result.credits
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: result.message
+        });
+      }
+    } catch (error) {
+      console.error('Error verifying payment:', error);
+      res.status(500).json({ message: "Failed to verify payment" });
     }
   });
 

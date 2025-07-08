@@ -4,10 +4,13 @@
 A dynamic "This or That" polling application with interactive battle game mechanics. Users create time-limited challenges with two options, each with image avatars. The key feature is an interactive car battle game where voting impacts car movement in real-time sumo-style contests.
 
 ## Recent Changes
-- **July 8, 2025**: **COMPLETE VOTE-TRIGGER INTEGRATION SYSTEM IMPLEMENTED** - Full vote-to-meme-coin delivery pipeline operational
+- **July 8, 2025**: **COMPLETE CROSS-CHAIN CREDIT TRACKING SYSTEM IMPLEMENTED** - Automatic USDT payment detection and credit allocation
+  - **WALLET MONITOR**: Created server/walletMonitor.ts for USDT transfer detection on Polygon network
+  - **PAYMENT VERIFICATION**: Manual transaction verification system via POST /api/verify-payment
+  - **AUTOMATIC CREDITS**: $1 USDT = 3 vote credits conversion with wallet-based tracking
+  - **VOTE-TRIGGER INTEGRATION**: Complete vote-to-meme-coin delivery pipeline operational
   - **TOKEN FACTORY**: Replaced baseCoinService.ts with evmCoinService.ts using optimized Token Factory pattern
   - **CREDIT SYSTEM**: Implemented voteCreditStore.ts for 1 vote = 1 credit = $0.33 USDT enforcement
-  - **VOTE INTEGRATION**: Direct meme coin delivery after successful votes with automatic credit deduction
   - **GAS MANAGEMENT**: Auto-funding system with graceful failure handling and USDT→ETH conversion
   - **TOKEN REUSE**: Efficient `${pollId}:${choice}` key system prevents duplicate token creation
   - **API ENDPOINTS**: Credit management APIs for testing and production wallet funding
