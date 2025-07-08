@@ -1,5 +1,6 @@
 import { ethers } from 'ethers';
 import { addUserCredits } from './voteCreditStore';
+import { storage } from './storage';
 
 const polygonProvider = new ethers.JsonRpcProvider(process.env.POLYGON_RPC_URL || 'https://polygon-rpc.com');
 const usdtAddress = process.env.USDT_POLYGON_ADDRESS || '0xc2132D05D31c914a87C6611C10748AEb04B58e8F';
@@ -56,6 +57,17 @@ export function stopUsdtMonitor() {
 // Alternative: Manual transaction verification endpoint
 export async function verifyUsdtPayment(txHash: string, senderWallet: string): Promise<{ success: boolean; credits?: number; message: string }> {
   try {
+    console.log(`🔍 Manually verifying USDT payment - txHash: ${txHash}, sender: ${senderWallet}`);
+    
+    // Anti-replay protection: Check if transaction already processed
+    const existingTransaction = await storage.getProcessedTransaction(txHash);
+    if (existingTransaction) {
+      return { 
+        success: false, 
+        message: `Transaction ${txHash} already processed. Credits were previously allocated.` 
+      };
+    }
+    
     const receipt = await polygonProvider.getTransactionReceipt(txHash);
     if (!receipt) {
       return { success: false, message: "Transaction not found" };
@@ -85,7 +97,19 @@ export async function verifyUsdtPayment(txHash: string, senderWallet: string): P
       const credits = Math.floor(usd * 3);
       
       if (credits > 0) {
+        // Record transaction to prevent replay attacks
+        await storage.createProcessedTransaction({
+          txHash,
+          fromWallet: senderWallet.toLowerCase(),
+          toWallet: backendWallet,
+          usdtAmount: usd.toString(),
+          creditsGranted: credits,
+          blockNumber: receipt.blockNumber,
+          chain: "polygon"
+        });
+        
         await addUserCredits(senderWallet, credits);
+        console.log(`💰 Credited ${credits} credits to wallet ${senderWallet} for ${usd} USDT (tx: ${txHash}) - Anti-replay protection applied`);
         return { 
           success: true, 
           credits, 

@@ -211,3 +211,29 @@ export const insertMemeCoinPackageSchema = createInsertSchema(memeCoinPackages).
 
 export type InsertMemeCoinPackage = z.infer<typeof insertMemeCoinPackageSchema>;
 export type MemeCoinPackage = typeof memeCoinPackages.$inferSelect;
+
+// Processed Transactions table for anti-replay protection
+export const processedTransactions = pgTable("processed_transactions", {
+  id: serial("id").primaryKey(),
+  txHash: text("tx_hash").notNull().unique(), // Transaction hash to prevent replay
+  fromWallet: text("from_wallet").notNull(), // Sender wallet address
+  toWallet: text("to_wallet").notNull(), // Recipient wallet (platform wallet)
+  usdtAmount: text("usdt_amount").notNull(), // Amount in USDT
+  creditsGranted: integer("credits_granted").notNull(), // Number of credits granted
+  blockNumber: integer("block_number"), // Block number for verification
+  processedAt: timestamp("processed_at").defaultNow(), // When processed
+  chain: text("chain").notNull().default("polygon"), // blockchain network
+});
+
+export const insertProcessedTransactionSchema = createInsertSchema(processedTransactions).pick({
+  txHash: true,
+  fromWallet: true,
+  toWallet: true,
+  usdtAmount: true,
+  creditsGranted: true,
+  blockNumber: true,
+  chain: true,
+});
+
+export type InsertProcessedTransaction = z.infer<typeof insertProcessedTransactionSchema>;
+export type ProcessedTransaction = typeof processedTransactions.$inferSelect;

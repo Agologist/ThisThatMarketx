@@ -2,7 +2,8 @@ import {
   User, InsertUser, Poll, InsertPoll, Vote, InsertVote, 
   Achievement, UserAchievement, InsertUserAchievement, RaceRecord, InsertRaceRecord,
   GeneratedCoin, InsertGeneratedCoin, MemeCoinPackage, InsertMemeCoinPackage,
-  users, polls, votes, achievements, userAchievements, raceRecords, generatedCoins, memeCoinPackages
+  ProcessedTransaction, InsertProcessedTransaction,
+  users, polls, votes, achievements, userAchievements, raceRecords, generatedCoins, memeCoinPackages, processedTransactions
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -70,6 +71,10 @@ export interface IStorage {
   getTokenAddress(tokenKey: string): Promise<string | null>;
   setTokenAddress(tokenKey: string, tokenAddress: string): Promise<void>;
   
+  // Processed Transaction methods for anti-replay protection
+  getProcessedTransaction(txHash: string): Promise<ProcessedTransaction | undefined>;
+  createProcessedTransaction(transaction: InsertProcessedTransaction): Promise<ProcessedTransaction>;
+  
   // Session store
   sessionStore: any; // Using any to avoid type conflicts with session store
 }
@@ -84,6 +89,7 @@ export class MemStorage implements IStorage {
   private generatedCoins: Map<number, GeneratedCoin>;
   private memeCoinPackages: Map<number, MemeCoinPackage>;
   private tokenAddresses: Map<string, string>; // tokenKey -> tokenAddress
+  private processedTransactions: Map<string, ProcessedTransaction>; // txHash -> ProcessedTransaction
   
   sessionStore: any; // Using any to avoid type conflicts with session store
   currentId: { [key: string]: number };
@@ -98,6 +104,7 @@ export class MemStorage implements IStorage {
     this.generatedCoins = new Map();
     this.memeCoinPackages = new Map();
     this.tokenAddresses = new Map();
+    this.processedTransactions = new Map();
     
     this.currentId = {
       users: 1,
@@ -107,7 +114,8 @@ export class MemStorage implements IStorage {
       achievements: 1,
       userAchievements: 1,
       generatedCoins: 1,
-      memeCoinPackages: 1
+      memeCoinPackages: 1,
+      processedTransactions: 1
     };
     
     this.sessionStore = new MemoryStore({
@@ -418,7 +426,8 @@ export class MemStorage implements IStorage {
       id, 
       createdAt: now,
       status: insertCoin.status || 'created',
-      transactionHash: insertCoin.transactionHash || null
+      transactionHash: insertCoin.transactionHash || null,
+      blockchain: insertCoin.blockchain || null
     };
     this.generatedCoins.set(id, coin);
     return coin;
@@ -517,6 +526,27 @@ export class MemStorage implements IStorage {
 
   async setTokenAddress(tokenKey: string, tokenAddress: string): Promise<void> {
     this.tokenAddresses.set(tokenKey, tokenAddress);
+  }
+
+  // Processed Transaction methods for anti-replay protection
+  async getProcessedTransaction(txHash: string): Promise<ProcessedTransaction | undefined> {
+    return this.processedTransactions.get(txHash);
+  }
+
+  async createProcessedTransaction(insertTransaction: InsertProcessedTransaction): Promise<ProcessedTransaction> {
+    const id = this.currentId.processedTransactions++;
+    const now = new Date();
+    
+    const transaction: ProcessedTransaction = {
+      ...insertTransaction,
+      id,
+      processedAt: now,
+      blockNumber: insertTransaction.blockNumber ?? null,
+      chain: insertTransaction.chain ?? "polygon"
+    };
+    
+    this.processedTransactions.set(insertTransaction.txHash, transaction);
+    return transaction;
   }
   
   // Seed initial achievements
@@ -1055,6 +1085,25 @@ export class DatabaseStorage implements IStorage {
       
       await db.insert(achievements).values(achievementsData);
     }
+  }
+
+  // Processed Transaction methods for anti-replay protection
+  async getProcessedTransaction(txHash: string): Promise<ProcessedTransaction | undefined> {
+    const [transaction] = await db.select()
+      .from(processedTransactions)
+      .where(eq(processedTransactions.txHash, txHash));
+    return transaction;
+  }
+
+  async createProcessedTransaction(insertTransaction: InsertProcessedTransaction): Promise<ProcessedTransaction> {
+    const [transaction] = await db.insert(processedTransactions)
+      .values({
+        ...insertTransaction,
+        blockNumber: insertTransaction.blockNumber ?? null,
+        chain: insertTransaction.chain ?? "polygon"
+      })
+      .returning();
+    return transaction;
   }
 }
 

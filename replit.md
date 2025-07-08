@@ -4,6 +4,13 @@
 A dynamic "This or That" polling application with interactive battle game mechanics. Users create time-limited challenges with two options, each with image avatars. The key feature is an interactive car battle game where voting impacts car movement in real-time sumo-style contests.
 
 ## Recent Changes
+- **July 8, 2025**: **ANTI-REPLAY PROTECTION FULLY IMPLEMENTED** - Complete database-backed transaction deduplication system
+  - **SECURITY**: Added processedTransactions table with unique transaction hash constraint
+  - **PROTECTION**: Prevents duplicate credit allocation from same USDT transaction hash
+  - **DATABASE**: PostgreSQL integration with proper schema migration and type safety
+  - **VERIFICATION**: Manual payment verification now checks transaction history before crediting
+  - **LOGGING**: Enhanced debugging with transaction processing confirmation messages
+  - **STORAGE**: Updated both MemStorage and DatabaseStorage to support anti-replay functionality
 - **July 8, 2025**: **COMPLETE CROSS-CHAIN CREDIT TRACKING SYSTEM IMPLEMENTED** - Automatic USDT payment detection and credit allocation
   - **WALLET MONITOR**: Created server/walletMonitor.ts for USDT transfer detection on Polygon network
   - **PAYMENT VERIFICATION**: Manual transaction verification system via POST /api/verify-payment
