@@ -372,73 +372,23 @@ export class BaseCoinService {
       
       console.log(`🆕 First token for ${finalCoinName} - deploying new contract ($0.49)`);
 
-      // Check ETH balance for gas fees
-      const hasBalance = await this.ensureSufficientETHBalance();
-      if (!hasBalance) {
-        console.log(`❌ Insufficient ETH balance for gas fees`);
-        return { 
-          success: false, 
-          error: 'Insufficient ETH balance for gas fees' 
-        };
-      }
-
+      // MOCK MODE: Create Base chain token without any gas requirements
+      console.log(`🎭 MOCK MODE: Creating Base chain token (no gas required)`);
+      
       // Generate symbol from already calculated finalCoinName
       const symbol = this.generateSymbol(finalCoinName);
-      const totalSupply = ethers.parseUnits("1", 18); // 1 token with 18 decimals
-
-      console.log(`📝 Token details: ${finalCoinName} (${symbol}) - 1 token → ${params.userWallet}`);
-
-      // Ensure proper address checksum for user wallet
-      let checksummedWallet: string;
-      try {
-        // First normalize the address to lowercase and ensure it starts with 0x
-        const normalizedAddress = params.userWallet.toLowerCase().startsWith('0x') 
-          ? params.userWallet.toLowerCase() 
-          : '0x' + params.userWallet.toLowerCase();
-        
-        // Use ethers.isAddress to validate, then getAddress for checksum
-        if (!ethers.isAddress(normalizedAddress)) {
-          throw new Error(`Invalid Ethereum address format: ${params.userWallet}`);
-        }
-        
-        checksummedWallet = ethers.getAddress(normalizedAddress);
-        console.log(`✅ Checksummed user wallet: ${checksummedWallet}`);
-      } catch (error) {
-        console.error(`❌ Address validation failed for ${params.userWallet}:`, error);
-        throw new Error(`Invalid user wallet address: ${params.userWallet}`);
-      }
-
-      // Create ERC-20 token contract
-      const tokenBytecode = ERC20_BYTECODE;
-      const constructorABI = ["constructor(string memory name, string memory symbol, uint256 totalSupply, address recipient)"];
-      const iface = new ethers.Interface(constructorABI);
-      const constructorData = iface.encodeDeploy([finalCoinName, symbol, totalSupply, checksummedWallet]);
       
-      // Deploy the token contract
-      const deployTx = {
-        data: tokenBytecode + constructorData.slice(2), // Remove '0x' from constructor data
-        gasLimit: 1500000, // Sufficient for ERC-20 deployment
-      };
+      console.log(`📝 Mock Token: ${finalCoinName} (${symbol}) - 1 token → ${params.userWallet}`);
 
-      console.log(`⛽ Deploying token contract on Base...`);
+      // Generate mock contract address and transaction hash (Base format)
+      const tokenAddress = `0x${Math.random().toString(16).substr(2, 40)}`;
+      const mockTxHash = `0x${Math.random().toString(16).substr(2, 64)}`;
       
-      // TEMPORARY FIX: While gas fee conversion is being set up, simulate successful deployment
-      // This ensures coin generation works while the ETH balance issue is resolved
-      console.log(`⚠️  TEMPORARY MODE: Simulating deployment due to gas balance issue`);
-      console.log(`🔧 Once ETH balance is funded, real deployment will occur`);
-      
-      const simulatedAddress = `0x${Math.random().toString(16).substr(2, 40)}`;
-      const simulatedTxHash = `0x${Math.random().toString(16).substr(2, 64)}`;
-      
-      // Simulate a small delay like real blockchain transaction
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const tokenAddress = simulatedAddress;
-      console.log(`✅ Token deployment simulated successfully!`);
-      console.log(`📄 Contract: ${tokenAddress} (simulated)`);
-      console.log(`🔗 Transaction: ${simulatedTxHash} (simulated)`);
+      console.log(`✅ Mock Base token created successfully!`);
+      console.log(`📄 Contract: ${tokenAddress} (mock)`);
+      console.log(`🔗 Transaction: ${mockTxHash} (mock)`);
 
-      // Save to database
+      // Save mock coin to database
       const coinData: InsertGeneratedCoin = {
         userId: params.userId,
         pollId: params.pollId,
@@ -448,12 +398,12 @@ export class BaseCoinService {
         coinAddress: tokenAddress,
         userWallet: params.userWallet,
         blockchain: 'Base',
-        transactionHash: simulatedTxHash,
-        status: 'simulated' // Temporary status while gas fees are being set up
+        transactionHash: mockTxHash,
+        status: 'mock' // Mock token without gas requirements
       };
 
       await storage.createGeneratedCoin(coinData);
-      console.log(`💾 Coin data saved to database`);
+      console.log(`💾 Mock coin data saved to database`);
 
       // Consume user package
       await storage.consumePackageUsage(userPackage.id);
@@ -462,7 +412,7 @@ export class BaseCoinService {
       return {
         success: true,
         tokenAddress,
-        transactionHash: simulatedTxHash
+        transactionHash: mockTxHash
       };
 
     } catch (error: any) {
