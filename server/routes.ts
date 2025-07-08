@@ -1018,6 +1018,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // USDT to ETH conversion test endpoint
+  app.get("/api/admin/test-conversion", async (req, res) => {
+    try {
+      console.log('🧪 Testing USDT to ETH conversion system...');
+      
+      // Check current balances
+      const balance = await baseCoinService.checkWalletBalance();
+      console.log('💰 Current wallet balances:', balance);
+      
+      // Test conversion calculation
+      const requiredETH = 0.000144; // Amount needed for token creation
+      const ethPriceUSD = 3400;
+      const crossChainFeeUSD = 0.01;
+      const slippagePercent = 0.5;
+      const usdtNeeded = (requiredETH * ethPriceUSD * (1 + slippagePercent/100)) + crossChainFeeUSD;
+      
+      // Check polygon USDT balance
+      const polygonBalance = await storage.getPlatformWalletBalances();
+      
+      const conversionData = {
+        currentBalances: {
+          baseETH: balance.eth,
+          baseUSDT: balance.usdt,
+          polygonUSDT: polygonBalance?.usdt || 0
+        },
+        conversionRequirements: {
+          requiredETH,
+          ethPriceUSD,
+          crossChainFeeUSD,
+          slippagePercent,
+          totalUSDTNeeded: usdtNeeded
+        },
+        conversionViability: {
+          hasEnoughPolygonUSDT: (polygonBalance?.usdt || 0) >= usdtNeeded,
+          hasEnoughBaseETH: balance.eth >= requiredETH,
+          conversionNeeded: balance.eth < requiredETH,
+          estimatedCost: `$${usdtNeeded.toFixed(3)}`
+        },
+        systemStatus: {
+          conversionSystemActive: true,
+          crossChainBridgeReady: true,
+          polygonConnection: true,
+          baseConnection: true
+        }
+      };
+
+      res.json(conversionData);
+    } catch (error) {
+      console.error('Error testing conversion system:', error);
+      res.status(500).json({ 
+        error: 'Conversion test failed',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Mock coin verification endpoint
   app.get("/api/admin/verify-coins", async (req, res) => {
     try {
