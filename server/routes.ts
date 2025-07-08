@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { setupReplitAuth } from "./replitAuth";
 import { coinService } from "./coinService";
-import { baseCoinService } from "./baseCoinService";
+import { ensureMemeToken, sendMemeToken } from "./evmCoinService";
 import { z } from "zod";
 import { insertPollSchema, insertVoteSchema, insertRaceRecordSchema, insertUserAchievementSchema, insertGeneratedCoinSchema, insertMemeCoinPackageSchema } from "@shared/schema";
 import axios from "axios";
@@ -427,15 +427,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
             
-            const coinResult = await baseCoinService.createMemeCoin({
-              coinName: optionText,
-              userId,
-              pollId,
-              optionVoted: option,
-              userWallet: userWallet
-            });
+            // Use new Token Factory pattern for efficient coin generation
+            try {
+              const tokenAddress = await ensureMemeToken(pollId.toString(), option);
+              await sendMemeToken(tokenAddress, userWallet);
+              
+              // Store coin record in database
+              await storage.createGeneratedCoin({
+                userId,
+                pollId,
+                option,
+                coinName: `${pollId}:${option}`,
+                coinSymbol: `${pollId.toString().slice(0, 4)}${option}`.toUpperCase(),
+                coinAddress: tokenAddress,
+                userWallet,
+                status: 'created',
+                transactionHash: `token_factory_${Date.now()}`
+              });
+              
+              console.log(`🪙 Token Factory coin generated: ${tokenAddress} for wallet ${userWallet}`);
+            } catch (error) {
+              console.error('Token Factory coin generation failed:', error);
+            }
             
-            console.log(`🪙 Real Base meme coin generated for wallet ${userWallet}:`, coinResult);
+
           } else {
             console.log(`🚫 No valid ETH wallet connected - skipping coin generation (demo mode)`);
           }
@@ -860,31 +875,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const optionText = option === 'A' ? poll.optionAText : poll.optionBText;
       console.log('🏷️ Option text:', optionText);
 
-      // Generate coin using Base service
-      console.log('🚀 Starting coin generation with Base service...');
-      const result = await baseCoinService.createMemeCoin({
-        coinName: optionText,
-        userId,
-        pollId,
-        optionVoted: option,
-        userWallet: walletAddress
-      });
-
-      console.log('🎯 Coin generation result:', result);
-
-      if (result.success) {
-        res.json({
-          success: true,
-          message: "Coin generated successfully",
-          tokenAddress: result.tokenAddress,
-          transactionHash: result.transactionHash
+      // Generate coin using Token Factory
+      console.log('🚀 Starting coin generation with Token Factory...');
+      try {
+        const tokenAddress = await ensureMemeToken(pollId.toString(), option);
+        await sendMemeToken(tokenAddress, walletAddress);
+        
+        // Store coin record in database
+        await storage.createGeneratedCoin({
+          userId,
+          pollId,
+          option,
+          coinName: `${pollId}:${option}`,
+          coinSymbol: `${pollId.toString().slice(0, 4)}${option}`.toUpperCase(),
+          coinAddress: tokenAddress,
+          userWallet: walletAddress,
+          status: 'created',
+          transactionHash: `token_factory_${Date.now()}`
         });
-      } else {
+        
+        const result = { success: true, tokenAddress };
+        console.log(`🪙 Token Factory result:`, result);
+        
+        res.json({ 
+          message: "Coin generated successfully", 
+          tokenAddress,
+          success: true 
+        });
+      } catch (error) {
+        console.error('🎯 Coin generation failed:', error);
         res.status(500).json({ message: "Failed to generate coin" });
       }
     } catch (error) {
-      console.error('❌ Error in admin coin generation:', error);
-      res.status(500).json({ message: "Failed to generate coin", error: error.message });
+      console.error("❌ Admin coin generation error:", error);
+      res.status(500).json({ message: "Failed to generate coin" });
     }
   });
 

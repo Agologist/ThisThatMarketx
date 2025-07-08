@@ -66,6 +66,10 @@ export interface IStorage {
   getPackageByTxHash(txHash: string): Promise<MemeCoinPackage | undefined>;
   updatePackageStatus(packageId: number, status: string): Promise<void>;
   
+  // Token address registry methods
+  getTokenAddress(tokenKey: string): Promise<string | null>;
+  setTokenAddress(tokenKey: string, tokenAddress: string): Promise<void>;
+  
   // Session store
   sessionStore: any; // Using any to avoid type conflicts with session store
 }
@@ -79,6 +83,7 @@ export class MemStorage implements IStorage {
   private userAchievements: Map<number, UserAchievement>;
   private generatedCoins: Map<number, GeneratedCoin>;
   private memeCoinPackages: Map<number, MemeCoinPackage>;
+  private tokenAddresses: Map<string, string>; // tokenKey -> tokenAddress
   
   sessionStore: any; // Using any to avoid type conflicts with session store
   currentId: { [key: string]: number };
@@ -92,6 +97,7 @@ export class MemStorage implements IStorage {
     this.userAchievements = new Map();
     this.generatedCoins = new Map();
     this.memeCoinPackages = new Map();
+    this.tokenAddresses = new Map();
     
     this.currentId = {
       users: 1,
@@ -502,6 +508,15 @@ export class MemStorage implements IStorage {
     if (packageRecord) {
       this.memeCoinPackages.set(packageId, { ...packageRecord, status });
     }
+  }
+
+  // Token address registry methods
+  async getTokenAddress(tokenKey: string): Promise<string | null> {
+    return this.tokenAddresses.get(tokenKey) || null;
+  }
+
+  async setTokenAddress(tokenKey: string, tokenAddress: string): Promise<void> {
+    this.tokenAddresses.set(tokenKey, tokenAddress);
   }
   
   // Seed initial achievements
@@ -976,6 +991,22 @@ export class DatabaseStorage implements IStorage {
     await db.update(memeCoinPackages)
       .set({ status })
       .where(eq(memeCoinPackages.id, packageId));
+  }
+
+  // Token address registry methods
+  async getTokenAddress(tokenKey: string): Promise<string | null> {
+    // For database storage, we'll use the generated_coins table to track token addresses
+    const existingCoin = await db.select()
+      .from(generatedCoins)
+      .where(eq(generatedCoins.coinName, tokenKey))
+      .limit(1);
+    
+    return existingCoin[0]?.coinAddress || null;
+  }
+
+  async setTokenAddress(tokenKey: string, tokenAddress: string): Promise<void> {
+    // This method will be handled through the createGeneratedCoin method
+    // No separate storage needed as the address is stored with the coin record
   }
   
   // Seed achievements if the table is empty
