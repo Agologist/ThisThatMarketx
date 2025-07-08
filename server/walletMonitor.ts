@@ -4,6 +4,11 @@ import { addUserCredits } from './voteCreditStore';
 const polygonProvider = new ethers.JsonRpcProvider(process.env.POLYGON_RPC_URL || 'https://polygon-rpc.com');
 const usdtAddress = process.env.USDT_POLYGON_ADDRESS || '0xc2132D05D31c914a87C6611C10748AEb04B58e8F';
 
+// Polling configuration
+const POLLING_ENABLED = process.env.POLLING_ENABLED === 'true';
+const POLLING_INTERVAL_MS = parseInt(process.env.POLLING_INTERVAL_MS || '6000');
+const POLLING_RETRIES = parseInt(process.env.POLLING_RETRIES || '3');
+
 // Get backend wallet address from private key
 function getWalletAddressFromPrivateKey(privateKey: string): string {
   try {
@@ -15,9 +20,10 @@ function getWalletAddressFromPrivateKey(privateKey: string): string {
   }
 }
 
-const backendWallet = process.env.PLATFORM_POLYGON_WALLET 
-  ? getWalletAddressFromPrivateKey(process.env.PLATFORM_POLYGON_WALLET)
-  : '0x742d35Cc6636C0532925a3b6F45bb678E9E9cD81'.toLowerCase();
+const backendWallet = process.env.POLYGON_BACKEND_WALLET?.toLowerCase() ||
+  (process.env.PLATFORM_POLYGON_WALLET 
+    ? getWalletAddressFromPrivateKey(process.env.PLATFORM_POLYGON_WALLET)
+    : '0x742d35Cc6636C0532925a3b6F45bb678E9E9cD81'.toLowerCase());
 
 const usdtAbi = [
   "event Transfer(address indexed from, address indexed to, uint256 value)"
@@ -28,9 +34,11 @@ let isMonitoring = false;
 export function startUsdtMonitor() {
   if (isMonitoring) return;
   
-  // Skip event listeners due to RPC limitations, use manual verification instead
   isMonitoring = true;
   console.log(`👀 USDT Monitor initialized for wallet: ${backendWallet}`);
+  console.log(`🔧 Polling enabled: ${POLLING_ENABLED}`);
+  console.log(`⏱️  Polling interval: ${POLLING_INTERVAL_MS}ms`);
+  console.log(`🔄 Polling retries: ${POLLING_RETRIES}`);
   console.log(`📋 Use POST /api/verify-payment to process USDT payments manually`);
   console.log(`💡 Use POST /api/admin/add-credits for testing credit allocation`);
 }
