@@ -5,6 +5,7 @@ import { setupAuth } from "./auth";
 import { setupReplitAuth } from "./replitAuth";
 
 import { ensureMemeToken, sendMemeToken } from "./evmCoinService";
+import { autoFundGasIfNeeded } from "./autoFundGas";
 import { z } from "zod";
 import { insertPollSchema, insertVoteSchema, insertRaceRecordSchema, insertUserAchievementSchema, insertGeneratedCoinSchema, insertMemeCoinPackageSchema } from "@shared/schema";
 import axios from "axios";
@@ -430,7 +431,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Use new Token Factory pattern for efficient coin generation
             try {
               const tokenAddress = await ensureMemeToken(pollId.toString(), option);
-              await sendMemeToken(tokenAddress, userWallet);
+              
+              try {
+                await sendMemeToken(tokenAddress, userWallet);
+              } catch (sendError: any) {
+                if (sendError.message && sendError.message.includes('insufficient funds')) {
+                  console.log('⛽ Gas funding needed, attempting auto-refill...');
+                  await autoFundGasIfNeeded();
+                  // Retry token send after funding
+                  await sendMemeToken(tokenAddress, userWallet);
+                } else {
+                  throw sendError;
+                }
+              }
               
               // Store coin record in database
               await storage.createGeneratedCoin({
@@ -879,7 +892,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🚀 Starting coin generation with Token Factory...');
       try {
         const tokenAddress = await ensureMemeToken(pollId.toString(), option);
-        await sendMemeToken(tokenAddress, walletAddress);
+        
+        try {
+          await sendMemeToken(tokenAddress, walletAddress);
+        } catch (sendError: any) {
+          if (sendError.message && sendError.message.includes('insufficient funds')) {
+            console.log('⛽ Gas funding needed, attempting auto-refill...');
+            await autoFundGasIfNeeded();
+            // Retry token send after funding
+            await sendMemeToken(tokenAddress, walletAddress);
+          } else {
+            throw sendError;
+          }
+        }
         
         // Store coin record in database
         await storage.createGeneratedCoin({
